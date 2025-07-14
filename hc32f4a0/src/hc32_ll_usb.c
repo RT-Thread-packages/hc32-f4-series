@@ -10,9 +10,11 @@
    2022-10-31       CDT             Add USB DMA function
    2023-09-30       CDT             Fix bug for function usb_clearepstall()
                                     Modify typo
+   2024-06-30       CDT             Select default internal PHY for USBFS core
+   2024-11-08       CDT             Modify API usb_wrpkt & usb_rdpkt for C-STAT
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -48,6 +50,11 @@
 /*******************************************************************************
  * Local pre-processor symbols/macros ('#define')
  ******************************************************************************/
+/**
+ * @defgroup USB_Local_Macros USB Local Macros
+ * @{
+ */
+
 /*  Parameters check */
 #define IS_USB_CORE_ID(x)                                                      \
 (   ((x) == USBFS_CORE_ID)                      ||                             \
@@ -57,6 +64,9 @@
 (   ((x) == USBHS_PHY_EMBED)                    ||                             \
     ((x) == USBHS_PHY_EXT))
 
+/**
+ * @}
+ */
 /*******************************************************************************
  * Global variable definitions (declared in header file with 'extern')
  ******************************************************************************/
@@ -121,27 +131,25 @@ void usb_coresoftrst(LL_USB_TypeDef *USBx)
  * @brief  Writes a packet whose byte number is len into the Tx FIFO associated
  *         with the EP
  * @param  [in] USBx        usb instance
- * @param  [in] src         source pointer used to hold the transmitted data
+ * @param  [in] pu8src      source pointer used to hold the transmitted data
  * @param  [in] ch_ep_num   end point index
  * @param  [in] len         length in bytes
  * @param  [in] u8DmaEn     USB DMA status
  * @retval None
  */
-void usb_wrpkt(LL_USB_TypeDef *USBx, uint8_t *src, uint8_t ch_ep_num, uint16_t len, uint8_t u8DmaEn)
+void usb_wrpkt(LL_USB_TypeDef *USBx, const uint8_t *pu8src, uint8_t ch_ep_num, uint16_t len, uint8_t u8DmaEn)
 {
-    __IO uint32_t u32pAddr;
     __IO uint32_t *fifo;
     uint32_t u32Count32b;
     uint32_t u32Tmp;
+    uint32_t *pu32Src = (uint32_t *)(uint32_t)pu8src;
     if (u8DmaEn == 0U) {
         u32Count32b = (len + 3UL);
         u32Count32b = u32Count32b >> 2U;
         fifo = USBx->DFIFO[ch_ep_num];
         u32Tmp = 0UL;
         while (u32Tmp < u32Count32b) {
-            WRITE_REG32(*fifo, *((uint32_t *)src));
-            u32pAddr = (uint32_t)src;
-            src = (uint8_t *)(u32pAddr + 4U);
+            WRITE_REG32(*fifo, *pu32Src++);
             u32Tmp++;
         }
     }
@@ -150,25 +158,22 @@ void usb_wrpkt(LL_USB_TypeDef *USBx, uint8_t *src, uint8_t ch_ep_num, uint16_t l
 /**
  * @brief  Reads a packet whose byte number is len from the Rx FIFO
  * @param  [in] USBx        usb instance
- * @param  [in] dest        destination pointer that point to the received data
+ * @param  [in] pu8dest     destination pointer that point to the received data
  * @param  [in] len         number of bytes
  * @retval None
  */
-void usb_rdpkt(LL_USB_TypeDef *USBx, uint8_t *dest, uint16_t len)
+void usb_rdpkt(LL_USB_TypeDef *USBx, uint8_t *pu8dest, uint16_t len)
 {
     uint32_t u32Tmp;
     __IO uint32_t u32Count32b;
-    __IO uint32_t u32pAddr;
+    uint32_t *pu32Dest = (uint32_t *)(uint32_t)pu8dest;
 
     __IO uint32_t *fifo = USBx->DFIFO[0];
     u32Count32b = (len + 3UL);
     u32Count32b = u32Count32b >> 2U;
-    u32pAddr = 0UL;
     u32Tmp = 0UL;
     while (u32Tmp < u32Count32b) {
-        *(uint32_t *)dest = READ_REG32(*fifo);
-        u32pAddr = (uint32_t)dest;
-        dest = (uint8_t *)(u32pAddr + 4U);
+        *pu32Dest++ = READ_REG32(*fifo);
         u32Tmp++;
     }
 }
@@ -185,7 +190,9 @@ void usb_setregaddr(LL_USB_TypeDef *USBx, stc_usb_port_identify *pstcPortIdentif
     uint32_t u32Tmp = 0UL;
     uint32_t u32baseAddr = CM_USBFS_BASE;
     DDL_ASSERT(IS_USB_CORE_ID(pstcPortIdentify->u8CoreID));
-    DDL_ASSERT(IS_USB_PHY_TYPE(pstcPortIdentify->u8PhyType));
+    if (USBHS_CORE_ID == pstcPortIdentify->u8CoreID) {
+        DDL_ASSERT(IS_USB_PHY_TYPE(pstcPortIdentify->u8PhyType));
+    }
 #if defined (USB_INTERNAL_DMA_ENABLED)
     basic_cfgs->dmaen = 1U;
 #else
@@ -195,7 +202,11 @@ void usb_setregaddr(LL_USB_TypeDef *USBx, stc_usb_port_identify *pstcPortIdentif
     basic_cfgs->host_chnum = USB_MAX_CH_NUM;
     basic_cfgs->dev_epnum = USB_MAX_EP_NUM;
     basic_cfgs->core_type = pstcPortIdentify->u8CoreID;
-    basic_cfgs->phy_type = pstcPortIdentify->u8PhyType;
+    if (USBHS_CORE_ID == pstcPortIdentify->u8CoreID) {
+        basic_cfgs->phy_type = pstcPortIdentify->u8PhyType;
+    } else {
+        basic_cfgs->phy_type = USBHS_PHY_EMBED;
+    }
     if (USBFS_CORE_ID == pstcPortIdentify->u8CoreID) {
 #ifdef USB_FS_MODE
         u32baseAddr = CM_USBFS_BASE;
@@ -328,7 +339,7 @@ void usb_modeset(LL_USB_TypeDef *USBx, uint8_t mode)
     } else {
         MODIFY_REG32(USBx->GREGS->GUSBCFG, USBFS_GUSBCFG_FHMOD | USBFS_GUSBCFG_FDMOD, USBFS_GUSBCFG_FDMOD);
     }
-    /* wate for the change to take effect */
+    /* Waite for the change to take effect */
     usb_mdelay(50UL);
 }
 
@@ -679,7 +690,7 @@ void usb_epstatusset(LL_USB_TypeDef *USBx, USB_DEV_EP *ep, uint32_t Status)
 }
 
 /**
- * @brief  enable the EP0 to be actiove
+ * @brief  enable the EP0 to be active
  * @param  [in] USBx        usb instance
  * @retval None
  */
@@ -1274,7 +1285,7 @@ uint8_t usb_hchtransbegin(LL_USB_TypeDef *USBx, uint8_t hc_num, USB_HOST_CH *pCh
                     u16LenWords = (uint16_t)((pCh->xfer_len + 3UL) / 4UL);
                     /* check if the amount of free space available in the non-periodic txFIFO is enough */
                     if (u16LenWords > ((u32hnptxsts & USBFS_HNPTXSTS_NPTXFSAV) >> USBFS_HNPTXSTS_NPTXFSAV_POS)) {
-                        /* enable interrrupt of nptxfempty of GINTMSK*/
+                        /* enable interrupt of nptxfempty of GINTMSK*/
                         SET_REG32_BIT(USBx->GREGS->GINTMSK, USBFS_GINTMSK_NPTXFEM);
                     }
                     break;
@@ -1285,7 +1296,7 @@ uint8_t usb_hchtransbegin(LL_USB_TypeDef *USBx, uint8_t hc_num, USB_HOST_CH *pCh
                     u16LenWords = (uint16_t)((pCh->xfer_len + 3UL) / 4UL);
                     /* check if the space of periodic TxFIFO is enough */
                     if (u16LenWords > ((u32hptxsts & USBFS_HPTXSTS_PTXFSAVL) >> USBFS_HPTXSTS_PTXFSAVL_POS)) {
-                        /* enable interrrupt of ptxfempty of GINTMSK */
+                        /* enable interrupt of ptxfempty of GINTMSK */
                         SET_REG32_BIT(USBx->GREGS->GINTMSK, USBFS_GINTMSK_PTXFEM);
                     }
                     break;

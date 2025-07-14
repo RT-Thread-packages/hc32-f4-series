@@ -9,9 +9,11 @@
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
                                     Add function: DVP_GetCaptureState
+   2024-06-30       CDT             Modify DVP_ClearStatus for couping risk
+   2024-08-31       CDT             Function DVP_DeInit add return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -58,7 +60,7 @@
  */
 
 #define IS_DVP_CAPT_MD(x)                                                      \
-(   ((x) == DVP_CAPT_MD_CONTINUOS_FRAME)    ||                                 \
+(   ((x) == DVP_CAPT_MD_CONT_FRAME)         ||                                 \
     ((x) == DVP_CAPT_MD_SINGLE_FRAME))
 
 #define IS_DVP_SYNC_MD(x)                                                      \
@@ -145,7 +147,7 @@ int32_t DVP_StructInit(stc_dvp_init_t *pstcDvpInit)
     if (NULL != pstcDvpInit) {
         pstcDvpInit->u32SyncMode       = DVP_SYNC_MD_HW;
         pstcDvpInit->u32DataWidth      = DVP_DATA_WIDTH_8BIT;
-        pstcDvpInit->u32CaptureMode    = DVP_CAPT_MD_CONTINUOS_FRAME;
+        pstcDvpInit->u32CaptureMode    = DVP_CAPT_MD_CONT_FRAME;
         pstcDvpInit->u32CaptureFreq    = DVP_CAPT_FREQ_ALL_FRAME;
         pstcDvpInit->u32PIXCLKPolarity = DVP_PIXCLK_FALLING;
         pstcDvpInit->u32HSYNCPolarity  = DVP_HSYNC_LOW;
@@ -191,10 +193,13 @@ int32_t DVP_Init(const stc_dvp_init_t *pstcDvpInit)
 /**
  * @brief  De-Initialize DVP function.
  * @param  None
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:           Reset success.
  */
-void DVP_DeInit(void)
+int32_t DVP_DeInit(void)
 {
+    int32_t i32Ret = LL_OK;
+
     WRITE_REG32(CM_DVP->CTR, 0UL);
     WRITE_REG32(CM_DVP->STR, 0UL);
     WRITE_REG32(CM_DVP->IER, 0UL);
@@ -202,6 +207,8 @@ void DVP_DeInit(void)
     WRITE_REG32(CM_DVP->SSYNMR, 0xFFFFFFFFUL);
     WRITE_REG32(CM_DVP->CPSFTR, 0UL);
     WRITE_REG32(CM_DVP->CPSZER, 0UL);
+
+    return i32Ret;
 }
 
 /**
@@ -336,7 +343,7 @@ void DVP_ClearStatus(uint32_t u32Flag)
 {
     DDL_ASSERT(IS_DVP_FLAG(u32Flag));
 
-    CLR_REG32_BIT(CM_DVP->STR, u32Flag);
+    WRITE_REG32(CM_DVP->STR, (~u32Flag) & DVP_FLAG_ALL);
 }
 
 /**

@@ -8,9 +8,13 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Add API DMA_SetDataWidth()
+   2023-12-15       CDT             Modify API input param type:u16->u32
+                                    Add structure stc_dma_rc_nonseq_init_t
+                                    Add API DMA_ReconfigNonSeqStructInit() & DMA_ReconfigNonSeqInit()
+   2024-11-08       CDT             Add API DMA_MxChSWTrigger() and DMA_SWReconfig()
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -119,6 +123,18 @@ typedef struct {
 } stc_dma_reconfig_init_t;
 
 /**
+ * @brief  DMA re-config non-sequence mode configuration
+ */
+typedef struct {
+    uint32_t u32Mode;           /*!< Specifies the DMA source non-sequence function.
+                                    This parameter can be a value of @ref DMA_NonSeq_Config         */
+    uint32_t u32SrcCount;       /*!< Specifies the DMA source non-sequence function count.          */
+    uint32_t u32SrcDist;        /*!< Specifies the DMA source non-sequence function distance.       */
+    uint32_t u32DestCount;      /*!< Specifies the DMA destination non-sequence function count.     */
+    uint32_t u32DestDist;       /*!< Specifies the DMA destination non-sequence function distance.  */
+} stc_dma_rc_nonseq_init_t;
+
+/**
  * @brief  Dma LLP(linked list pointer) descriptor structure definition
  */
 typedef struct {
@@ -161,11 +177,11 @@ typedef struct {
  * @defgroup DMA_Mx_Channel_selection DMA Multiplex Channel selection
  * @{
  */
-#define DMA_MX_CH0                      (0x01UL)        /*!< DMA Channel 0 position */
-#define DMA_MX_CH1                      (0x02UL)        /*!< DMA Channel 1 position */
+#define DMA_MX_CH0                      (0x01U)        /*!< DMA Channel 0 position */
+#define DMA_MX_CH1                      (0x02U)        /*!< DMA Channel 1 position */
+#define DMA_MX_CH2                      (0x04U)        /*!< DMA Channel 2 position */
+#define DMA_MX_CH3                      (0x08U)        /*!< DMA Channel 3 position */
 #define DMA_MX_CH_ALL                   (DMA_CHEN_CHEN) /*!< DMA Channel mask position */
-#define DMA_MX_CH2                      (0x04UL)        /*!< DMA Channel 2 position */
-#define DMA_MX_CH3                      (0x08UL)        /*!< DMA Channel 3 position */
 /**
  * @}
  */
@@ -330,17 +346,17 @@ typedef struct {
  */
 
 /**
- * @defgroup DMA_Llp_En DMA LLP(linked list pinter) enable or disable
+ * @defgroup DMA_Llp_En DMA LLP(linked list pointer) enable or disable
  * @{
  */
-#define DMA_LLP_DISABLE                 (0x00000000UL)          /*!< DMA linked list pinter disable    */
-#define DMA_LLP_ENABLE                  (DMA_CHCTL_LLPEN)       /*!< DMA linked list pinter enable     */
+#define DMA_LLP_DISABLE                 (0x00000000UL)          /*!< DMA linked list pointer disable    */
+#define DMA_LLP_ENABLE                  (DMA_CHCTL_LLPEN)       /*!< DMA linked list pointer enable     */
 /**
  * @}
  */
 
 /**
- * @defgroup DMA_Llp_Mode DMA linked list pinter mode while transferring complete
+ * @defgroup DMA_Llp_Mode DMA linked list pointer mode while transferring complete
  * @{
  */
 #define DMA_LLP_WAIT                    (0x00000000UL)          /*!< DMA Llp wait next request while transferring complete */
@@ -476,8 +492,8 @@ int32_t DMA_SetTransCount(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint16_t u16Count)
 int32_t DMA_SetBlockSize(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint16_t u16Size);
 int32_t DMA_SetDataWidth(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint32_t u32DataWidth);
 
-int32_t DMA_SetSrcRepeatSize(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint16_t u16Size);
-int32_t DMA_SetDestRepeatSize(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint16_t u16Size);
+int32_t DMA_SetSrcRepeatSize(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint32_t u32Size);
+int32_t DMA_SetDestRepeatSize(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint32_t u32Size);
 int32_t DMA_SetNonSeqSrcCount(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint32_t u32Count);
 int32_t DMA_SetNonSeqDestCount(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint32_t u32Count);
 int32_t DMA_SetNonSeqSrcOffset(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, uint32_t u32Offset);
@@ -504,6 +520,8 @@ int32_t DMA_ReconfigStructInit(stc_dma_reconfig_init_t *pstcDmaRCInit);
 int32_t DMA_ReconfigInit(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, const stc_dma_reconfig_init_t *pstcDmaRCInit);
 void DMA_ReconfigCmd(CM_DMA_TypeDef *DMAx, en_functional_state_t enNewState);
 void DMA_ReconfigLlpCmd(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, en_functional_state_t enNewState);
+int32_t DMA_ReconfigNonSeqStructInit(stc_dma_rc_nonseq_init_t *pstcDmaRcNonSeqInit);
+int32_t DMA_ReconfigNonSeqInit(CM_DMA_TypeDef *DMAx, uint8_t u8Ch, const stc_dma_rc_nonseq_init_t *pstcDmaRcNonSeqInit);
 
 uint32_t DMA_GetSrcAddr(const CM_DMA_TypeDef *DMAx, uint8_t u8Ch);
 uint32_t DMA_GetDestAddr(const CM_DMA_TypeDef *DMAx, uint8_t u8Ch);
@@ -516,6 +534,8 @@ uint32_t DMA_GetNonSeqDestCount(const CM_DMA_TypeDef *DMAx, uint8_t u8Ch);
 uint32_t DMA_GetNonSeqSrcOffset(const CM_DMA_TypeDef *DMAx, uint8_t u8Ch);
 uint32_t DMA_GetNonSeqDestOffset(const CM_DMA_TypeDef *DMAx, uint8_t u8Ch);
 
+void DMA_MxChSWTrigger(CM_DMA_TypeDef *DMAx, uint8_t u8MxCh);
+void DMA_SWReconfig(CM_DMA_TypeDef *DMAx);
 /**
  * @}
  */

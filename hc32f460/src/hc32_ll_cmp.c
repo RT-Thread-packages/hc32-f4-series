@@ -11,9 +11,10 @@
    2023-01-15       CDT             Code refine for scan function
    2023-06-30       CDT             Modify typo
    2023-09-30       CDT             Add assert for IEN bit in GetCmpFuncStatusAndDisFunc function
+   2024-06-30       CDT             Rename the peripheral registers structure: CMPCR -> CMP_COMMON
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -87,16 +88,16 @@
                                               CMP3_POSITIVE_CMP3_INP4)
 
 #define IS_CMP1_POSITIVE_IN(x)                                                 \
-(   (((x) & (~CMP1_POSITIVE_MASK)) == 0U) &&                                   \
-    ((((x) & CMP1_INP4_MASK) == 0U) ||                                         \
-     (((x) & CMP1_INP4_MASK) == CMP1_POSITIVE_PGAO) ||                         \
-     (((x) & CMP1_INP4_MASK) == CMP1_POSITIVE_PGAO_BP) ||                      \
+(   (((x) & (~CMP1_POSITIVE_MASK)) == 0U)               &&                     \
+    ((((x) & CMP1_INP4_MASK) == 0U)                     ||                     \
+     (((x) & CMP1_INP4_MASK) == CMP1_POSITIVE_PGAO)     ||                     \
+     (((x) & CMP1_INP4_MASK) == CMP1_POSITIVE_PGAO_BP)  ||                     \
      (((x) & CMP1_INP4_MASK) == CMP1_POSITIVE_CMP1_INP4)))
 
 #define IS_CMP2_POSITIVE_IN(x)                                                 \
-(   (((x) & (~CMP2_POSITIVE_MASK)) == 0U) &&                                   \
-    ((((x) & CMP2_INP4_MASK) == 0U) ||                                         \
-     (((x) & CMP2_INP4_MASK) == CMP2_POSITIVE_PGAO) ||                         \
+(   (((x) & (~CMP2_POSITIVE_MASK)) == 0U)               &&                     \
+    ((((x) & CMP2_INP4_MASK) == 0U)                     ||                     \
+     (((x) & CMP2_INP4_MASK) == CMP2_POSITIVE_PGAO)     ||                     \
      (((x) & CMP2_INP4_MASK) == CMP2_POSITIVE_PGAO_BP)))
 
 #define IS_CMP3_POSITIVE_IN(x)                                                 \
@@ -277,10 +278,10 @@ void CMP_DeInit(CM_CMP_TypeDef *CMPx)
     CLR_REG16(CMPx->VLTSEL);
     WRITE_REG16(CMPx->CVSSTB, 0x0005U);
     WRITE_REG16(CMPx->CVSPRD, 0x000FU);
-    CLR_REG16(CM_CMPCR->DADR1);
-    CLR_REG16(CM_CMPCR->DADR2);
-    CLR_REG16(CM_CMPCR->DACR);
-    CLR_REG16(CM_CMPCR->RVADC);
+    CLR_REG16(CM_CMP_COMMON->DADR1);
+    CLR_REG16(CM_CMP_COMMON->DADR2);
+    CLR_REG16(CM_CMP_COMMON->DACR);
+    CLR_REG16(CM_CMP_COMMON->RVADC);
 }
 
 /**
@@ -638,9 +639,9 @@ void CMP_8BitDAC_Cmd(uint8_t u8Ch, en_functional_state_t enNewState)
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
-        SET_REG16_BIT(CM_CMPCR->DACR, u8Ch);
+        SET_REG16_BIT(CM_CMP_COMMON->DACR, u8Ch);
     } else {
-        CLR_REG16_BIT(CM_CMPCR->DACR, u8Ch);
+        CLR_REG16_BIT(CM_CMP_COMMON->DACR, u8Ch);
     }
 }
 
@@ -662,8 +663,8 @@ void CMP_8BitDAC_AdcRefCmd(uint16_t u16AdcRefSw, en_functional_state_t enNewStat
     } else {
         WrTmp = 0U;
     }
-    WRITE_REG16(CM_CMPCR->RVADC, CMP_DADC_RVADC_REG_UNLOCK);
-    WRITE_REG16(CM_CMPCR->RVADC, WrTmp);
+    WRITE_REG16(CM_CMP_COMMON->RVADC, CMP_DADC_RVADC_REG_UNLOCK);
+    WRITE_REG16(CM_CMP_COMMON->RVADC, WrTmp);
 }
 
 /**
@@ -678,9 +679,9 @@ void CMP_8BitDAC_WriteData(uint8_t u8Ch, uint16_t u16DACData)
     DDL_ASSERT(IS_CMP_8_BIT_DAC_DATA(u16DACData));
 
     if (CMP_8BITDAC_CH1 == u8Ch) {
-        WRITE_REG16(CM_CMPCR->DADR1, u16DACData);
+        WRITE_REG16(CM_CMP_COMMON->DADR1, u16DACData);
     } else {
-        WRITE_REG16(CM_CMPCR->DADR2, u16DACData);
+        WRITE_REG16(CM_CMP_COMMON->DADR2, u16DACData);
     }
 }
 

@@ -7,9 +7,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Add API MAU_DeInit()
+   2024-06-30       CDT             All parameter assert add module name
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -54,9 +55,9 @@
  * @defgroup MAU_Check_Parameters_Validity MAU Check Parameters Validity
  * @{
  */
-#define IS_VALID_UNIT(x)            ((x) == CM_MAU)
-#define IS_LSHBIT_NUM(x)            ((x) <= MAU_SQRT_OUTPUT_LSHIFT_MAX)
-#define IS_ANGLE_IDX(x)             ((x) < MAU_SIN_ANGIDX_TOTAL)
+#define IS_MAU_UNIT(x)        ((x) == CM_MAU)
+#define IS_MAU_SQRT_LSHBIT_NUM(x)   ((x) <= MAU_SQRT_OUTPUT_LSHIFT_MAX)
+#define IS_MAU_SIN_ANGLE_IDX(x)     ((x) < MAU_SIN_ANGIDX_TOTAL)
 /**
  * @}
  */
@@ -96,8 +97,8 @@
  */
 void MAU_SqrtResultLShiftConfig(CM_MAU_TypeDef *MAUx, uint8_t u8ShiftNum)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
-    DDL_ASSERT(IS_LSHBIT_NUM(u8ShiftNum));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_SQRT_LSHBIT_NUM(u8ShiftNum));
 
     MODIFY_REG32(MAUx->CSR, MAU_CSR_SHIFT, ((uint32_t)u8ShiftNum << MAU_CSR_SHIFT_POS));
 }
@@ -111,7 +112,7 @@ void MAU_SqrtResultLShiftConfig(CM_MAU_TypeDef *MAUx, uint8_t u8ShiftNum)
  */
 void MAU_SqrtIntCmd(CM_MAU_TypeDef *MAUx, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(MAUx->CSR, MAU_CSR_INTEN, (uint32_t)enNewState << MAU_CSR_INTEN_POS);
@@ -126,7 +127,7 @@ void MAU_SqrtIntCmd(CM_MAU_TypeDef *MAUx, en_functional_state_t enNewState)
  */
 void MAU_SqrtWriteData(CM_MAU_TypeDef *MAUx, uint32_t u32Radicand)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
 
     WRITE_REG32(MAUx->DTR0, u32Radicand);
 }
@@ -139,7 +140,7 @@ void MAU_SqrtWriteData(CM_MAU_TypeDef *MAUx, uint32_t u32Radicand)
  */
 void MAU_SqrtStart(CM_MAU_TypeDef *MAUx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
 
     SET_REG32_BIT(MAUx->CSR, MAU_CSR_START);
 }
@@ -152,7 +153,7 @@ void MAU_SqrtStart(CM_MAU_TypeDef *MAUx)
  */
 en_flag_status_t MAU_SqrtGetStatus(const CM_MAU_TypeDef *MAUx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
 
     return (0UL != READ_REG32_BIT(MAUx->CSR, MAU_CSR_BUSY)) ? SET : RESET;
 }
@@ -165,7 +166,7 @@ en_flag_status_t MAU_SqrtGetStatus(const CM_MAU_TypeDef *MAUx)
  */
 uint32_t MAU_SqrtReadData(const CM_MAU_TypeDef *MAUx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
 
     return READ_REG32(MAUx->RTR0);
 }
@@ -180,8 +181,8 @@ uint32_t MAU_SqrtReadData(const CM_MAU_TypeDef *MAUx)
  */
 void MAU_SqrtInit(CM_MAU_TypeDef *MAUx, uint8_t u8ShiftNum, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
-    DDL_ASSERT(IS_LSHBIT_NUM(u8ShiftNum));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_SQRT_LSHBIT_NUM(u8ShiftNum));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(MAUx->CSR, MAU_CSR_SHIFT | MAU_CSR_INTEN,
@@ -196,7 +197,7 @@ void MAU_SqrtInit(CM_MAU_TypeDef *MAUx, uint8_t u8ShiftNum, en_functional_state_
  */
 void MAU_SqrtDeInit(CM_MAU_TypeDef *MAUx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
 
     CLR_REG32_BIT(MAUx->CSR, MAU_CSR_SHIFT | MAU_CSR_INTEN);
 }
@@ -216,7 +217,7 @@ int32_t MAU_Sqrt(CM_MAU_TypeDef *MAUx, uint32_t u32Radicand, uint32_t *pu32Resul
     __IO uint32_t u32TimeCount = MAU_SQRT_TIMEOUT;
     int32_t i32Ret = LL_OK;
 
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
     DDL_ASSERT(pu32Result != (void *)0UL);
 
     WRITE_REG32(MAUx->DTR0, u32Radicand);
@@ -250,8 +251,8 @@ int32_t MAU_Sqrt(CM_MAU_TypeDef *MAUx, uint32_t u32Radicand, uint32_t *pu32Resul
  */
 int16_t MAU_Sin(CM_MAU_TypeDef *MAUx, uint16_t u16AngleIdx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(MAUx));
-    DDL_ASSERT(IS_ANGLE_IDX(u16AngleIdx));
+    DDL_ASSERT(IS_MAU_UNIT(MAUx));
+    DDL_ASSERT(IS_MAU_SIN_ANGLE_IDX(u16AngleIdx));
 
     WRITE_REG16(MAUx->DTR1, u16AngleIdx);
     __ASM("NOP");

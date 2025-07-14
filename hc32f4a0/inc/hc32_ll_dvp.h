@@ -9,9 +9,10 @@
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
                                     Add function: DVP_GetCaptureState
+   2024-08-31       CDT             API DVP_DeInit add return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -135,7 +136,7 @@ typedef struct {
  * @defgroup DVP_Capture_Mode DVP Capture Mode
  * @{
  */
-#define DVP_CAPT_MD_CONTINUOS_FRAME     (0UL)
+#define DVP_CAPT_MD_CONT_FRAME          (0UL)
 #define DVP_CAPT_MD_SINGLE_FRAME        (DVP_CTR_CAPMD)
 /**
  * @}
@@ -261,7 +262,7 @@ typedef struct {
  */
 int32_t DVP_StructInit(stc_dvp_init_t *pstcDvpInit);
 int32_t DVP_Init(const stc_dvp_init_t *pstcDvpInit);
-void DVP_DeInit(void);
+int32_t DVP_DeInit(void);
 
 void DVP_Cmd(en_functional_state_t enNewState);
 void DVP_IntCmd(uint32_t u32IntType, en_functional_state_t enNewState);

@@ -10,9 +10,12 @@
    2022-10-31       CDT             Modify macro group definition: ADC_Scan_Mode, ADC_Sync_Unit, ADC_Sync_Mode
    2023-06-30       CDT             Modify typo
                                     API fixed: ADC_DeInit()
+   2023-12-15       CDT             Add declaration of API ADC_MxChCmd(), ADC_ConvDataAverageMxChCmd(), and add defgroup ADC_Mx_Channel
+                                    Add declaration of API ADC_GetResolution()
+   2024-06-30       CDT             Fixed some comments
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -114,19 +117,47 @@ typedef struct {
 #define ADC_CH6                         (6U)        /*!< Default input pin: PA6 for ADC1, PC0 for ADC2. */
 #define ADC_CH7                         (7U)        /*!< Default input pin: PA7 for ADC1, PC1 for ADC2. */
 #define ADC_CH8                         (8U)        /*!< Default input pin: PB0 for ADC1, internal analog signal for ADC2. */
-#define ADC_CH9                         (9U)        /*!< Default input pin: PB1 for ADC1, NOT support ADC2. */
-#define ADC_CH10                        (10U)       /*!< Default input pin: PC0 for ADC1, NOT support ADC2. */
-#define ADC_CH11                        (11U)       /*!< Default input pin: PC1 for ADC1, NOT support ADC2. */
-#define ADC_CH12                        (12U)       /*!< Default input pin: PC2 for ADC1, NOT support ADC2. */
-#define ADC_CH13                        (13U)       /*!< Default input pin: PC3 for ADC1, NOT support ADC2. */
-#define ADC_CH14                        (14U)       /*!< Default input pin: PC4 for ADC1, NOT support ADC2. */
-#define ADC_CH15                        (15U)       /*!< Default input pin: PC5 for ADC1, NOT support ADC2. */
+#define ADC_CH9                         (9U)        /*!< Default input pin: PB1 for ADC1. NOT support ADC2. */
+#define ADC_CH10                        (10U)       /*!< Default input pin: PC0 for ADC1. NOT support ADC2. */
+#define ADC_CH11                        (11U)       /*!< Default input pin: PC1 for ADC1. NOT support ADC2. */
+#define ADC_CH12                        (12U)       /*!< Default input pin: PC2 for ADC1. NOT support ADC2. */
+#define ADC_CH13                        (13U)       /*!< Default input pin: PC3 for ADC1. NOT support ADC2. */
+#define ADC_CH14                        (14U)       /*!< Default input pin: PC4 for ADC1. NOT support ADC2. */
+#define ADC_CH15                        (15U)       /*!< Default input pin: PC5 for ADC1. NOT support ADC2. */
 #define ADC_CH16                        (16U)       /*!< ADC1 extended channel, input source is internal analog signal */
 
 #define ADC1_EXT_CH                     (ADC_CH16)  /*!< ADC1 extended channel, input source is internal analog signal:
                                                          internal reference voltage or 8bit-DAC. */
 #define ADC2_EXT_CH                     (ADC_CH8)   /*!< ADC2 extended channel, input source is internal analog signal:
                                                          internal reference voltage or 8bit-DAC. */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup ADC_Mx_Channel ADC Channel
+ * @{
+ */
+#define ADC_MX_CH0                      (1U << 0U)          /*!< ADC channel 0 position  */
+#define ADC_MX_CH1                      (1U << 1U)          /*!< ADC channel 1 position  */
+#define ADC_MX_CH2                      (1U << 2U)          /*!< ADC channel 2 position  */
+#define ADC_MX_CH3                      (1U << 3U)          /*!< ADC channel 3 position  */
+#define ADC_MX_CH4                      (1U << 4U)          /*!< ADC channel 4 position  */
+#define ADC_MX_CH5                      (1U << 5U)          /*!< ADC channel 5 position  */
+#define ADC_MX_CH6                      (1U << 6U)          /*!< ADC channel 6 position  */
+#define ADC_MX_CH7                      (1U << 7U)          /*!< ADC channel 7 position  */
+#define ADC_MX_CH8                      (1U << 8U)          /*!< ADC channel 8 position  */
+#define ADC_MX_CH9                      (1U << 9U)          /*!< ADC channel 9 position  */
+#define ADC_MX_CH10                     (1U << 10U)         /*!< ADC channel 10 position */
+#define ADC_MX_CH11                     (1U << 11U)         /*!< ADC channel 11 position */
+#define ADC_MX_CH12                     (1U << 12U)         /*!< ADC channel 12 position */
+#define ADC_MX_CH13                     (1U << 13U)         /*!< ADC channel 13 position */
+#define ADC_MX_CH14                     (1U << 14U)         /*!< ADC channel 14 position */
+#define ADC_MX_CH15                     (1U << 15U)         /*!< ADC channel 15 position */
+#define ADC_MX_CH16                     (1U << 16U)         /*!< ADC channel 16 position */
+
+#define ADC1_MX_CH_ALL                  (0xFFFFUL)          /*!< ADC1 Channel mask position */
+#define ADC2_MX_CH_ALL                  (0x1FFUL)           /*!< ADC2 Channel mask position */
 /**
  * @}
  */
@@ -232,7 +263,7 @@ typedef struct {
  * @defgroup ADC_Sync_Unit ADC Synchronous Unit
  * @{
  */
-#define ADC_SYNC_ADC1_ADC2              (0U)                        /*!< ADC1 and ADC2 work synchronously. */
+#define ADC_SYNC_ADC1_ADC2              (0U)                                /*!< ADC1 and ADC2 work synchronously. */
 /**
  * @}
  */
@@ -249,10 +280,10 @@ typedef struct {
                                                                              All ADCs scan once. */
 #define ADC_SYNC_CYCLIC_DELAY_TRIG      (0x4U << ADC_SYNCCR_SYNCMD_POS) /*!< Cyclic delayed trigger mode.
                                                                              When the trigger condition occurs, ADC1 starts first, then ADC2, last ADC3(if has).
-                                                                             All ADCs scan cyclicly(keep scanning till you stop them). */
+                                                                             All ADCs scan cyclically(keep scanning till you stop them). */
 #define ADC_SYNC_CYCLIC_PARALLEL_TRIG   (0x6U << ADC_SYNCCR_SYNCMD_POS) /*!< Single shot parallel trigger mode.
                                                                              When the trigger condition occurs, all ADCs start at the same time.
-                                                                             All ADCs scan cyclicly(keep scanning till you stop them). */
+                                                                             All ADCs scan cyclically(keep scanning till you stop them). */
 /**
  * @}
  */
@@ -428,16 +459,18 @@ int32_t ADC_Init(CM_ADC_TypeDef *ADCx, const stc_adc_init_t *pstcAdcInit);
 int32_t ADC_DeInit(CM_ADC_TypeDef *ADCx);
 int32_t ADC_StructInit(stc_adc_init_t *pstcAdcInit);
 void ADC_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8Ch, en_functional_state_t enNewState);
+void ADC_MxChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint32_t u32MxCh, en_functional_state_t enNewState);
 void ADC_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8SampleTime);
 
 /* Conversion data average calculation function. */
 void ADC_ConvDataAverageConfig(CM_ADC_TypeDef *ADCx, uint16_t u16AverageCount);
 void ADC_ConvDataAverageChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, en_functional_state_t enNewState);
+void ADC_ConvDataAverageMxChCmd(CM_ADC_TypeDef *ADCx, uint32_t u32MxCh, en_functional_state_t enNewState);
 
 void ADC_TriggerConfig(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint16_t u16TriggerSel);
 void ADC_TriggerCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, en_functional_state_t enNewState);
 void ADC_IntCmd(CM_ADC_TypeDef *ADCx, uint8_t u8IntType, en_functional_state_t enNewState);
-void ADC_Start(CM_ADC_TypeDef *ADCx);
+int32_t ADC_Start(CM_ADC_TypeDef *ADCx);
 void ADC_Stop(CM_ADC_TypeDef *ADCx);
 uint16_t ADC_GetValue(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch);
 uint16_t ADC_GetResolution(const CM_ADC_TypeDef *ADCx);

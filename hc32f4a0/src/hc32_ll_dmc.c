@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
+   2024-08-31       CDT             Function EXMC_DMC_DeInit add return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -365,10 +366,13 @@ int32_t EXMC_DMC_Init(const stc_exmc_dmc_init_t *pstcDmcInit)
 /**
  * @brief  De-Initialize EXMC_DMC function.
  * @param  None
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:           Reset success.
  */
-void EXMC_DMC_DeInit(void)
+int32_t EXMC_DMC_DeInit(void)
 {
+    int32_t i32Ret = LL_OK;
+
     /* Disable */
     CLR_REG32_BIT(CM_PERIC->DMC_ENAR, PERIC_DMC_ENAR_DMCEN);
 
@@ -389,6 +393,8 @@ void EXMC_DMC_DeInit(void)
     WRITE_REG32(CM_DMC->TMCR_T_XP, 0x00000001UL);
     WRITE_REG32(CM_DMC->TMCR_T_XSR, 0x0000000AUL);
     WRITE_REG32(CM_DMC->TMCR_T_ESR, 0x00000014UL);
+
+    return i32Ret;
 }
 
 /**
@@ -436,7 +442,7 @@ void EXMC_DMC_SetState(uint32_t u32State)
  * @param  [in] pstcChipConfig          Pointer to a @ref stc_exmc_dmc_chip_config_t structure.
  * @retval int32_t:
  *           - LL_OK:                   Initialize successfully.
- *           - LL_ERR_INVD_PARAM:       The pointer pstcConfig value is NULL.
+ *           - LL_ERR_INVD_PARAM:       The pointer pstcChipConfig value is NULL.
  */
 int32_t EXMC_DMC_ChipConfig(uint32_t u32Chip, const stc_exmc_dmc_chip_config_t *pstcChipConfig)
 {

@@ -8,7 +8,7 @@
    2022-03-31       CDT             First version
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -70,7 +70,7 @@ extern "C"
 void DDL_DelayMS(uint32_t u32Count);
 void DDL_DelayUS(uint32_t u32Count);
 
-/* Systick functions */
+/* SysTick functions */
 int32_t SysTick_Init(uint32_t u32Freq);
 void SysTick_Delay(uint32_t u32Delay);
 void SysTick_IncTick(void);

@@ -18,9 +18,10 @@
    2023-09-30       CDT             Modify macro define for group TMR6_Emb_Ch_Define
                                     Add macro define for TMR6_Count_Dir_Status_Define
                                     Modify typo
+   2023-12-15       CDT             Modify for headfile update: CM_TMR6CR -> CM_TMR6_COMMON
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -136,13 +137,13 @@ typedef struct {
  */
 typedef struct {
     uint32_t u32EqualUpDown;        /*!< Enable down count dead time register equal to up count DT register \
-                                         @ref TMR6_Deadtime_Reg_Equal_Func_Define */
+                                         @ref TMR6_DeadTime_Reg_Equal_Func_Define */
     uint32_t u32BufUp;              /*!< Enable buffer transfer for up count dead time register (DTUBR-->DTUAR) \
-                                         @ref TMR6_Deadtime_CountUp_Buf_Func_Define*/
+                                         @ref TMR6_DeadTime_CountUp_Buf_Func_Define*/
     uint32_t u32BufDown;            /*!< Enable buffer transfer for down count dead time register (DTDBR-->DTDAR) \
-                                         @ref TMR6_Deadtime_CountDown_Buf_Func_Define*/
+                                         @ref TMR6_DeadTime_CountDown_Buf_Func_Define*/
     uint32_t u32BufTransCond;       /*!< Buffer transfer condition for triangular wave mode \
-                                         @ref TMR6_Deadtime_Buf_Trans_Cond_Define */
+                                         @ref TMR6_DeadTime_Buf_Trans_Cond_Define */
 } stc_tmr6_deadtime_config_t;
 
 /**
@@ -207,7 +208,6 @@ typedef struct {
                                             TMR6_FLAG_UP_CNT_SPECIAL_MATCH_A | TMR6_FLAG_DOWN_CNT_SPECIAL_MATCH_A | \
                                             TMR6_FLAG_UP_CNT_SPECIAL_MATCH_B | TMR6_FLAG_DOWN_CNT_SPECIAL_MATCH_B | \
                                             TMR6_FLAG_CNT_DIR)
-
 /**
  * @}
  */
@@ -291,7 +291,6 @@ typedef struct {
 #define TMR6_BUF_TRANS_OVF                  (0x00000004UL)
 #define TMR6_BUF_TRANS_UDF                  (0x00000008UL)
 #define TMR6_BUF_TRANS_OVF_UDF              (0x0000000CUL)
-
 /**
  * @}
  */
@@ -387,7 +386,6 @@ typedef struct {
 #define TMR6_STAT_DOWN_CNT_MATCH_A          (5U)    /*!< Count down match compare register A */
 #define TMR6_STAT_UP_CNT_MATCH_B            (6U)    /*!< Count up match compare register B */
 #define TMR6_STAT_DOWN_CNT_MATCH_B          (7U)    /*!< Count down match compare register B */
-
 /**
  * @}
  */
@@ -396,7 +394,6 @@ typedef struct {
  * @defgroup TMR6_Pin_Polarity_Define TMR6 Pin Output Polarity
  * @{
  */
-
 #define TMR6_PWM_LOW                        (0x00U)
 #define TMR6_PWM_HIGH                       (0x01U)
 #define TMR6_PWM_HOLD                       (0x02U)
@@ -420,10 +417,10 @@ typedef struct {
  * @defgroup TMR6_Emb_Ch_Define TMR6 EMB Event Channel
  * @{
  */
-#define TMR6_EMB_EVT_CH0                    (0x00UL)
-#define TMR6_EMB_EVT_CH1                    (0x01UL << TMR6_PCNAR_EMBSA_POS)
-#define TMR6_EMB_EVT_CH2                    (0x02UL << TMR6_PCNAR_EMBSA_POS)
-#define TMR6_EMB_EVT_CH3                    (0x03UL << TMR6_PCNAR_EMBSA_POS)
+#define TMR6_EMB_EVT_CH0                    (0x00UL)                            /* EMB group 0 */
+#define TMR6_EMB_EVT_CH1                    (0x01UL << TMR6_PCNAR_EMBSA_POS)    /* EMB group 1 */
+#define TMR6_EMB_EVT_CH2                    (0x02UL << TMR6_PCNAR_EMBSA_POS)    /* EMB group 2 */
+#define TMR6_EMB_EVT_CH3                    (0x03UL << TMR6_PCNAR_EMBSA_POS)    /* EMB group 3 */
 /**
  * @}
  */
@@ -448,13 +445,12 @@ typedef struct {
 #define TMR6_EMB_PIN_HIZ                    (TMR6_PCNAR_EMBCA_0)
 #define TMR6_EMB_PIN_LOW                    (TMR6_PCNAR_EMBCA_1)
 #define TMR6_EMB_PIN_HIGH                   (TMR6_PCNAR_EMBCA)
-
 /**
  * @}
  */
 
 /**
- * @defgroup TMR6_Deadtime_CountUp_Buf_Func_Define TMR6 Dead Time Buffer Function For Count Up Stage
+ * @defgroup TMR6_DeadTime_CountUp_Buf_Func_Define TMR6 Dead Time Buffer Function For Count Up Stage
  * @{
  */
 #define TMR6_DEADTIME_CNT_UP_BUF_OFF        (0x00UL)
@@ -464,7 +460,7 @@ typedef struct {
  */
 
 /**
- * @defgroup TMR6_Deadtime_CountDown_Buf_Func_Define TMR6 Dead Time Buffer Function For Count Down Stage
+ * @defgroup TMR6_DeadTime_CountDown_Buf_Func_Define TMR6 Dead Time Buffer Function For Count Down Stage
  * @{
  */
 #define TMR6_DEADTIME_CNT_DOWN_BUF_OFF      (0x00UL)
@@ -474,7 +470,7 @@ typedef struct {
  */
 
 /**
- * @defgroup TMR6_Deadtime_Buf_Trans_Cond_Define TMR6 Dead Time Buffer Transfer Condition Define For Triangular Count Mode
+ * @defgroup TMR6_DeadTime_Buf_Trans_Cond_Define TMR6 Dead Time Buffer Transfer Condition Define For Triangular Count Mode
  * @{
  */
 #define TMR6_DEADTIME_BUF_COND_INVD         (0x00U)
@@ -486,7 +482,7 @@ typedef struct {
  */
 
 /**
- * @defgroup TMR6_Deadtime_Reg_Equal_Func_Define TMR6 Dead Time Function DTDAR Equal DTUAR
+ * @defgroup TMR6_DeadTime_Reg_Equal_Func_Define TMR6 Dead Time Function DTDAR Equal DTUAR
  * @{
  */
 #define TMR6_DEADTIME_EQUAL_OFF             (0x00UL)
@@ -499,16 +495,15 @@ typedef struct {
  * @defgroup TMR6_SW_Sync_Unit_define TMR6 Software Synchronization Start/Stop/Clear/Update Unit Number Define
  * @{
  */
-#define TMR6_SW_SYNC_U1                     (TMR6CR_SSTAR_SSTA1)
-#define TMR6_SW_SYNC_U2                     (TMR6CR_SSTAR_SSTA2)
-#define TMR6_SW_SYNC_U3                     (TMR6CR_SSTAR_SSTA3)
-#define TMR6_SW_SYNC_U4                     (TMR6CR_SSTAR_SSTA4)
-#define TMR6_SW_SYNC_U5                     (TMR6CR_SSTAR_SSTA5)
-#define TMR6_SW_SYNC_U6                     (TMR6CR_SSTAR_SSTA6)
-#define TMR6_SW_SYNC_U7                     (TMR6CR_SSTAR_SSTA7)
-#define TMR6_SW_SYNC_U8                     (TMR6CR_SSTAR_SSTA8)
+#define TMR6_SW_SYNC_U1                     (TMR6_COMMON_SSTAR_SSTA1)
+#define TMR6_SW_SYNC_U2                     (TMR6_COMMON_SSTAR_SSTA2)
+#define TMR6_SW_SYNC_U3                     (TMR6_COMMON_SSTAR_SSTA3)
+#define TMR6_SW_SYNC_U4                     (TMR6_COMMON_SSTAR_SSTA4)
+#define TMR6_SW_SYNC_U5                     (TMR6_COMMON_SSTAR_SSTA5)
+#define TMR6_SW_SYNC_U6                     (TMR6_COMMON_SSTAR_SSTA6)
+#define TMR6_SW_SYNC_U7                     (TMR6_COMMON_SSTAR_SSTA7)
+#define TMR6_SW_SYNC_U8                     (TMR6_COMMON_SSTAR_SSTA8)
 #define TMR6_SW_SYNC_ALL                    (0xFFUL)
-
 /**
  * @}
  */
@@ -534,7 +529,6 @@ typedef struct {
 #define TMR6_START_COND_TRIGD_RISING        (TMR6_HSTAR_HSTA22)
 #define TMR6_START_COND_TRIGD_FALLING       (TMR6_HSTAR_HSTA23)
 #define TMR6_START_COND_ALL                 (0x00FF0F0FUL)
-
 /**
  * @}
  */
@@ -560,7 +554,6 @@ typedef struct {
 #define TMR6_STOP_COND_TRIGD_RISING         (TMR6_HSTPR_HSTP22)
 #define TMR6_STOP_COND_TRIGD_FALLING        (TMR6_HSTPR_HSTP23)
 #define TMR6_STOP_COND_ALL                  (0x00FF0F0FUL)
-
 /**
  * @}
  */
@@ -586,7 +579,6 @@ typedef struct {
 #define TMR6_CLR_COND_TRIGD_RISING          (TMR6_HCLRR_HCLE22)
 #define TMR6_CLR_COND_TRIGD_FALLING         (TMR6_HCLRR_HCLE23)
 #define TMR6_CLR_COND_ALL                   (0x00FF0F0FUL)
-
 /**
  * @}
  */
@@ -637,7 +629,6 @@ typedef struct {
 #define TMR6_CAPT_COND_TRIGD_RISING         (TMR6_HCPAR_HCPA22)
 #define TMR6_CAPT_COND_TRIGD_FALLING        (TMR6_HCPAR_HCPA23)
 #define TMR6_CAPT_COND_ALL                  (0x00FF0F0FUL)
-
 /**
  * @}
  */
@@ -668,7 +659,6 @@ typedef struct {
 #define TMR6_CNT_UP_COND_TRIGD_RISING               (TMR6_HCUPR_HCUP22)
 #define TMR6_CNT_UP_COND_TRIGD_FALLING              (TMR6_HCUPR_HCUP23)
 #define TMR6_CNT_UP_COND_ALL                        (0x00FF0FFFUL)
-
 /**
  * @}
  */
@@ -699,7 +689,6 @@ typedef struct {
 #define TMR6_CNT_DOWN_COND_TRIGD_RISING             (TMR6_HCDOR_HCDO22)
 #define TMR6_CNT_DOWN_COND_TRIGD_FALLING            (TMR6_HCDOR_HCDO23)
 #define TMR6_CNT_DOWN_COND_ALL                      (0x00FF0FFFUL)
-
 /**
  * @}
  */
@@ -750,7 +739,6 @@ typedef struct {
 #define TMR6_CLK_DIV256                     (0x08UL << TMR6_GCONR_CKDIV_POS)
 #define TMR6_CLK_DIV512                     (0x09UL << TMR6_GCONR_CKDIV_POS)
 #define TMR6_CLK_DIV1024                    (0x0AUL << TMR6_GCONR_CKDIV_POS)
-
 /**
  * @}
  */
@@ -819,7 +807,7 @@ typedef struct {
  */
 __STATIC_INLINE uint32_t TMR6_GetSWSyncStartStatus(void)
 {
-    return READ_REG32(CM_TMR6CR->SSTAR);
+    return READ_REG32(CM_TMR6_COMMON->SSTAR);
 }
 
 /* Base count */
@@ -913,6 +901,7 @@ void TMR6_HWClearCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional
 void TMR6_HWClearCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState);
 void TMR6_HWUpdateCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState);
 void TMR6_HWUpdateCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState);
+
 /**
  * @}
  */

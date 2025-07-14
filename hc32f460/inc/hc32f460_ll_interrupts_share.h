@@ -10,7 +10,7 @@
    2022-10-31       CDT             Rename I2Cx_Error_IrqHandler as I2Cx_EE_IrqHandler
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -344,7 +344,7 @@ void CAN_IrqHandler(void);
 }
 #endif
 
-#endif /* __HC32F4A0_LL_INTERRUPTS_SHARE_H__ */
+#endif /* __HC32F460_LL_INTERRUPTS_SHARE_H__ */
 
 /*******************************************************************************
  * EOF (not truncated)

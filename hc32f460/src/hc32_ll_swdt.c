@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Optimize SWDT_ClearStatus function timeout
+   2024-06-30       CDT             Modify API SWDT_ClearStatus() for couping risk
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -91,7 +92,7 @@
  * Function implementation - global ('extern') and local ('static')
  ******************************************************************************/
 /**
- * @addtogroup SWDT_Global_Functions
+ * @defgroup SWDT_Global_Functions SWDT Global Functions
  * @{
  */
 
@@ -152,7 +153,7 @@ int32_t SWDT_ClearStatus(uint32_t u32Flag)
     /* Waiting for FLAG bit clear */
     u32Count = SWDT_CLR_FLAG_TIMEOUT * (HCLK_VALUE / 25000UL);
     while (0UL != READ_REG32_BIT(CM_SWDT->SR, u32Flag)) {
-        CLR_REG32_BIT(CM_SWDT->SR, u32Flag);
+        MODIFY_REG32(CM_SWDT->SR, SWDT_FLAG_ALL, ~u32Flag);
         if (0UL == u32Count) {
             i32Ret = LL_ERR_TIMEOUT;
             break;

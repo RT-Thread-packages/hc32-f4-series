@@ -7,9 +7,10 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2023-12-15       CDT             Modify macro define: SWDT_LPM_CNT_CONTINUE -> SWDT_LPM_CNT_CONT
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -138,7 +139,7 @@ typedef struct {
  * @brief    Counting control of SWDT in sleep/stop mode.
  * @{
  */
-#define SWDT_LPM_CNT_CONTINUE                   (0UL)               /*!< Continue counting in sleep/stop mode */
+#define SWDT_LPM_CNT_CONT                       (0UL)               /*!< Continue counting in sleep/stop mode */
 #define SWDT_LPM_CNT_STOP                       (SWDT_CR_SLPOFF)    /*!< Stop counting in sleep/stop mode     */
 /**
  * @}

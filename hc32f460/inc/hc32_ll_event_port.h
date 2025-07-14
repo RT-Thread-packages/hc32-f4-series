@@ -9,7 +9,7 @@
    2022-03-31       CDT             First version
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -149,7 +149,6 @@ typedef struct {
 #define EP_FCLK_DIV8        (1UL << AOS_PEVNTNFCR_DIVS1_POS)    /*!< PCLK div8 as EP filter clock source */
 #define EP_FCLK_DIV32       (2UL << AOS_PEVNTNFCR_DIVS1_POS)    /*!< PCLK div32 as EP filter clock source */
 #define EP_FCLK_DIV64       (3UL << AOS_PEVNTNFCR_DIVS1_POS)    /*!< PCLK div64 as EP filter clock source */
-
 /**
  * @}
  */
@@ -162,7 +161,6 @@ typedef struct {
 #define EP_TRIG_FALLING     (1UL)       /*!< Trigger by falling edge */
 #define EP_TRIG_RISING      (2UL)       /*!< Trigger by rising edge */
 #define EP_TRIG_BOTH        (3UL)       /*!< Trigger by falling and rising edge */
-
 /**
  * @}
  */
@@ -172,8 +170,8 @@ typedef struct {
  * @{
  */
 #define EP_OPS_NONE         (0UL)       /*!< Pin no action after triggered */
-#define EP_OPS_LOW          (1UL)       /*!< Pin ouput low after triggered */
-#define EP_OPS_HIGH         (2UL)       /*!< Pin ouput high after triggered */
+#define EP_OPS_LOW          (1UL)       /*!< Pin output low after triggered */
+#define EP_OPS_HIGH         (2UL)       /*!< Pin output high after triggered */
 #define EP_OPS_TOGGLE       (3UL)       /*!< Pin toggle after triggered */
 /**
  * @}

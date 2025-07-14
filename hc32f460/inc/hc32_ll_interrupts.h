@@ -9,7 +9,7 @@
    2022-03-31       CDT             First version
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -95,7 +95,7 @@ typedef struct {
  * @{
  */
 /**
- * @defgroup INTC_Priority_Sel Interrupt Priority Level 00 ~ 15
+ * @defgroup INTC_Priority_Sel Interrupt Priority Level
  * @{
  */
 #define DDL_IRQ_PRIO_00                 (0U)
@@ -330,7 +330,7 @@ typedef struct {
  * @{
  */
 #define EXTINT_FILTER_OFF               (0UL)
-#define EXTINT_FILTER_ON                INTC_EIRQCR_EFEN
+#define EXTINT_FILTER_ON                (INTC_EIRQCR_EFEN)
 
 /**
  * @}
@@ -354,9 +354,9 @@ typedef struct {
  * @{
  */
 #define EXTINT_TRIG_FALLING             (0UL)
-#define EXTINT_TRIG_RISING              INTC_EIRQCR_EIRQTRG_0
-#define EXTINT_TRIG_BOTH                INTC_EIRQCR_EIRQTRG_1
-#define EXTINT_TRIG_LOW                 INTC_EIRQCR_EIRQTRG
+#define EXTINT_TRIG_RISING              (INTC_EIRQCR_EIRQTRG_0)
+#define EXTINT_TRIG_BOTH                (INTC_EIRQCR_EIRQTRG_1)
+#define EXTINT_TRIG_LOW                 (INTC_EIRQCR_EIRQTRG)
 
 /**
  * @}

@@ -8,9 +8,10 @@
    2022-03-31       CDT             First version
    2023-01-15       CDT             Macro name modified: from IS_AOS_TRIG_SEL to IS_AOS_TARGET
                                     Modified parameters name and comments of AOS_CommonTriggerCmd() and AOS_SetTriggerEventSrc()
+   2024-08-31       CDT             Optimize assert IS_AOS_TARGET
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -52,6 +53,16 @@
  */
 
 /**
+ * @defgroup AOS_Const_Value_Def AOS Const Value Definition
+ * @{
+ */
+#define AOS_TRG_START               AOS_DCU1
+#define AOS_TRG_END                 AOS_COMM_2
+/**
+ * @}
+ */
+
+/**
  * @defgroup AOS_Common_Trigger_ID_Validity AOS Common Trigger ID Validity
  * @{
  */
@@ -68,50 +79,7 @@
  * @{
  */
 #define IS_AOS_TARGET(x)                                                       \
-(   ((x) == AOS_DCU1)                           ||                             \
-    ((x) == AOS_DCU2)                           ||                             \
-    ((x) == AOS_DCU3)                           ||                             \
-    ((x) == AOS_DCU4)                           ||                             \
-    ((x) == AOS_DMA1_0)                         ||                             \
-    ((x) == AOS_DMA1_1)                         ||                             \
-    ((x) == AOS_DMA1_2)                         ||                             \
-    ((x) == AOS_DMA1_3)                         ||                             \
-    ((x) == AOS_DMA1_4)                         ||                             \
-    ((x) == AOS_DMA1_5)                         ||                             \
-    ((x) == AOS_DMA1_6)                         ||                             \
-    ((x) == AOS_DMA1_7)                         ||                             \
-    ((x) == AOS_DMA2_0)                         ||                             \
-    ((x) == AOS_DMA2_1)                         ||                             \
-    ((x) == AOS_DMA2_2)                         ||                             \
-    ((x) == AOS_DMA2_3)                         ||                             \
-    ((x) == AOS_DMA2_4)                         ||                             \
-    ((x) == AOS_DMA2_5)                         ||                             \
-    ((x) == AOS_DMA2_6)                         ||                             \
-    ((x) == AOS_DMA2_7)                         ||                             \
-    ((x) == AOS_DMA_RC)                         ||                             \
-    ((x) == AOS_TMR6_0)                         ||                             \
-    ((x) == AOS_TMR6_1)                         ||                             \
-    ((x) == AOS_TMR6_2)                         ||                             \
-    ((x) == AOS_TMR6_3)                         ||                             \
-    ((x) == AOS_EVTPORT12)                      ||                             \
-    ((x) == AOS_EVTPORT34)                      ||                             \
-    ((x) == AOS_TMR0)                           ||                             \
-    ((x) == AOS_TMR2)                           ||                             \
-    ((x) == AOS_HASH_A)                         ||                             \
-    ((x) == AOS_HASH_B)                         ||                             \
-    ((x) == AOS_TMRA_0)                         ||                             \
-    ((x) == AOS_TMRA_1)                         ||                             \
-    ((x) == AOS_TMRA_2)                         ||                             \
-    ((x) == AOS_TMRA_3)                         ||                             \
-    ((x) == AOS_OTS)                            ||                             \
-    ((x) == AOS_ADC1_0)                         ||                             \
-    ((x) == AOS_ADC1_1)                         ||                             \
-    ((x) == AOS_ADC2_0)                         ||                             \
-    ((x) == AOS_ADC2_1)                         ||                             \
-    ((x) == AOS_ADC3_0)                         ||                             \
-    ((x) == AOS_ADC3_1)                         ||                             \
-    ((x) == AOS_COMM_1)                         ||                             \
-    ((x) == AOS_COMM_2))
+(   ((x) >= AOS_TRG_START) && ((x) <= AOS_TRG_END) && (((x) & 0x03UL) == 0UL))
 
 /**
  * @}

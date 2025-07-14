@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Modify API FMAC_DeInit()
+   2024-06-30       CDT             All parameter assert add module name
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -63,7 +64,7 @@
 (   ((x) == FMAC_INT_ENABLE)                    ||                              \
     ((x) == FMAC_INT_DISABLE))
 
-#define IS_VALID_UNIT(x)                                                        \
+#define IS_FMAC_UNIT(x)                                                         \
 (   ((x) == CM_FMAC1)                           ||                              \
     ((x) == CM_FMAC2)                           ||                              \
     ((x) == CM_FMAC3)                           ||                              \
@@ -131,7 +132,7 @@ int32_t FMAC_StructInit(stc_fmac_init_t *pstcFmacInit)
  */
 int32_t FMAC_DeInit(CM_FMAC_TypeDef *FMACx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
 
     WRITE_REG32(FMACx->CTR, 0UL);
     WRITE_REG32(FMACx->IER, 0UL);
@@ -164,7 +165,7 @@ int32_t FMAC_Init(CM_FMAC_TypeDef *FMACx, const stc_fmac_init_t *pstcFmacInit)
     __IO uint32_t *FMAC_CORx;
     uint32_t i;
     if ((pstcFmacInit != NULL) && (pstcFmacInit->pi16Factor != NULL)) {
-        DDL_ASSERT(IS_VALID_UNIT(FMACx));
+        DDL_ASSERT(IS_FMAC_UNIT(FMACx));
         DDL_ASSERT(IS_FMAC_FIR_SHIFT(pstcFmacInit->u32Shift));
         DDL_ASSERT(IS_FMAC_FIR_STAGE(pstcFmacInit->u32Stage));
         DDL_ASSERT(IS_FMAC_INT_FUNC(pstcFmacInit->u32IntCmd));
@@ -196,7 +197,7 @@ int32_t FMAC_Init(CM_FMAC_TypeDef *FMACx, const stc_fmac_init_t *pstcFmacInit)
  */
 void FMAC_Cmd(CM_FMAC_TypeDef *FMACx, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     WRITE_REG32(FMACx->ENR, enNewState);
@@ -216,7 +217,7 @@ void FMAC_Cmd(CM_FMAC_TypeDef *FMACx, en_functional_state_t enNewState)
  */
 void FMAC_SetResultShift(CM_FMAC_TypeDef *FMACx, uint32_t u32ShiftNum)
 {
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
     DDL_ASSERT(IS_FMAC_FIR_SHIFT(u32ShiftNum));
     /* Set Filter result shift bits */
     MODIFY_REG32(FMACx->CTR, FMAC_CTR_SHIFT, u32ShiftNum << FMAC_CTR_SHIFT_POS);
@@ -240,7 +241,7 @@ void FMAC_SetStageFactor(CM_FMAC_TypeDef *FMACx, uint32_t u32FilterStage, int16_
 {
     __IO uint32_t *FMAC_CORx;
     uint8_t i;
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
     DDL_ASSERT(IS_FMAC_FIR_STAGE(u32FilterStage));
     /* FMAC Software reset */
     CLR_REG32_BIT(FMACx->ENR, FMAC_ENR_FMACEN);
@@ -266,7 +267,7 @@ void FMAC_SetStageFactor(CM_FMAC_TypeDef *FMACx, uint32_t u32FilterStage, int16_
  */
 void FMAC_IntCmd(CM_FMAC_TypeDef *FMACx, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     WRITE_REG32(FMACx->IER, enNewState);
@@ -285,7 +286,7 @@ void FMAC_IntCmd(CM_FMAC_TypeDef *FMACx, en_functional_state_t enNewState)
  */
 void FMAC_FIRInput(CM_FMAC_TypeDef *FMACx, int16_t i16Factor)
 {
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
     WRITE_REG32(FMACx->DTR, i16Factor);
 }
 
@@ -303,7 +304,7 @@ void FMAC_FIRInput(CM_FMAC_TypeDef *FMACx, int16_t i16Factor)
  */
 en_flag_status_t FMAC_GetStatus(const CM_FMAC_TypeDef *FMACx)
 {
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
     return ((READ_REG32_BIT(FMACx->STR, FMAC_STR_READY) != 0UL) ? SET : RESET);
 }
 
@@ -325,7 +326,7 @@ en_flag_status_t FMAC_GetStatus(const CM_FMAC_TypeDef *FMACx)
 int32_t FMAC_GetResult(const CM_FMAC_TypeDef *FMACx, stc_fmac_result_t *pstcResult)
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
-    DDL_ASSERT(IS_VALID_UNIT(FMACx));
+    DDL_ASSERT(IS_FMAC_UNIT(FMACx));
 
     if (pstcResult != NULL) {
         pstcResult->u32ResultHigh = READ_REG32(FMACx->RTR0);

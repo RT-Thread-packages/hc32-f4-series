@@ -17,11 +17,15 @@
                                     Modify macro-definition: IS_TMR4_OC_BUF_OBJECT
                                     Fix magic number of function:  TMR4_OC_StructInit
    2023-09-30       CDT             Fix spell error about "response" that in function name
-                                    Modify fuction:TMR4_PWM_Init
+                                    Modify function:TMR4_PWM_Init
                                     Modify comment
+   2024-06-30       CDT             Modify peripheral registers structure: CM_TMR4CR -> CM_TMR4_ECER
+                                    Fix bug that the status flag of CCSR/OCSR for couping risk
+                                    Refine TMR4_GetStatus()
+   2024-09-13       CDT             Fix misra warning, MODIFY_REG->MODIFY_RCSR_REG
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -215,6 +219,8 @@
 
 #define RCSR_REG_TYPE               uint16_t
 
+#define MODIFY_RCSR_REG(REGS, CLRMASK, SETMASK)    (WRITE_REG((REGS), (((READ_REG(REGS)) & (RCSR_REG_TYPE)(~(CLRMASK))) | ((SETMASK) & (CLRMASK)))))
+
 /**
  * @defgroup TMR4_Registers_Reset_Value TMR4 Registers Reset Value
  * @{
@@ -237,14 +243,25 @@
  */
 
 /**
+ * @defgroup TMR4_CCSR_Bit TMR4_CCSR Bit
+ * @brief Get the specified TMR4_CCSR register bis value of the specified TMR4 OC channel
+ * @{
+ */
+#define TMR4_CCSR_IRQF              (TMR4_CCSR_IRQZF | TMR4_CCSR_IRQPF)
+#define TMR4_CCSR_IRQEN             (TMR4_CCSR_IRQZEN | TMR4_CCSR_IRQPEN)
+/**
+ * @}
+ */
+
+/**
  * @defgroup TMR4_OCSR_Bit_Mask TMR4_OCSR Bit Mask
  * @brief Get the specified TMR4_OCSR register bis value of the specified TMR4 OC channel
  * @{
  */
 #define TMR4_OCSR_OCEx_MASK(CH)     (((uint16_t)TMR4_OCSR_OCEH) << ((CH) % 2UL))
 #define TMR4_OCSR_OCPx_MASK(CH)     (((uint16_t)TMR4_OCSR_OCPH) << ((CH) % 2UL))
-#define TMR4_OCSR_OCIE_MASK         (TMR4_OCSR_OCIEH | TMR4_OCSR_OCIEL)
-#define TMR4_OCSR_OCF_MASK          (TMR4_OCSR_OCFH | TMR4_OCSR_OCFL)
+#define TMR4_OCSR_OCIE              (TMR4_OCSR_OCIEH | TMR4_OCSR_OCIEL)
+#define TMR4_OCSR_OCF               (TMR4_OCSR_OCFH | TMR4_OCSR_OCFL)
 #define TMR4_OCSR_MASK(CH)                                                     \
 (   ((uint16_t)(TMR4_OCSR_OCEH | TMR4_OCSR_OCPH | TMR4_OCSR_OCIEH | TMR4_OCSR_OCFH)) << (((CH) % 2UL)))
 /**
@@ -326,7 +343,7 @@
  * @{
  */
 #define _TMR4_OCCR(UNIT, CH)        TMR4_REG16(TMR4_REG_ADDR((UNIT)->OCCRUH) + ((CH) << 2U))
-#define _TMR4_OCMR(UNIT, CH)        TMR4_REG16(TMR4_REG_ADDR((UNIT)->OCMRHUH) + ((CH) << 2U))
+#define _TMR4_OCMR(UNIT, CH)        TMR4_REG16(TMR4_REG_ADDR((UNIT)->OCMRUH) + ((CH) << 2U))
 #define _TMR4_OCER(UNIT, CH)        TMR4_REG16(TMR4_REG_ADDR((UNIT)->OCERU) + (((CH) & 0x06UL) << 1U))
 #define _TMR4_OCSR(UNIT, CH)        TMR4_REG16(TMR4_REG_ADDR((UNIT)->OCSRU) + (((CH) & 0x06UL) << 1U))
 /**
@@ -399,8 +416,8 @@
  * @{
  */
 #define TMR4_ECER(UNITx)                                                       \
-(   ((UNITx) == CM_TMR4_1) ? (&CM_TMR4CR->ECER1) :                             \
-    (((UNITx) == CM_TMR4_2) ? (&CM_TMR4CR->ECER2) : (&CM_TMR4CR->ECER3)))
+(   ((UNITx) == CM_TMR4_1) ? (&CM_TMR4_ECER->ECER1) :                          \
+    (((UNITx) == CM_TMR4_2) ? (&CM_TMR4_ECER->ECER2) : (&CM_TMR4_ECER->ECER3)))
 /**
  * @}
  */
@@ -444,7 +461,7 @@
  * @param  [out] pstcTmr4Init           Pointer to a @ref stc_tmr4_init_t structure
  * @retval int32_t:
  *           - LL_OK:                   Initialize successfully.
- *           - LL_ERR_INVD_PARAM:       The pointer pstcCntInit value is NULL.
+ *           - LL_ERR_INVD_PARAM:       The pointer pstcTmr4Init value is NULL.
  */
 int32_t TMR4_StructInit(stc_tmr4_init_t *pstcTmr4Init)
 {
@@ -469,7 +486,7 @@ int32_t TMR4_StructInit(stc_tmr4_init_t *pstcTmr4Init)
  * @param  [in] pstcTmr4Init            Pointer to a @ref stc_tmr4_init_t structure
  * @retval int32_t:
  *           - LL_OK:                   Initialize successfully.
- *           - LL_ERR_INVD_PARAM:       The pointer pstcCntInit value is NULL.
+ *           - LL_ERR_INVD_PARAM:       The pointer pstcTmr4Init value is NULL.
  */
 int32_t TMR4_Init(CM_TMR4_TypeDef *TMR4x, const stc_tmr4_init_t *pstcTmr4Init)
 {
@@ -554,7 +571,7 @@ void TMR4_SetClockSrc(CM_TMR4_TypeDef *TMR4x, uint16_t u16Src)
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
     DDL_ASSERT(IS_TMR4_CLK_SRC(u16Src));
 
-    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_ECKEN, u16Src);
+    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_ECKEN, TMR4_CCSR_IRQF | u16Src);
 }
 
 /**
@@ -583,7 +600,7 @@ void TMR4_SetClockDiv(CM_TMR4_TypeDef *TMR4x, uint16_t u16Div)
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
     DDL_ASSERT(IS_TMR4_CLK_DIV(u16Div));
 
-    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_CKDIV, u16Div);
+    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_CKDIV, TMR4_CCSR_IRQF | u16Div);
 }
 
 /**
@@ -602,7 +619,7 @@ void TMR4_SetCountMode(CM_TMR4_TypeDef *TMR4x, uint16_t u16Mode)
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
     DDL_ASSERT(IS_TMR4_MD(u16Mode));
 
-    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_MODE, u16Mode);
+    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_MODE, TMR4_CCSR_IRQF | u16Mode);
 }
 
 /**
@@ -676,7 +693,7 @@ void TMR4_ClearCountValue(CM_TMR4_TypeDef *TMR4x)
 {
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
 
-    SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_CLEAR);
+    SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_CLEAR);
 }
 
 /**
@@ -690,7 +707,7 @@ void TMR4_Start(CM_TMR4_TypeDef *TMR4x)
 {
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
 
-    CLR_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_STOP);
+    MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_STOP, ~TMR4_CCSR_STOP);
 }
 
 /**
@@ -704,7 +721,7 @@ void TMR4_Stop(CM_TMR4_TypeDef *TMR4x)
 {
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
 
-    SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_STOP);
+    SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_STOP);
 }
 
 /**
@@ -718,45 +735,35 @@ void TMR4_Stop(CM_TMR4_TypeDef *TMR4x)
  */
 void TMR4_ClearStatus(CM_TMR4_TypeDef *TMR4x, uint32_t u32Flag)
 {
+    uint16_t u16ClearFlag;
     uint32_t u32ClearFlag;
     __IO uint16_t *OCSR;
+    uint32_t u32Ch;
 
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
     DDL_ASSERT(IS_TMR4_FLAG(u32Flag));
 
     /* Counter flag */
-    if ((u32Flag & TMR4_FLAG_CNT_MASK) > 0UL) {
-        CLR_REG16_BIT(TMR4x->CCSR, (u32Flag & TMR4_FLAG_CNT_MASK));
+    u16ClearFlag = (uint16_t)u32Flag & TMR4_CCSR_IRQF;
+    if (u16ClearFlag != 0U) {
+        MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_IRQF, ~u16ClearFlag);
     }
 
     /* Output-compare flag */
-    u32ClearFlag = (u32Flag & TMR4_FLAG_OC_MASK);
-    if (u32ClearFlag > 0UL) {
-        /* TMR4_OCSRU */
-        u32ClearFlag = ((u32Flag & (TMR4_FLAG_OC_CMP_UH | TMR4_FLAG_OC_CMP_UL)) >> 10U);
-        if (u32ClearFlag > 0UL) {
-            OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_UH);
-            CLR_REG16_BIT(*OCSR, u32ClearFlag);
-        }
-
-        /* TMR4_OCSRV */
-        u32ClearFlag = ((u32Flag & (TMR4_FLAG_OC_CMP_VH | TMR4_FLAG_OC_CMP_VL)) >> 12U);
-        if (u32ClearFlag > 0UL) {
-            OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_VH);
-            CLR_REG16_BIT(*OCSR, u32ClearFlag);
-        }
-
-        /* TMR4_OCSRW */
-        u32ClearFlag = ((u32Flag & (TMR4_FLAG_OC_CMP_WH | TMR4_FLAG_OC_CMP_WL)) >> 14U);
-        if (u32ClearFlag > 0UL) {
-            OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_WH);
-            CLR_REG16_BIT(*OCSR, u32ClearFlag);
+    u16ClearFlag = (uint16_t)((u32Flag & TMR4_FLAG_OC_MASK) >> 10U);
+    if (u16ClearFlag != 0U) {
+        for (u32Ch = TMR4_OC_CH_UH; u32Ch <= TMR4_OC_CH_MAX; u32Ch += 2UL) {
+            if ((u16ClearFlag & TMR4_OCSR_OCF) != 0U) {
+                OCSR = TMR4_OCSR(TMR4x, u32Ch);
+                MODIFY_REG16(*OCSR, TMR4_OCSR_OCF, ~u16ClearFlag);
+            }
+            u16ClearFlag >>= 2UL;
         }
     }
 
     /* PWM reload timer flag */
     u32ClearFlag = ((u32Flag & TMR4_FLAG_RELOAD_TMR_MASK) << 5U);
-    if (u32ClearFlag > 0UL) {
+    if (u32ClearFlag != 0UL) {
         SET_REG_BIT(TMR4x->RCSR, (RCSR_REG_TYPE)u32ClearFlag);
     }
 }
@@ -772,40 +779,29 @@ void TMR4_ClearStatus(CM_TMR4_TypeDef *TMR4x, uint32_t u32Flag)
  */
 en_flag_status_t TMR4_GetStatus(const CM_TMR4_TypeDef *TMR4x, uint32_t u32Flag)
 {
+    uint16_t u16ReadFlag;
     uint32_t u32ReadFlag;
     uint8_t u8FlagSetCount = 0;
     __IO uint16_t *OCSR;
+    uint32_t u32Ch;
 
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
     DDL_ASSERT(IS_TMR4_FLAG(u32Flag));
 
     /* Counter flag status */
-    if (READ_REG16_BIT(TMR4x->CCSR, (u32Flag & TMR4_FLAG_CNT_MASK)) > 0U) {
+    if (READ_REG16_BIT(TMR4x->CCSR, ((uint16_t)u32Flag & TMR4_CCSR_IRQF)) != 0U) {
         u8FlagSetCount++;
     }
 
     /* Output-compare interrupt */
-    u32ReadFlag = (u32Flag & TMR4_FLAG_OC_MASK);
-    if (u32ReadFlag > 0UL) {
-        /* TMR4_OCSRU */
-        u32ReadFlag = ((u32Flag & (TMR4_FLAG_OC_CMP_UH | TMR4_FLAG_OC_CMP_UL)) >> 10U);
-        OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_UH);
-        if (READ_REG16_BIT(*OCSR, u32ReadFlag) > 0U) {
-            u8FlagSetCount++;
-        }
-
-        /* TMR4_OCSRV */
-        u32ReadFlag = ((u32Flag & (TMR4_FLAG_OC_CMP_VH | TMR4_FLAG_OC_CMP_VL)) >> 12U);
-        OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_VH);
-        if (READ_REG16_BIT(*OCSR, u32ReadFlag) > 0U) {
-            u8FlagSetCount++;
-        }
-
-        /* TMR4_OCSRW */
-        u32ReadFlag = ((u32Flag & (TMR4_FLAG_OC_CMP_WH | TMR4_FLAG_OC_CMP_WL)) >> 14U);
-        OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_WH);
-        if (READ_REG16_BIT(*OCSR, u32ReadFlag) > 0U) {
-            u8FlagSetCount++;
+    u16ReadFlag = (uint16_t)((u32Flag & TMR4_FLAG_OC_MASK) >> 10U);
+    if (u16ReadFlag != 0UL) {
+        for (u32Ch = TMR4_OC_CH_UH; u32Ch <= TMR4_OC_CH_MAX; u32Ch += 2UL) {
+            OCSR = TMR4_OCSR(TMR4x, u32Ch);
+            if ((*OCSR & (u16ReadFlag & TMR4_OCSR_OCF)) != 0U) {
+                u8FlagSetCount++;
+            }
+            u16ReadFlag >>= 2UL;
         }
     }
 
@@ -830,41 +826,40 @@ en_flag_status_t TMR4_GetStatus(const CM_TMR4_TypeDef *TMR4x, uint32_t u32Flag)
  */
 void TMR4_IntCmd(CM_TMR4_TypeDef *TMR4x, uint32_t u32IntType, en_functional_state_t enNewState)
 {
+    uint16_t u16Type;
     uint32_t u32Type;
+    uint16_t u16OCIE;
     __IO uint16_t *OCSR;
+    uint32_t u32Ch;
 
     DDL_ASSERT(IS_TMR4_UNIT(TMR4x));
     DDL_ASSERT(IS_TMR4_INT(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     /* Counter interrupt */
-    u32Type = (u32IntType & TMR4_INT_CNT_MASK);
-    if (u32Type > 0UL) {
-        (ENABLE == enNewState) ? SET_REG16_BIT(TMR4x->CCSR, u32Type) : CLR_REG16_BIT(TMR4x->CCSR, u32Type);
+    u16Type = (uint16_t)u32IntType & TMR4_CCSR_IRQEN;
+    if (u16Type != 0U) {
+        if (ENABLE == enNewState) {
+            SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_IRQF | u16Type);
+        } else {
+            MODIFY_REG16(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_IRQEN, ~u16Type);
+        }
     }
 
     /* Output-compare interrupt */
-    u32Type = (u32IntType & TMR4_INT_OC_MASK);
-    if (u32Type > 0UL) {
-        /* TMR4_OCSRU */
-        u32Type = ((u32IntType & (TMR4_INT_OC_CMP_UH | TMR4_INT_OC_CMP_UL)) >> 12U);
-        if (u32Type != 0UL) {
-            OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_UH);
-            (ENABLE == enNewState) ? SET_REG16_BIT(*OCSR, u32Type) : CLR_REG16_BIT(*OCSR, u32Type);
-        }
-
-        /* TMR4_OCSRV */
-        u32Type = ((u32IntType & (TMR4_INT_OC_CMP_VH | TMR4_INT_OC_CMP_VL)) >> 14U);
-        if (u32Type != 0UL) {
-            OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_VH);
-            (ENABLE == enNewState) ? SET_REG16_BIT(*OCSR, u32Type) : CLR_REG16_BIT(*OCSR, u32Type);
-        }
-
-        /* TMR4_OCSRW */
-        u32Type = ((u32IntType & (TMR4_INT_OC_CMP_WH | TMR4_INT_OC_CMP_WL)) >> 16U);
-        if (u32Type != 0UL) {
-            OCSR = TMR4_OCSR(TMR4x, TMR4_OC_CH_WH);
-            (ENABLE == enNewState) ? SET_REG16_BIT(*OCSR, u32Type) : CLR_REG16_BIT(*OCSR, u32Type);
+    u16Type = (uint16_t)((u32IntType & TMR4_INT_OC_MASK) >> 12U);
+    if (u16Type != 0U) {
+        for (u32Ch = TMR4_OC_CH_UH; u32Ch <= TMR4_OC_CH_MAX; u32Ch += 2UL) {
+            u16OCIE = u16Type & TMR4_OCSR_OCIE;
+            if (u16OCIE != 0U) {
+                OCSR = TMR4_OCSR(TMR4x, u32Ch);
+                if (ENABLE == enNewState) {
+                    SET_REG16_BIT(*OCSR, TMR4_OCSR_OCF | u16OCIE);
+                } else {
+                    MODIFY_REG16(*OCSR, TMR4_OCSR_OCF | TMR4_OCSR_OCIE, ~u16OCIE);
+                }
+            }
+            u16Type >>= 2UL;
         }
     }
 
@@ -889,9 +884,9 @@ void TMR4_PeriodBufCmd(CM_TMR4_TypeDef *TMR4x, en_functional_state_t enNewState)
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
-        SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_BUFEN);
+        SET_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_IRQF | TMR4_CCSR_BUFEN);
     } else {
-        CLR_REG16_BIT(TMR4x->CCSR, TMR4_CCSR_BUFEN);
+        MODIFY_REG16(TMR4x->CCSR, (TMR4_CCSR_IRQF | TMR4_CCSR_BUFEN), ~TMR4_CCSR_BUFEN);
     }
 }
 
@@ -1226,7 +1221,8 @@ void TMR4_OC_Cmd(CM_TMR4_TypeDef *TMR4x, uint32_t u32Ch, en_functional_state_t e
     OCSR = TMR4_OCSR(TMR4x, u32Ch);
 
     /* Set OCSR port output compare */
-    MODIFY_REG16(*OCSR, TMR4_OCSR_OCEx_MASK(u32Ch), TMR4_OCSR_OCEx(u32Ch, enNewState));
+    MODIFY_REG16(*OCSR, TMR4_OCSR_OCEx_MASK(u32Ch) | TMR4_OCSR_OCF, \
+                 TMR4_OCSR_OCEx(u32Ch, enNewState) | TMR4_OCSR_OCF);
 }
 
 /**
@@ -1346,7 +1342,8 @@ void TMR4_OC_SetOcInvalidPolarity(CM_TMR4_TypeDef *TMR4x, uint32_t u32Ch, uint16
     OCSR = TMR4_OCSR(TMR4x, u32Ch);
 
     /* Set OCSR register: OC invalid output polarity */
-    MODIFY_REG16(*OCSR, TMR4_OCSR_OCPx_MASK(u32Ch), TMR4_OCSR_OCPx(u32Ch, u16Polarity));
+    MODIFY_REG16(*OCSR, TMR4_OCSR_OCPx_MASK(u32Ch) | TMR4_OCSR_OCF, \
+                 TMR4_OCSR_OCPx(u32Ch, u16Polarity) | TMR4_OCSR_OCF);
 }
 
 /**
@@ -1548,7 +1545,7 @@ int32_t TMR4_PWM_Init(CM_TMR4_TypeDef *TMR4x, uint32_t u32Ch, const stc_tmr4_pwm
 
         /* Set RCSR register */
         RCSRValue = (TMR4_RCSR_RTSx_MASK(u32Ch) | TMR4_RCSR_RTIDx_MASK(u32Ch) | TMR4_RCSR_RTICx_MASK(u32Ch));
-        MODIFY_REG(*RCSR, TMR4_RCSR_MASK(u32Ch), RCSRValue);
+        MODIFY_RCSR_REG(*RCSR, TMR4_RCSR_MASK(u32Ch), RCSRValue);
 
         i32Ret = LL_OK;
     }
@@ -1589,7 +1586,7 @@ void TMR4_PWM_DeInit(CM_TMR4_TypeDef *TMR4x, uint32_t u32Ch)
 
     /* Set RCSR register */
     RCSRValue = (TMR4_RCSR_RTSx_MASK(u32Ch) | TMR4_RCSR_RTICx_MASK(u32Ch));
-    MODIFY_REG(*RCSR, TMR4_RCSR_MASK(u32Ch), RCSRValue);
+    MODIFY_RCSR_REG(*RCSR, TMR4_RCSR_MASK(u32Ch), RCSRValue);
 
     /* Set PDAR/PDBR register to reset value */
     WRITE_REG16(*PDAR, 0U);

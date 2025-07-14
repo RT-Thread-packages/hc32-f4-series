@@ -7,9 +7,11 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2022-10-31       CDT             Deleted redundant comments
+   2024-06-30       CDT             Modify TMR2_DeInit()
+                                    Modify TMR2_ClearStatus for couping risk
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -71,7 +73,6 @@
 #define TMR2_CH_OFFSET                      (16U)
 
 #define TMR2_PWM_POLARITY_OFFSET            (2U)
-
 /**
  * @}
  */
@@ -256,14 +257,14 @@ int32_t TMR2_StructInit(stc_tmr2_init_t *pstcTmr2Init)
  * @param  [in]  TMR2x                  Pointer to TMR2 instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_TMR2_x or CM_TMR2
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:                   De-Initialize success.
  */
-void TMR2_DeInit(CM_TMR2_TypeDef *TMR2x)
+int32_t TMR2_DeInit(CM_TMR2_TypeDef *TMR2x)
 {
     DDL_ASSERT(IS_TMR2_UNIT(TMR2x));
 
-    TMR2_Stop(TMR2x, TMR2_CH_A);
-    TMR2_Stop(TMR2x, TMR2_CH_B);
+    CLR_REG32_BIT(TMR2x->BCONR, TMR2_BCONR_CSTA | TMR2_BCONR_CSTB);
     WRITE_REG32(TMR2x->CMPBR, 0xFFFFU);
     CLR_REG32(TMR2x->CNTBR);
     CLR_REG32(TMR2x->CNTAR);
@@ -273,6 +274,8 @@ void TMR2_DeInit(CM_TMR2_TypeDef *TMR2x)
     CLR_REG32(TMR2x->HCONR);
     CLR_REG32(TMR2x->STFLR);
     WRITE_REG32(TMR2x->CMPAR, 0xFFFFU);
+
+    return LL_OK;
 }
 
 /**
@@ -284,7 +287,7 @@ void TMR2_DeInit(CM_TMR2_TypeDef *TMR2x)
  *                                      This parameter can be a value of @ref TMR2_Channel
  * @param  [in]  u32Func                Function mode.
  *                                      This parameter can be a value of @ref TMR2_Function
- *   @arg  TMR2_FUNC_CMP:               The function of TMR2 channel is ouput compare.
+ *   @arg  TMR2_FUNC_CMP:               The function of TMR2 channel is output compare.
  *   @arg  TMR2_FUNC_CAPT:              The function of TMR2 channel is input capture.
  * @retval None
  */
@@ -345,20 +348,20 @@ void TMR2_SetClockDiv(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, uint32_t u32Div)
 
 /**
  * @brief  Set a default value for the TMR2 output compare configuration structure.
- * @param  [in]  pstPwmInit             Pointer to a stc_tmr2_pwm_init_t structure value that
+ * @param  [in]  pstcPwmInit            Pointer to a stc_tmr2_pwm_init_t structure value that
  *                                      contains the configuration information for the TMR2 PWM.
  * @retval int32_t:
  *           - LL_OK:                   No error occurred.
  *           - LL_ERR_INVD_PARAM:       pstcTmr2Init == NULL.
  */
-int32_t TMR2_PWM_StructInit(stc_tmr2_pwm_init_t *pstPwmInit)
+int32_t TMR2_PWM_StructInit(stc_tmr2_pwm_init_t *pstcPwmInit)
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
-    if (pstPwmInit != NULL) {
-        pstPwmInit->u32StartPolarity = TMR2_PWM_HIGH;
-        pstPwmInit->u32StopPolarity  = TMR2_PWM_LOW;
-        pstPwmInit->u32CompareMatchPolarity = TMR2_PWM_INVT;
+    if (pstcPwmInit != NULL) {
+        pstcPwmInit->u32StartPolarity = TMR2_PWM_HIGH;
+        pstcPwmInit->u32StopPolarity  = TMR2_PWM_LOW;
+        pstcPwmInit->u32CompareMatchPolarity = TMR2_PWM_INVT;
         i32Ret = LL_OK;
     }
 
@@ -373,13 +376,13 @@ int32_t TMR2_PWM_StructInit(stc_tmr2_pwm_init_t *pstPwmInit)
  *   @arg  CM_TMR2_x or CM_TMR2
  * @param  [in]  u32Ch                  TMR2 channel.
  *                                      This parameter can be a value of @ref TMR2_Channel
- * @param  [in]  pstPwmInit             Pointer to a @ref stc_tmr2_pwm_init_t structure value that
+ * @param  [in]  pstcPwmInit            Pointer to a @ref stc_tmr2_pwm_init_t structure value that
  *                                      contains the configuration information for the TMR2 PWM.
  * @retval int32_t:
  *           - LL_OK:                   No error occurred.
  *           - LL_ERR_INVD_PARAM:       pstcTmr2Init == NULL.
  */
-int32_t TMR2_PWM_Init(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, const stc_tmr2_pwm_init_t *pstPwmInit)
+int32_t TMR2_PWM_Init(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, const stc_tmr2_pwm_init_t *pstcPwmInit)
 {
     uint32_t u32Tmp;
     int32_t i32Ret = LL_ERR_INVD_PARAM;
@@ -387,14 +390,14 @@ int32_t TMR2_PWM_Init(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, const stc_tmr2_pwm
     DDL_ASSERT(IS_TMR2_UNIT(TMR2x));
     DDL_ASSERT(IS_TMR2_CH(u32Ch));
 
-    if (pstPwmInit != NULL) {
-        DDL_ASSERT(IS_TMR2_PWM_START_POLARITY(pstPwmInit->u32StartPolarity));
-        DDL_ASSERT(IS_TMR2_PWM_STOP_POLARITY(pstPwmInit->u32StopPolarity));
-        DDL_ASSERT(IS_TMR2_PWM_MATCH_CMP_POLARITY(pstPwmInit->u32CompareMatchPolarity));
+    if (pstcPwmInit != NULL) {
+        DDL_ASSERT(IS_TMR2_PWM_START_POLARITY(pstcPwmInit->u32StartPolarity));
+        DDL_ASSERT(IS_TMR2_PWM_STOP_POLARITY(pstcPwmInit->u32StopPolarity));
+        DDL_ASSERT(IS_TMR2_PWM_MATCH_CMP_POLARITY(pstcPwmInit->u32CompareMatchPolarity));
         /* Configures PWM polarity. */
-        u32Tmp = (pstPwmInit->u32StartPolarity << TMR2_PCONR_STACA_POS) | \
-                 (pstPwmInit->u32StopPolarity << TMR2_PCONR_STPCA_POS)  | \
-                 (pstPwmInit->u32CompareMatchPolarity << TMR2_PCONR_CMPCA_POS);
+        u32Tmp = (pstcPwmInit->u32StartPolarity << TMR2_PCONR_STACA_POS) | \
+                 (pstcPwmInit->u32StopPolarity << TMR2_PCONR_STPCA_POS)  | \
+                 (pstcPwmInit->u32CompareMatchPolarity << TMR2_PCONR_CMPCA_POS);
         u32Ch *= TMR2_CH_OFFSET;
         MODIFY_REG32(TMR2x->PCONR, (TMR2_PWM_POLARITY_MASK << u32Ch), (u32Tmp << u32Ch));
         i32Ret = LL_OK;
@@ -677,7 +680,8 @@ void TMR2_ClearStatus(CM_TMR2_TypeDef *TMR2x, uint32_t u32Flag)
 {
     DDL_ASSERT(IS_TMR2_UNIT(TMR2x));
     DDL_ASSERT(IS_TMR2_FLAG(u32Flag));
-    CLR_REG32_BIT(TMR2x->STFLR, u32Flag);
+
+    WRITE_REG32(TMR2x->STFLR, (~u32Flag) & TMR2_FLAG_ALL);
 }
 
 /**
@@ -766,7 +770,7 @@ uint32_t TMR2_GetCountValue(const CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch)
 }
 
 /**
- * @brief  Specifies the ouput polarity of the PWM at the specified state of counter.
+ * @brief  Specifies the output polarity of the PWM at the specified state of counter.
  * @param  [in]  TMR2x                  Pointer to TMR2 instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_TMR2_x or CM_TMR2

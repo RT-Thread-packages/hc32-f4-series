@@ -12,9 +12,10 @@
    2023-06-30       CDT             Modify typo
    2023-09-30       CDT             Add assert for CIEN bit in GetCmpFuncStatusAndDisFunc function
                                     Remove redundant code in function CMP_WindowModeInit
+   2024-11-08       CDT             Refine relation of CMP out detect flag functions and Unified Register Bit Names
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -135,6 +136,10 @@
  * @}
  */
 
+#define CMP_MDR_CENA        (CMP_MDR_CENB)
+#define CMP_MDR_WDEN        (CMP_MDR_CWDE)
+#define CMP_OCR_BWEN        (CMP_OCR_TWOE)
+#define CMP_OCR_BWOL        (CMP_OCR_TWOL)
 /**
  * @}
  */
@@ -190,9 +195,9 @@ static uint16_t GetCmpFuncStatusAndDisFunc(CM_CMP_TypeDef *CMPx)
     DDL_ASSERT(READ_REG8_BIT(CMPx->FIR, CMP_FIR_CIEN) == 0U);
 
     /* Read CMP status */
-    u16temp = (uint16_t)(uint8_t)READ_REG8_BIT(CMPx->MDR, CMP_MDR_CENB);
+    u16temp = (uint16_t)(uint8_t)READ_REG8_BIT(CMPx->MDR, CMP_MDR_CENA);
     /* Stop CMP function */
-    CLR_REG8_BIT(CMPx->MDR, CMP_MDR_CENB);
+    CLR_REG8_BIT(CMPx->MDR, CMP_MDR_CENA);
     return u16temp;
 }
 
@@ -207,7 +212,7 @@ static void RecoverCmpFuncStatus(CM_CMP_TypeDef *CMPx, uint16_t u16CmpFuncStatus
 {
     if (u16CmpFuncStatus != 0U) {
         /* Recover CMP status */
-        MODIFY_REG8(CMPx->MDR, CMP_MDR_CENB, u16CmpFuncStatus);
+        MODIFY_REG8(CMPx->MDR, CMP_MDR_CENA, u16CmpFuncStatus);
         /* Delay 1us */
         CMP_DelayUS(1U);
     }
@@ -333,7 +338,7 @@ int32_t CMP_NormalModeInit(CM_CMP_TypeDef *CMPx, const stc_cmp_init_t *pstcCmpIn
         DDL_ASSERT(IS_CMP_NEGATIVE_IN(pstcCmpInit->u16NegativeInput));
 
         /* Stop CMP compare */
-        CLR_REG8_BIT(CMPx->MDR, CMP_MDR_CENB);
+        CLR_REG8_BIT(CMPx->MDR, CMP_MDR_CENA);
 
         /* Set voltage in */
         WRITE_REG8(CMPx->PMSR, (pstcCmpInit->u16PositiveInput & CMP_PMSR_CVSL) | pstcCmpInit->u16NegativeInput);
@@ -347,7 +352,7 @@ int32_t CMP_NormalModeInit(CM_CMP_TypeDef *CMPx, const stc_cmp_init_t *pstcCmpIn
         /* Delay 1us*/
         CMP_DelayUS(1U);
         /* Start CMP compare */
-        SET_REG8_BIT(CMPx->MDR, CMP_MDR_CENB);
+        SET_REG8_BIT(CMPx->MDR, CMP_MDR_CENA);
         /* Delay 1us*/
         CMP_DelayUS(1U);
         /* Set output filter and output detect edge and output polarity */
@@ -372,11 +377,11 @@ void CMP_FuncCmd(CM_CMP_TypeDef *CMPx, en_functional_state_t enNewState)
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
-        SET_REG8_BIT(CMPx->MDR, CMP_MDR_CENB);
+        SET_REG8_BIT(CMPx->MDR, CMP_MDR_CENA);
         /* Delay 1us*/
         CMP_DelayUS(1U);
     } else {
-        CLR_REG8_BIT(CMPx->MDR, CMP_MDR_CENB);
+        CLR_REG8_BIT(CMPx->MDR, CMP_MDR_CENA);
     }
 
 }
@@ -616,18 +621,18 @@ int32_t CMP_WindowModeInit(uint8_t u8WinCMPx, const stc_cmp_window_init_t *pstcC
             pCMP_MINOR = CM_CMP3;
         }
         /* Stop CMP compare */
-        CLR_REG8_BIT(pCMP_MINOR->MDR, CMP_MDR_CENB);
-        CLR_REG8_BIT(pCMP_MAIN->MDR, CMP_MDR_CENB);
+        CLR_REG8_BIT(pCMP_MINOR->MDR, CMP_MDR_CENA);
+        CLR_REG8_BIT(pCMP_MAIN->MDR, CMP_MDR_CENA);
 
         /* Set positive in(compare voltage), window voltage */
         WRITE_REG8(pCMP_MINOR->PMSR, (CMP1_POSITIVE_CMP2_INP3 & CMP_PMSR_CVSL) | pstcCmpWindowInit->u16WinVolLow);
         WRITE_REG8(pCMP_MAIN->PMSR, (CMP2_POSITIVE_CMP2_INP3 & CMP_PMSR_CVSL) | pstcCmpWindowInit->u16WinVolHigh);
         WRITE_REG16(pCMP_MINOR->VISR, (CMP1_POSITIVE_CMP2_INP3 >> VISR_OFFSET) & (CMP_VISR_P3SL | CMP_VISR_P2SL));
         /* Select window compare mode */
-        SET_REG8_BIT(pCMP_MAIN->MDR, CMP_MDR_CWDE);
+        SET_REG8_BIT(pCMP_MAIN->MDR, CMP_MDR_WDEN);
         /* Start CMP compare function */
-        SET_REG8_BIT(pCMP_MINOR->MDR, CMP_MDR_CENB);
-        SET_REG8_BIT(pCMP_MAIN->MDR, CMP_MDR_CENB);
+        SET_REG8_BIT(pCMP_MINOR->MDR, CMP_MDR_CENA);
+        SET_REG8_BIT(pCMP_MAIN->MDR, CMP_MDR_CENA);
         /* Delay 1us*/
         CMP_DelayUS(1U);
         /* Set output filter and output detect edge and output polarity */
@@ -678,7 +683,7 @@ int32_t CMP_BlankWindowConfig(CM_CMP_TypeDef *CMPx, const stc_cmp_blankwindow_t 
         DDL_ASSERT(IS_CMP_BLANKWIN_OUT_LVL(pstcBlankWindowConfig->u8OutLevel));
 
         /* Select output level when blank window valid */
-        MODIFY_REG8(CMPx->OCR, CMP_OCR_TWOL, pstcBlankWindowConfig->u8OutLevel);
+        MODIFY_REG8(CMPx->OCR, CMP_OCR_BWOL, pstcBlankWindowConfig->u8OutLevel);
         /* Select blank window valid level */
         if (CMP_BLANKWIN_VALID_LVL_LOW == pstcBlankWindowConfig->u8ValidLevel) {
             SET_REG16_BIT(CMPx->TWPR, pstcBlankWindowConfig->u16Src);
@@ -705,9 +710,9 @@ void CMP_BlankWindowCmd(CM_CMP_TypeDef *CMPx, en_functional_state_t enNewState)
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
-        SET_REG8_BIT(CMPx->OCR, CMP_OCR_TWOE);
+        SET_REG8_BIT(CMPx->OCR, CMP_OCR_BWEN);
     } else {
-        CLR_REG8_BIT(CMPx->OCR, CMP_OCR_TWOE);
+        CLR_REG8_BIT(CMPx->OCR, CMP_OCR_BWEN);
     }
 }
 

@@ -9,7 +9,7 @@
    2023-09-30       CDT             First version
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -49,39 +49,13 @@ extern "C"
 /*******************************************************************************
  * Global type definitions ('typedef')
  ******************************************************************************/
-/**
- * @defgroup DBGC_Global_Types DBGC Global Types
- * @{
- */
-/**
- * @brief DBGC authenticate ID definition
- */
-typedef struct {
-    uint32_t            u32AuthID0;     /*!< auth ID 0.       */
-    uint32_t            u32AuthID1;     /*!< auth ID 1.       */
-    uint32_t            u32AuthID2;     /*!< auth ID 2.       */
-} stc_dbgc_auth_id_t;
-/**
- * @}
- */
+
 /*******************************************************************************
  * Global pre-processor symbols/macros ('#define')
  ******************************************************************************/
 /**
  * @defgroup DBGC_Global_Macros DBGC Global Macros
  * @{
- */
-
-/**
- * @defgroup DBGC_MCU_Security_Flag DBGC MCU Security Status flag
- * @{
- */
-#define DBGC_SECURITY_AUTH_SUCCESS          (DBGC_MCUSTAT_AUTHFG)       /*!< AUTHID register equal security password */
-#define DBGC_SECURITY_LOCK_LVL1             (DBGC_MCUSTAT_PRTLV1)       /*!< Security lock level 1 */
-#define DBGC_SECURITY_LOCK_LVL2             (DBGC_MCUSTAT_PRTLV2)       /*!< Security lock level 2 */
-#define DBGC_SECURITY_ALL                   (DBGC_MCUSTAT_AUTHFG | DBGC_MCUSTAT_PRTLV1 | DBGC_MCUSTAT_PRTLV2)
-/**
- * @}
  */
 
 /**
@@ -144,9 +118,6 @@ typedef struct {
  * @addtogroup DBGC_Global_Functions
  * @{
  */
-en_flag_status_t DBGC_GetSecurityStatus(uint32_t u32Flag);
-int32_t DBGC_FlashErase(uint32_t u32Timeout);
-void DBGC_GetAuthID(stc_dbgc_auth_id_t *pstcAuthID);
 void DBGC_PeriphCmd(uint32_t u32Periph, en_functional_state_t enNewState);
 void DBGC_TraceIoCmd(en_functional_state_t enNewState);
 void DBGC_TraceModeConfig(uint32_t u32TraceMode);

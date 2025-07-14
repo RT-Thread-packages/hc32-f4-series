@@ -10,7 +10,7 @@
    2023-06-30       CDT             Modify typo
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -357,7 +357,7 @@ typedef struct {
 #define RTC_FLAG_INTRU_CH1                      ((uint32_t)RTC_TPSR_TPF1  << 16U)   /*!< RTCIC1 intrusion flag          */
 #define RTC_FLAG_ALL                            (RTC_FLAG_RD_WR     | RTC_FLAG_ALARM     | RTC_FLAG_PERIOD | \
                                                  RTC_FLAG_INTRU_OVF | RTC_FLAG_INTRU_CH0 | RTC_FLAG_INTRU_CH1)
-#define RTC_FLAG_CLR_ALL                        (RTC_FLAG_ALARM     | RTC_FLAG_PERIOD | \
+#define RTC_FLAG_CLR_ALL                        (RTC_FLAG_ALARM     | RTC_FLAG_PERIOD    | \
                                                  RTC_FLAG_INTRU_OVF | RTC_FLAG_INTRU_CH0 | RTC_FLAG_INTRU_CH1)
 /**
  * @}

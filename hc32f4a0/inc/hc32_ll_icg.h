@@ -1,16 +1,19 @@
 /**
  *******************************************************************************
- * @file    hc32_ll_icg.h
- * @brief   This file contains all the Macro Definitions of the ICG driver
- *          library.
+ * @file  hc32_ll_icg.h
+ * @brief This file contains all the Macro Definitions of the ICG driver
+ *        library.
  @verbatim
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-01-15       CDT             Delete ICG2 function
+   2023-12-15       CDT             Modify macro define: ICG_SWDT_LPM_CNT_CONTINUE -> ICG_SWDT_LPM_CNT_CONT
+   2024-06-30       CDT             Delete ICG2 function
+   2024-11-08       CDT             Modify comment of ICG_BOR_Voltage_Threshold
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -135,7 +138,7 @@ extern "C"
  * @brief    Counting control of SWDT in sleep/stop mode
  * @{
  */
-#define ICG_SWDT_LPM_CNT_CONTINUE               (0UL)                   /*!< Continue counting in sleep/stop mode */
+#define ICG_SWDT_LPM_CNT_CONT                   (0UL)                   /*!< Continue counting in sleep/stop mode */
 #define ICG_SWDT_LPM_CNT_STOP                   (ICG_ICG0_SWDTSLPOFF)   /*!< Stop counting in sleep/stop mode     */
 /**
  * @}
@@ -223,7 +226,7 @@ extern "C"
  * @brief    Counting control of WDT in sleep mode
  * @{
  */
-#define ICG_WDT_LPM_CNT_CONTINUE                (0UL)                   /*!< Continue counting in sleep mode */
+#define ICG_WDT_LPM_CNT_CONT                    (0UL)                   /*!< Continue counting in sleep mode */
 #define ICG_WDT_LPM_CNT_STOP                    (ICG_ICG0_WDTSLPOFF)    /*!< Stop counting in sleep mode     */
 /**
  * @}
@@ -233,10 +236,10 @@ extern "C"
  * @defgroup ICG_BOR_Voltage_Threshold ICG BOR Voltage Threshold
  * @{
  */
-#define ICG_BOR_VOL_THRESHOLD_LVL0              (0UL)                   /*!< BOR voltage threshold 1.9V */
-#define ICG_BOR_VOL_THRESHOLD_LVL1              (ICG_ICG1_BOR_LEV_0)    /*!< BOR voltage threshold 2.0V */
-#define ICG_BOR_VOL_THRESHOLD_LVL2              (ICG_ICG1_BOR_LEV_1)    /*!< BOR voltage threshold 2.1V */
-#define ICG_BOR_VOL_THRESHOLD_LVL3              (ICG_ICG1_BOR_LEV)      /*!< BOR voltage threshold 2.3V */
+#define ICG_BOR_VOL_THRESHOLD_LVL0              (0UL)                   /*!< BOR voltage threshold 2.0V */
+#define ICG_BOR_VOL_THRESHOLD_LVL1              (ICG_ICG1_BOR_LEV_0)    /*!< BOR voltage threshold 2.1V */
+#define ICG_BOR_VOL_THRESHOLD_LVL2              (ICG_ICG1_BOR_LEV_1)    /*!< BOR voltage threshold 2.2V */
+#define ICG_BOR_VOL_THRESHOLD_LVL3              (ICG_ICG1_BOR_LEV)      /*!< BOR voltage threshold 2.4V */
 /**
  * @}
  */
@@ -284,10 +287,6 @@ extern "C"
  */
 
 /**
- * @}
- */
-
-/**
  * @defgroup ICG_Register_Configuration ICG Register Configuration
  * @{
  */
@@ -296,7 +295,7 @@ extern "C"
  * @defgroup ICG_SWDT_Preload_Configuration ICG SWDT Preload Configuration
  * @{
  */
-/* SWDT register config */
+/* SWDT register bits config */
 #define ICG_RB_SWDT_AUTS                        (ICG_SWDT_RST_STOP)
 #define ICG_RB_SWDT_ITS                         (ICG_SWDT_EXP_TYPE_RST)
 #define ICG_RB_SWDT_PERI                        (ICG_SWDT_CNT_PERIOD65536)
@@ -315,7 +314,7 @@ extern "C"
  * @defgroup ICG_WDT_Preload_Configuration ICG WDT Preload Configuration
  * @{
  */
-/* WDT register config */
+/* WDT register bits config */
 #define ICG_RB_WDT_AUTS                         (ICG_WDT_RST_STOP)
 #define ICG_RB_WDT_ITS                          (ICG_WDT_EXP_TYPE_RST)
 #define ICG_RB_WDT_PERI                         (ICG_WDT_CNT_PERIOD65536)
@@ -334,7 +333,7 @@ extern "C"
  * @defgroup ICG_BOR_Preload_Configuration ICG BOR Preload Configuration
  * @{
  */
-/* BOR register config */
+/* BOR register bits config */
 #define ICG_RB_BOR_LEV                          (ICG_BOR_VOL_THRESHOLD_LVL3)
 #define ICG_RB_BOR_DIS                          (ICG_BOR_RST_DISABLE)
 
@@ -348,7 +347,7 @@ extern "C"
  * @defgroup ICG_HRC_Preload_Configuration ICG HRC Preload Configuration
  * @{
  */
-/* HRC register config */
+/* HRC register bits config */
 #define ICG_RB_HRC_FREQSEL                      (ICG_HRC_16M)
 #define ICG_RB_HRC_STOP                         (ICG_HRC_RST_STOP)
 
@@ -383,9 +382,6 @@ extern "C"
 #ifndef ICG_REG_CFG1_CONST
 #define ICG_REG_CFG1_CONST                      (ICG_REG_BOR_CONFIG | ICG_REG_HRC_CONFIG  | 0xFFF8FEFEUL)
 #endif
-#ifndef ICG_REG_CFG2_CONST
-#define ICG_REG_CFG2_CONST                      (0xFFFFFFFFUL)
-#endif
 #ifndef ICG_REG_CFG3_CONST
 #define ICG_REG_CFG3_CONST                      (ICG_REG_FLASH_PROTECT_CONFIG | 0xFFFF0000UL)
 #endif
@@ -396,6 +392,9 @@ extern "C"
  * @}
  */
 
+/**
+ * @}
+ */
 /*******************************************************************************
  * Global variable definitions ('extern')
  ******************************************************************************/

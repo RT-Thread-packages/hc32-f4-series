@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Modify typo
+   2024-06-30       CDT             API TMR2_DeInit() added return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -106,7 +107,7 @@ typedef struct {
  * @defgroup TMR2_Function TMR2 Function
  * @{
  */
-#define TMR2_FUNC_CMP                   (0x0U)                          /*!< The function of TMR2 channel is ouput compare. */
+#define TMR2_FUNC_CMP                   (0x0U)                          /*!< The function of TMR2 channel is output compare. */
 #define TMR2_FUNC_CAPT                  (TMR2_BCONR_CAPMDA)             /*!< The function of TMR2 channel is input capture. */
 /**
  * @}
@@ -121,12 +122,12 @@ typedef struct {
                                                                              One rising edge causes one count. */
 #define TMR2_CLK_TRIG_FALLING           (TMR2_BCONR_SYNCLKA_1)          /*!< Synchronous clock source, falling edge of TIM2_<t>_TRIGA/B.
                                                                              One falling edge causes one count. */
-#define TMR2_CLK_EVT                    (TMR2_BCONR_SYNCLKA)            /*!< Synchronous clock source, peripheral event. The event is specified by register TMR2_HTSSR.
+#define TMR2_CLK_EVT                    (TMR2_BCONR_SYNCLKA)            /*!< Synchronous clock source, peripheral event. The event is specified by register TMR2_TRGSEL.
                                                                              One event causes one count. */
 #define TMR2_CLK_TMR6_OVF               (TMR2_BCONR_SYNCLKAT_0)         /*!< Synchronous clock source, the event of counting overflow of TIMER6.
-                                                                             It is NOT need to set register TMR2_HTSSR. */
+                                                                             It is NOT need to set register TMR2_TRGSEL. */
 #define TMR2_CLK_TMR6_UDF               (TMR2_BCONR_SYNCLKAT_1)         /*!< Synchronous clock source, the event of counting underflow of TIMER6.
-                                                                             It is NOT need to set register TMR2_HTSSR. */
+                                                                             It is NOT need to set register TMR2_TRGSEL. */
 #define TMR2_CLK_TMR6_OVF_UDF           (TMR2_BCONR_SYNCLKAT_0 | \
                                          TMR2_BCONR_SYNCLKAT_1)         /*!< Synchronous clock source, both overflow and underflow of TIMER6. */
 #define TMR2_CLK_LRC                    (TMR2_BCONR_SYNSA)              /*!< Asynchronous clock source, LRC(32.768KHz). */
@@ -293,14 +294,14 @@ typedef struct {
  */
 int32_t TMR2_Init(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, const stc_tmr2_init_t *pstcTmr2Init);
 int32_t TMR2_StructInit(stc_tmr2_init_t *pstcTmr2Init);
-void TMR2_DeInit(CM_TMR2_TypeDef *TMR2x);
+int32_t TMR2_DeInit(CM_TMR2_TypeDef *TMR2x);
 
 void TMR2_SetFunc(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, uint32_t u32Func);
 void TMR2_SetClockSrc(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, uint32_t u32Src);
 void TMR2_SetClockDiv(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, uint32_t u32Div);
 
-int32_t TMR2_PWM_StructInit(stc_tmr2_pwm_init_t *pstPwmInit);
-int32_t TMR2_PWM_Init(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, const stc_tmr2_pwm_init_t *pstPwmInit);
+int32_t TMR2_PWM_StructInit(stc_tmr2_pwm_init_t *pstcPwmInit);
+int32_t TMR2_PWM_Init(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, const stc_tmr2_pwm_init_t *pstcPwmInit);
 void TMR2_PWM_OutputCmd(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, en_functional_state_t enNewState);
 
 void TMR2_HWCaptureCondCmd(CM_TMR2_TypeDef *TMR2x, uint32_t u32Ch, uint32_t u32Cond, en_functional_state_t enNewState);

@@ -12,9 +12,10 @@
                                     API optimized for better random numbers: TRNG_GenerateRandom(), TRNG_GetRandom()
                                     Add TRNG_Cmd,TRNG_DeInit functions and optimize TRNG_Start function
    2023-09-30       CDT             Optimize the processing of discarded data and enable TRNG in TRNG_Init()
+   2024-08-31       CDT             Use MODIFY_REG32() to prevent reserved bit from being overwritten
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -144,7 +145,7 @@ void TRNG_Init(uint32_t u32ShiftCount, uint32_t u32ReloadInitValueEn)
 
     DDL_ASSERT(IS_TRNG_SHIFT_CNT(u32ShiftCount));
     DDL_ASSERT(IS_RNG_RELOAD_INIT_VAL_EN(u32ReloadInitValueEn));
-    WRITE_REG32(CM_TRNG->MR, u32ShiftCount | u32ReloadInitValueEn);
+    MODIFY_REG32(CM_TRNG->MR, (TRNG_MR_CNT | TRNG_MR_LOAD), (u32ShiftCount | u32ReloadInitValueEn));
     /* Enable TRNG */
     SET_REG32_BIT(CM_TRNG->CR, TRNG_CR_EN);
     /* Discard the first 10 generated data (64bit), 20 for 32bit variable storage */
@@ -158,7 +159,7 @@ void TRNG_Init(uint32_t u32ShiftCount, uint32_t u32ReloadInitValueEn)
  * @retval int32_t:
  *           - LL_OK:                   No error occurred.
  *           - LL_ERR_TIMEOUT:          Works timeout.
- *           - LL_ERR_INVD_PARAM:       pu32Random == NULL or u8RandomLen == 0
+ *           - LL_ERR_INVD_PARAM:       pu32Random == NULL or u32RandomLen == 0
  */
 int32_t TRNG_GenerateRandom(uint32_t *pu32Random, uint32_t u32RandomLen)
 {

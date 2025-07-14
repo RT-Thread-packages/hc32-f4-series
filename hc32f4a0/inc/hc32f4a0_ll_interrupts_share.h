@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2022-10-31       CDT             Rename I2Cx_Error_IrqHandler as I2Cx_EE_IrqHandler
+   2024-06-30       CDT             Add handler for USB
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -382,6 +383,10 @@ void EMB_GR3_IrqHandler(void);
 void EMB_GR4_IrqHandler(void);
 void EMB_GR5_IrqHandler(void);
 void EMB_GR6_IrqHandler(void);
+void USBHS_EP1Out_IrqHandler(void);
+void USBHS_EP1In_IrqHandler(void);
+void USBHS_Global_IrqHandler(void);
+void USBHS_Wakeup_IrqHandler(void);
 void USART1_RxError_IrqHandler(void);
 void USART1_RxFull_IrqHandler(void);
 void USART1_TxEmpty_IrqHandler(void);
@@ -469,6 +474,7 @@ void I2S4_Tx_IrqHandler(void);
 void I2S4_Rx_IrqHandler(void);
 void I2S4_Error_IrqHandler(void);
 void USBFS_Global_IrqHandler(void);
+void USBFS_Wakeup_IrqHandler(void);
 void SDIOC1_Normal_IrqHandler(void);
 void SDIOC1_Error_IrqHandler(void);
 void SDIOC2_Normal_IrqHandler(void);

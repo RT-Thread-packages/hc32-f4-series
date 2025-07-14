@@ -8,9 +8,11 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-01-15       CDT             Update define base on new head file
+   2023-12-15       CDT             Add structure stc_mpu_unit_init_t, and declaration of MPU_UnitInit(), MPU_UnitStructInit()
+                                    Refine def group MPU_Flag
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -67,6 +69,20 @@ typedef struct {
     uint32_t u32BackgroundRead;         /*!< Specifies the unit's read permission for the background space
                                              This parameter can be a value of @ref MPU_Background_Read_Permission  */
 } stc_mpu_unit_config_t;
+
+/**
+ * @brief MPU Unit initialize structure definition
+ */
+typedef struct {
+    uint32_t u32MpuState;               /*!< Specifies the unit's state of mpu
+                                             This parameter can be a value of @ref MPU_Unit_State             */
+    uint32_t u32ExceptionType;          /*!< Specifies the type of exception that occurs when the unit accesses a protected region.
+                                             This parameter can be a value of @ref MPU_Exception_Type          */
+    uint32_t u32BackgroundWrite;        /*!< Specifies the unit's write permission for the background space.
+                                             This parameter can be a value of @ref MPU_Background_Write_Permission */
+    uint32_t u32BackgroundRead;         /*!< Specifies the unit's read permission for the background space
+                                             This parameter can be a value of @ref MPU_Background_Read_Permission  */
+} stc_mpu_unit_init_t;
 
 /**
  * @brief MPU Init structure definition
@@ -179,6 +195,16 @@ typedef struct {
  */
 
 /**
+ * @defgroup MPU_Unit_State MPU unit state
+ * @{
+ */
+#define MPU_UNIT_ENABLE                         (MPU_SCR_SMPUE)
+#define MPU_UNIT_DISABLE                        (0UL)
+/**
+ * @}
+ */
+
+/**
  * @defgroup MPU_Exception_Type MPU Exception Type
  * @{
  */
@@ -250,14 +276,14 @@ typedef struct {
  * @defgroup MPU_Flag MPU Flag
  * @{
  */
-#define MPU_FLAG_SMPU1EAF                       (MPU_SR_SMPU1EAF)   /*!< System DMA_1 error flag */
-#define MPU_FLAG_SMPU2EAF                       (MPU_SR_SMPU2EAF)   /*!< System DMA_2 error flag */
-#define MPU_FLAG_FMPUEAF                        (MPU_SR_FMPUEAF)    /*!< USBFS_DMA error flag    */
-#define MPU_FLAG_HMPUEAF                        (MPU_SR_HMPUEAF)    /*!< USBHS_DMA error flag    */
-#define MPU_FLAG_EMPUEAF                        (MPU_SR_EMPUEAF)    /*!< ETH_DMA error flag      */
+#define MPU_FLAG_DMA1                           (MPU_SR_SMPU1EAF)   /*!< System DMA_1 error flag */
+#define MPU_FLAG_DMA2                           (MPU_SR_SMPU2EAF)   /*!< System DMA_2 error flag */
+#define MPU_FLAG_USBFS_DMA                      (MPU_SR_FMPUEAF)    /*!< USBFS_DMA error flag    */
+#define MPU_FLAG_USBHS_DMA                      (MPU_SR_HMPUEAF)    /*!< USBHS_DMA error flag    */
+#define MPU_FLAG_ETH_DMA                        (MPU_SR_EMPUEAF)    /*!< ETH_DMA error flag      */
+#define MPU_FLAG_ALL                            (MPU_FLAG_DMA1       | MPU_FLAG_DMA2 | MPU_FLAG_USBFS_DMA | \
+                                                 MPU_FLAG_USBHS_DMA  | MPU_FLAG_ETH_DMA)
 
-#define MPU_FLAG_ALL                            (MPU_FLAG_SMPU1EAF | MPU_FLAG_SMPU2EAF | MPU_FLAG_FMPUEAF | \
-                                                 MPU_FLAG_HMPUEAF  | MPU_FLAG_EMPUEAF)
 /**
  * @}
  */
@@ -351,6 +377,8 @@ void MPU_REG_Lock(void);
 void MPU_DeInit(void);
 int32_t MPU_Init(const stc_mpu_init_t *pstcMpuInit);
 int32_t MPU_StructInit(stc_mpu_init_t *pstcMpuInit);
+int32_t MPU_UnitInit(uint32_t u32Unit, stc_mpu_unit_init_t *pstcUnitInit);
+int32_t MPU_UnitStructInit(stc_mpu_unit_init_t *pstcUnitInit);
 void MPU_SetExceptionType(uint32_t u32Unit, uint32_t u32Type);
 void MPU_BackgroundWriteCmd(uint32_t u32Unit, en_functional_state_t enNewState);
 void MPU_BackgroundReadCmd(uint32_t u32Unit, en_functional_state_t enNewState);

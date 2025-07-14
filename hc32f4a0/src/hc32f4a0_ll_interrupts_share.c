@@ -13,9 +13,11 @@
                                     IRQxxx_Handler add __DSB for Arm Errata 838869
                                     The BCSTR register of TimerA is split into BCSTRH and BCSTRL
                                     Modify for head file update: EIRQFR -> EIFR
+   2024-06-30       CDT             Add handler for USB
+   2024-09-13       CDT             Refine for USB interrupt
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -665,7 +667,7 @@ void IRQ130_Handler(void)
                 DVP_SWSyncError_IrqHandler();
             }
         }
-        /* DVP fifo overfolw err */
+        /* DVP fifo overflow err */
         if (1UL == bCM_DVP->IER_b.FIFOERIEN) {
             if ((1UL == bCM_DVP->STR_b.FIFOERF) && (0UL != (VSSEL130 & BIT_MASK_25))) {
                 DVP_FifoError_IrqHandler();
@@ -1912,14 +1914,35 @@ void IRQ137_Handler(void)
     if ((0UL != (u32Tmp1 & u32Tmp2)) && (0UL != (VSSEL137 & BIT_MASK_06))) {
         EMB_GR6_IrqHandler();
     }
-    /* USB HS EP1 out */
+    if (1UL == bCM_USBHS->GAHBCFG_b.GINTMSK) {
+        /* USB HS EP1 out interrupt */
+        u32Tmp1 = bCM_USBHS->DEACHINT_b.OEP1INT;
+        u32Tmp2 = bCM_USBHS->DEACHINTMSK_b.OEP1INTM;
+        if ((0UL != u32Tmp1) && (0UL != u32Tmp2) && (0UL != (VSSEL137 & BIT_MASK_07))) {
+            USBHS_EP1Out_IrqHandler();
+        }
 
-    /* USB HS EP1 in */
+        /* USB HS EP1 in interrupt */
+        u32Tmp1 = bCM_USBHS->DEACHINT_b.IEP1INT;
+        u32Tmp2 = bCM_USBHS->DEACHINTMSK_b.IEP1INTM;
+        if ((0UL != u32Tmp1) && (0UL != u32Tmp2) && (0UL != (VSSEL137 & BIT_MASK_08))) {
+            USBHS_EP1In_IrqHandler();
+        }
 
-    /* USB HS global */
+        /* USB HS global interrupt */
+        u32Tmp1 = CM_USBHS->GINTMSK & 0xFF7CFCFBUL;
+        u32Tmp2 = CM_USBHS->GINTSTS & 0xFF7CFCFBUL;
+        if ((0UL != (u32Tmp1 & u32Tmp2)) && (0UL != (VSSEL137 & BIT_MASK_09))) {
+            USBHS_Global_IrqHandler();
+        }
 
-    /* USB HS wakeup */
-
+        /* USB HS wakeup interrupt */
+        u32Tmp1 = bCM_USBHS->GINTSTS_b.WKUINT;
+        u32Tmp2 = bCM_USBHS->GINTMSK_b.WKUIM;
+        if ((0UL != u32Tmp1) && (0UL != u32Tmp2) && (0UL != (VSSEL137 & BIT_MASK_10))) {
+            USBHS_Wakeup_IrqHandler();
+        }
+    }
     if (1UL == bCM_USART1->CR1_b.RIE) {
         /* USART Ch.1 Rx ORE/FE/PE error */
         u32Tmp1 = CM_USART1->SR & (USART_SR_PE | USART_SR_FE | USART_SR_ORE);
@@ -1943,7 +1966,7 @@ void IRQ137_Handler(void)
             USART1_TxComplete_IrqHandler();
         }
     }
-    /* USART Ch.1 Tx timeout */
+    /* USART Ch.1 Rx timeout */
     if (1UL == bCM_USART1->CR1_b.RTOIE) {
         if ((1UL == bCM_USART1->SR_b.RTOF) && (0UL != (VSSEL137 & BIT_MASK_16))) {
             USART1_RxTO_IrqHandler();
@@ -2553,7 +2576,7 @@ void IRQ140_Handler(void)
             USART7_TxComplete_IrqHandler();
         }
     }
-    /* USART Ch.7 Tx timeout */
+    /* USART Ch.7 Rx timeout */
     if (1UL == bCM_USART7->CR1_b.RTOIE) {
         if ((1UL == bCM_USART7->SR_b.RTOF) && (0UL != (VSSEL140 & BIT_MASK_10))) {
             USART7_RxTO_IrqHandler();
@@ -2582,12 +2605,18 @@ void IRQ140_Handler(void)
             USART8_TxComplete_IrqHandler();
         }
     }
-    /* USB FS global interrupt */
     if (1UL == bCM_USBFS->GAHBCFG_b.GINTMSK) {
-        u32Tmp1 = CM_USBFS->GINTMSK & 0xF77CFCFBUL;
-        u32Tmp2 = CM_USBFS->GINTSTS & 0xF77CFCFBUL;
+        /* USB FS global interrupt */
+        u32Tmp1 = CM_USBFS->GINTMSK & 0xFF7CFCFBUL;
+        u32Tmp2 = CM_USBFS->GINTSTS & 0xFF7CFCFBUL;
         if ((0UL != (u32Tmp1 & u32Tmp2)) && (0UL != (VSSEL140 & BIT_MASK_15))) {
             USBFS_Global_IrqHandler();
+        }
+        /* USB FS wakeup interrupt */
+        u32Tmp1 = bCM_USBFS->GINTSTS_b.WKUINT;
+        u32Tmp2 = bCM_USBFS->GINTMSK_b.WKUIM;
+        if ((0UL != u32Tmp1) && (0UL != u32Tmp2) && (0UL != (VSSEL140 & BIT_MASK_16))) {
+            USBFS_Wakeup_IrqHandler();
         }
     }
     /* SDIO unit 1 */
@@ -4033,6 +4062,18 @@ __WEAKDEF void EMB_GR5_IrqHandler(void)
 __WEAKDEF void EMB_GR6_IrqHandler(void)
 {
 }
+__WEAKDEF void USBHS_EP1Out_IrqHandler(void)
+{
+}
+__WEAKDEF void USBHS_EP1In_IrqHandler(void)
+{
+}
+__WEAKDEF void USBHS_Global_IrqHandler(void)
+{
+}
+__WEAKDEF void USBHS_Wakeup_IrqHandler(void)
+{
+}
 __WEAKDEF void USART1_RxError_IrqHandler(void)
 {
 }
@@ -4292,6 +4333,9 @@ __WEAKDEF void I2S4_Error_IrqHandler(void)
 {
 }
 __WEAKDEF void USBFS_Global_IrqHandler(void)
+{
+}
+__WEAKDEF void USBFS_Wakeup_IrqHandler(void)
 {
 }
 __WEAKDEF void SDIOC1_Normal_IrqHandler(void)

@@ -9,9 +9,11 @@
    2023-01-15       CDT             Modify the conditions for entering direct communication mode
    2023-09-30       CDT             Optimize QSPI_ClearStatus function
                                     Modify return value type of QSPI_DeInit function
+   2024-06-30       CDT             Delete judgement condition when switching to direct communication mode
+   2024-11-08       CDT             Modify QSPI->SR2 to QSPI->CLR
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -182,7 +184,6 @@ static uint32_t m_u32ReadMode = 0U;
  * @param  None
  * @retval int32_t:
  *           - LL_OK:                   No error occurred.
- *           - LL_ERR_TIMEOUT:          Works timeout.
  */
 int32_t QSPI_DeInit(void)
 {
@@ -191,7 +192,7 @@ int32_t QSPI_DeInit(void)
     WRITE_REG32(CM_QSPI->FCR,   0x8033UL);
     WRITE_REG32(CM_QSPI->CCMD,  0x0UL);
     WRITE_REG32(CM_QSPI->XCMD,  0xFFUL);
-    WRITE_REG32(CM_QSPI->SR2,   QSPI_FLAG_ROM_ACCESS_ERR);
+    WRITE_REG32(CM_QSPI->CLR,   QSPI_FLAG_ROM_ACCESS_ERR);
     WRITE_REG32(CM_QSPI->EXAR,  0UL);
     return LL_OK;
 }
@@ -387,10 +388,8 @@ void QSPI_EnterDirectCommMode(void)
 {
     /* Backup the read mode */
     m_u32ReadMode = READ_REG32_BIT(CM_QSPI->CR, QSPI_CR_MDSEL);
-    if (m_u32ReadMode <= QSPI_RD_MD_QUAD_IO_FAST_RD) {
-        /* Set standard read mode */
-        CLR_REG32_BIT(CM_QSPI->CR, QSPI_CR_MDSEL);
-    }
+    /* Set standard read mode */
+    CLR_REG32_BIT(CM_QSPI->CR, QSPI_CR_MDSEL);
     /* Enter direct communication mode */
     SET_REG32_BIT(CM_QSPI->CR, QSPI_CR_DCOME);
 }
@@ -404,10 +403,8 @@ void QSPI_ExitDirectCommMode(void)
 {
     /* Exit direct communication mode */
     CLR_REG32_BIT(CM_QSPI->CR, QSPI_CR_DCOME);
-    if (m_u32ReadMode <= QSPI_RD_MD_QUAD_IO_FAST_RD) {
-        /* Recovery the read mode */
-        SET_REG32_BIT(CM_QSPI->CR, m_u32ReadMode);
-    }
+    /* Recovery the read mode */
+    SET_REG32_BIT(CM_QSPI->CR, m_u32ReadMode);
 }
 
 /**
@@ -459,7 +456,7 @@ void QSPI_ClearStatus(uint32_t u32Flag)
     /* Check parameters */
     DDL_ASSERT(IS_QSPI_CLR_FLAG(u32Flag));
 
-    WRITE_REG32(CM_QSPI->SR2, u32Flag);
+    WRITE_REG32(CM_QSPI->CLR, u32Flag);
 }
 
 /**

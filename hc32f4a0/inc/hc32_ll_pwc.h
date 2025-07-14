@@ -11,9 +11,11 @@
    2023-06-30       CDT             Modify group PWC_Stop_Type
    2023-09-30       CDT             Add function PWC_LVD_DeInit
                                     Modify the PWC_LVD_Detection_Voltage_Sel comment
+   2023-12-15       CDT             Refine API PWC_SLEEP_Enter()
+                                    Add API PWC_PD_SetIoState & PWC_PD_SetMode and add return value to PWC_PD_Enter
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -186,6 +188,17 @@ typedef struct {
 #define PWC_STOP_WFI                    (0x00U)                 /*!< Enter stop mode by WFI, and wake-up by interrupt handle. */
 #define PWC_STOP_WFE_INT                (0x01U)                 /*!< Enter stop mode by WFE, and wake-up by interrupt request. */
 #define PWC_STOP_WFE_EVT                (0x02U)                 /*!< Enter stop mode by WFE, and wake-up by event. */
+/**
+ * @}
+ */
+
+/**
+ * @defgroup PWC_Stop_Type PWC stop mode type.
+ * @{
+ */
+#define PWC_SLEEP_WFI                   (0x00U)                 /*!< Enter sleep mode by WFI, and wake-up by interrupt handle. */
+#define PWC_SLEEP_WFE_INT               (0x01U)                 /*!< Enter sleep mode by WFE, and wake-up by interrupt request. */
+#define PWC_SLEEP_WFE_EVT               (0x02U)                 /*!< Enter sleep mode by WFE, and wake-up by event. */
 /**
  * @}
  */
@@ -482,9 +495,9 @@ typedef struct {
  * @defgroup PWC_WKT_Clock_Source PWC WKT Clock Source
  * @{
  */
-#define PWC_WKT_CLK_SRC_64HZ            ((0x00U << PWC_WKTC2_WKCKS_POS))   /*!< 64Hz Clock   */
-#define PWC_WKT_CLK_SRC_XTAL32          ((0x01U << PWC_WKTC2_WKCKS_POS))   /*!< XTAL32 Clock */
-#define PWC_WKT_CLK_SRC_RTCLRC          ((0x02U << PWC_WKTC2_WKCKS_POS))   /*!< RTCLRC Clock */
+#define PWC_WKT_CLK_SRC_64HZ            (0x00U << PWC_WKTC2_WKCKS_POS)      /*!< 64Hz Clock   */
+#define PWC_WKT_CLK_SRC_XTAL32          (0x01U << PWC_WKTC2_WKCKS_POS)      /*!< XTAL32 Clock */
+#define PWC_WKT_CLK_SRC_RTCLRC          (0x02U << PWC_WKTC2_WKCKS_POS)      /*!< RTCLRC Clock */
 /**
  * @}
  */
@@ -503,6 +516,7 @@ typedef struct {
 /**
  * @defgroup PWC_REG_Write_Unlock_Code PWC register unlock code.
  * @brief Lock/unlock Code for each module
+@verbatim
  *        PWC_UNLOCK_CODE0:
  *          Below registers are locked in CLK module.
  *              XTALCFGR, XTALSTBCR, XTALCR, XTALSTDCR, XTALSTDSR, HRCTRM, HRCCR,
@@ -520,6 +534,7 @@ typedef struct {
  *        PWC_UNLOCK_CODE2:
  *          Below registers are locked in PWC module.
  *              PVDCR0, PVDCR1, PVDFCR, PVDLCR, PVDICR, PVDDSR
+@endverbatim
  * @{
  */
 #define PWC_WRITE_ENABLE                (0xA500U)
@@ -600,9 +615,11 @@ __STATIC_INLINE void PWC_FCG0_REG_Unlock(void)
 }
 
 /* PWC PD Function */
-void PWC_PD_Enter(void);
+int32_t PWC_PD_Enter(void);
 int32_t PWC_PD_StructInit(stc_pwc_pd_mode_config_t *pstcPDModeConfig);
 int32_t PWC_PD_Config(const stc_pwc_pd_mode_config_t *pstcPDModeConfig);
+void PWC_PD_SetIoState(uint8_t u8IoState);
+void PWC_PD_SetMode(uint8_t u8PdMode);
 void PWC_PD_WakeupCmd(uint32_t u32Event, en_functional_state_t enNewState);
 void PWC_PD_SetWakeupTriggerEdge(uint8_t u8Event, uint8_t u8TrigEdge);
 en_flag_status_t PWC_PD_GetWakeupStatus(uint16_t u16Flag);
@@ -621,7 +638,7 @@ void PWC_WKT_ClearStatus(void);
 void PWC_RamModeConfig(uint16_t u16Mode);
 
 /* PWC Sleep Function */
-void PWC_SLEEP_Enter(void);
+void PWC_SLEEP_Enter(uint8_t u8SleepType);
 
 /* PWC Stop Function */
 void PWC_STOP_Enter(uint8_t u8StopType);

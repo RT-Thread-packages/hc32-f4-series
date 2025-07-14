@@ -12,9 +12,10 @@
                                     Rename function SDMMC_CMD1_SendOperatCond to SDMMC_CMD1_SendOperateCond
                                     Optimize SDIOC_GetMode function
                                     Support CMD5/CMD52/CMD53
+   2024-08-31       CDT             Add parameter for SDMMC_CMD38_Erase
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -2389,6 +2390,7 @@ int32_t SDMMC_CMD33_EraseBlockEndAddr(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32EndA
  *         This parameter can be one of the following values:
  *           @arg CM_SDIOC1:            SDIOC unit 1 instance
  *           @arg CM_SDIOC2:            SDIOC unit 2 instance
+ * @param  [in] u32Argument             Argument used for the command.
  * @param  [out] pu32ErrStatus          Pointer to the error state value
  * @retval int32_t:
  *           - LL_OK: Command send completed
@@ -2396,7 +2398,7 @@ int32_t SDMMC_CMD33_EraseBlockEndAddr(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32EndA
  *           - LL_ERR_INVD_PARAM: SDIOCx == NULL or pu32ErrStatus == NULL
  *           - LL_ERR_TIMEOUT: Wait timeout
  */
-int32_t SDMMC_CMD38_Erase(CM_SDIOC_TypeDef *SDIOCx, uint32_t *pu32ErrStatus)
+int32_t SDMMC_CMD38_Erase(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32Argument, uint32_t *pu32ErrStatus)
 {
     int32_t i32Ret;
     stc_sdioc_cmd_config_t stcCmdConfig;
@@ -2404,7 +2406,7 @@ int32_t SDMMC_CMD38_Erase(CM_SDIOC_TypeDef *SDIOCx, uint32_t *pu32ErrStatus)
     if (NULL == pu32ErrStatus) {
         i32Ret = LL_ERR_INVD_PARAM;
     } else {
-        stcCmdConfig.u32Argument        = 0UL;
+        stcCmdConfig.u32Argument        = u32Argument;
         stcCmdConfig.u16CmdIndex        = SDIOC_CMD38_ERASE;
         stcCmdConfig.u16CmdType         = SDIOC_CMD_TYPE_NORMAL;
         stcCmdConfig.u16DataLine        = SDIOC_DATA_LINE_DISABLE;

@@ -8,9 +8,11 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             API EXMC_SMC_DeInit add return value
+   2024-06-30       CDT             Rename macro-define: EXMC_SMC_READ_BURST_CONTINUOUS -> EXMC_SMC_READ_BURST_INFINITE
+                                    Rename macro-define: EXMC_SMC_WRITE_BURST_CONTINUOUS -> EXMC_SMC_WRITE_BURST_INFINITE
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -168,7 +170,7 @@ typedef struct {
 #define EXMC_SMC_READ_BURST_8BEAT               (2UL << SMC_CPCR_RBL_POS)
 #define EXMC_SMC_READ_BURST_16BEAT              (3UL << SMC_CPCR_RBL_POS)
 #define EXMC_SMC_READ_BURST_32BEAT              (4UL << SMC_CPCR_RBL_POS)
-#define EXMC_SMC_READ_BURST_CONTINUOUS          (5UL << SMC_CPCR_RBL_POS)
+#define EXMC_SMC_READ_BURST_INFINITE            (5UL << SMC_CPCR_RBL_POS)
 /**
  * @}
  */
@@ -182,7 +184,7 @@ typedef struct {
 #define EXMC_SMC_WRITE_BURST_8BEAT              (2UL << SMC_CPCR_WBL_POS)
 #define EXMC_SMC_WRITE_BURST_16BEAT             (3UL << SMC_CPCR_WBL_POS)
 #define EXMC_SMC_WRITE_BURST_32BEAT             (4UL << SMC_CPCR_WBL_POS)
-#define EXMC_SMC_WRITE_BURST_CONTINUOUS         (5UL << SMC_CPCR_WBL_POS)
+#define EXMC_SMC_WRITE_BURST_INFINITE           (5UL << SMC_CPCR_WBL_POS)
 /**
  * @}
  */

@@ -13,9 +13,10 @@
                                     Support CMD5/CMD52/CMD53
                                     Rename macro definition SDIOC_ACMD52_RW_DIRECT to SDIOC_CMD52_IO_RW_DIRECT
                                     Rename macro definition SDIOC_ACMD53_RW_EXTENDED to SDIOC_CMD53_IO_RW_EXTENDED
+   2024-08-31       CDT             Add parameter for SDMMC_CMD38_Erase
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -208,15 +209,15 @@ typedef struct {
  * @defgroup SDIOC_Clock_Division SDIOC Clock Division
  * @{
  */
-#define SDIOC_CLK_DIV1                          (0x00U)               /*!< CLK1/1   */
-#define SDIOC_CLK_DIV2                          (SDIOC_CLKCON_FS_0)   /*!< CLK1/2   */
-#define SDIOC_CLK_DIV4                          (SDIOC_CLKCON_FS_1)   /*!< CLK1/4   */
-#define SDIOC_CLK_DIV8                          (SDIOC_CLKCON_FS_2)   /*!< CLK1/8   */
-#define SDIOC_CLK_DIV16                         (SDIOC_CLKCON_FS_3)   /*!< CLK1/16  */
-#define SDIOC_CLK_DIV32                         (SDIOC_CLKCON_FS_4)   /*!< CLK1/32  */
-#define SDIOC_CLK_DIV64                         (SDIOC_CLKCON_FS_5)   /*!< CLK1/64  */
-#define SDIOC_CLK_DIV128                        (SDIOC_CLKCON_FS_6)   /*!< CLK1/128 */
-#define SDIOC_CLK_DIV256                        (SDIOC_CLKCON_FS_7)   /*!< CLK1/256 */
+#define SDIOC_CLK_DIV1                          (0x00U)               /*!< PCLK/1   */
+#define SDIOC_CLK_DIV2                          (SDIOC_CLKCON_FS_0)   /*!< PCLK/2   */
+#define SDIOC_CLK_DIV4                          (SDIOC_CLKCON_FS_1)   /*!< PCLK/4   */
+#define SDIOC_CLK_DIV8                          (SDIOC_CLKCON_FS_2)   /*!< PCLK/8   */
+#define SDIOC_CLK_DIV16                         (SDIOC_CLKCON_FS_3)   /*!< PCLK/16  */
+#define SDIOC_CLK_DIV32                         (SDIOC_CLKCON_FS_4)   /*!< PCLK/32  */
+#define SDIOC_CLK_DIV64                         (SDIOC_CLKCON_FS_5)   /*!< PCLK/64  */
+#define SDIOC_CLK_DIV128                        (SDIOC_CLKCON_FS_6)   /*!< PCLK/128 */
+#define SDIOC_CLK_DIV256                        (SDIOC_CLKCON_FS_7)   /*!< PCLK/256 */
 /**
  * @}
  */
@@ -849,7 +850,7 @@ int32_t SDMMC_CMD24_WriteSingleBlock(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32Write
 int32_t SDMMC_CMD25_WriteMultipleBlock(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32WriteAddr, uint32_t *pu32ErrStatus);
 int32_t SDMMC_CMD32_EraseBlockStartAddr(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32StartAddr, uint32_t *pu32ErrStatus);
 int32_t SDMMC_CMD33_EraseBlockEndAddr(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32EndAddr, uint32_t *pu32ErrStatus);
-int32_t SDMMC_CMD38_Erase(CM_SDIOC_TypeDef *SDIOCx, uint32_t *pu32ErrStatus);
+int32_t SDMMC_CMD38_Erase(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32Argument, uint32_t *pu32ErrStatus);
 int32_t SDMMC_CMD55_AppCmd(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32Argument, uint32_t *pu32ErrStatus);
 
 int32_t SDMMC_ACMD6_SetBusWidth(CM_SDIOC_TypeDef *SDIOCx, uint32_t u32BusWidth, uint32_t *pu32ErrStatus);

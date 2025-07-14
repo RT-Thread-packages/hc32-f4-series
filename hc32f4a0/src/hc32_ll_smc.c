@@ -10,9 +10,11 @@
    2022-06-30       CDT             Modify EXMC_SMC_StructInit, EXMC_SMC_Init, EXMC_SMC_GetChipConfig
                                     Delete function comments: EXMC_SMC_Chipx
    2023-06-30       CDT             Function EXMC_SMC_DeInit add return value
+   2024-06-30       CDT             Update macro: EXMC_SMC_READ_BURST_CONTINUOUS -> EXMC_SMC_READ_BURST_INFINITE
+                                    Update macro: EXMC_SMC_WRITE_BURST_CONTINUOUS -> EXMC_SMC_WRITE_BURST_INFINITE
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -88,7 +90,7 @@
     ((x) == EXMC_SMC_READ_BURST_8BEAT)          ||                             \
     ((x) == EXMC_SMC_READ_BURST_16BEAT)         ||                             \
     ((x) == EXMC_SMC_READ_BURST_32BEAT)         ||                             \
-    ((x) == EXMC_SMC_READ_BURST_CONTINUOUS))
+    ((x) == EXMC_SMC_READ_BURST_INFINITE))
 
 #define IS_EXMC_SMC_WRITE_BURST(x)                                             \
 (   ((x) == EXMC_SMC_WRITE_BURST_1BEAT)         ||                             \
@@ -96,7 +98,7 @@
     ((x) == EXMC_SMC_WRITE_BURST_8BEAT)         ||                             \
     ((x) == EXMC_SMC_WRITE_BURST_16BEAT)        ||                             \
     ((x) == EXMC_SMC_WRITE_BURST_32BEAT)        ||                             \
-    ((x) == EXMC_SMC_WRITE_BURST_CONTINUOUS))
+    ((x) == EXMC_SMC_WRITE_BURST_INFINITE))
 
 #define IS_EXMC_SMC_BLS_SYNC(x)                                                \
 (   ((x) == EXMC_SMC_BLS_SYNC_CS)               ||                             \

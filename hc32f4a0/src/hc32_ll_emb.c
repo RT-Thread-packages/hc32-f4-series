@@ -12,9 +12,12 @@
    2023-06-30       CDT             Function EMB_TMR4_Init don't call EMB_DeInit
                                     Function EMB_TMR6_Init don't call EMB_DeInit
                                     Function EMB_DeInit set register EMB_RLSSEL to reset value
+   2024-06-30       CDT             Modify assert IS_EMB_MONITOR_EVT
+                                    Optimize EMB_ClearStatus function
+                                    Rename macro-definition: IS_VALID_EMB_INT -> IS_EMB_INT
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -116,7 +119,6 @@
 #define IS_EMB_CMP3_STAT(x)                                                    \
 (   ((x) == EMB_CMP3_ENABLE)                ||                                 \
     ((x) == EMB_CMP3_DISABLE))
-
 #define IS_EMB_CMP4_STAT(x)                                                    \
 (   ((x) == EMB_CMP4_ENABLE)                ||                                 \
     ((x) == EMB_CMP4_DISABLE))
@@ -134,7 +136,6 @@
     ((x) == EMB_PORT1_FILTER_DISABLE))
 
 #define IS_EMB_PORT1_FILTER_DIV(x)          (((x) & (~EMB_PORT1_FILTER_CLK_DIV_MASK)) == 0UL)
-
 #define IS_EMB_PORT2_STAT(x)                                                   \
 (   ((x) == EMB_PORT2_ENABLE)               ||                                 \
     ((x) == EMB_PORT2_DISABLE))
@@ -162,7 +163,6 @@
     ((x) == EMB_PORT3_FILTER_DISABLE))
 
 #define IS_EMB_PORT3_FILTER_DIV(x)          (((x) & (~EMB_PORT3_FILTER_CLK_DIV_MASK)) == 0UL)
-
 #define IS_EMB_PORT4_STAT(x)                                                   \
 (   ((x) == EMB_PORT4_ENABLE)               ||                                 \
     ((x) == EMB_PORT4_DISABLE))
@@ -192,7 +192,6 @@
 #define IS_EMB_DETECT_TMR6_2_PWM_LVL(x)                                        \
 (   ((x) == EMB_DETECT_TMR6_2_PWM_BOTH_LOW) ||                                 \
     ((x) == EMB_DETECT_TMR6_2_PWM_BOTH_HIGH))
-
 #define IS_EMB_TMR6_3_PWM_STAT(x)                                              \
 (   ((x) == EMB_TMR6_3_PWM_ENABLE)          ||                                 \
     ((x) == EMB_TMR6_3_PWM_DISABLE))
@@ -200,7 +199,6 @@
 #define IS_EMB_DETECT_TMR6_3_PWM_LVL(x)                                        \
 (   ((x) == EMB_DETECT_TMR6_3_PWM_BOTH_LOW) ||                                 \
     ((x) == EMB_DETECT_TMR6_3_PWM_BOTH_HIGH))
-
 #define IS_EMB_TMR6_4_PWM_STAT(x)                                              \
 (   ((x) == EMB_TMR6_4_PWM_ENABLE)          ||                                 \
     ((x) == EMB_TMR6_4_PWM_DISABLE))
@@ -208,7 +206,6 @@
 #define IS_EMB_DETECT_TMR6_4_PWM_LVL(x)                                        \
 (   ((x) == EMB_DETECT_TMR6_4_PWM_BOTH_LOW) ||                                 \
     ((x) == EMB_DETECT_TMR6_4_PWM_BOTH_HIGH))
-
 #define IS_EMB_TMR6_5_PWM_STAT(x)                                              \
 (   ((x) == EMB_TMR6_5_PWM_ENABLE)          ||                                 \
     ((x) == EMB_TMR6_5_PWM_DISABLE))
@@ -241,7 +238,7 @@
 (   ((x) == EMB_DETECT_TMR6_8_PWM_BOTH_LOW) ||                                 \
     ((x) == EMB_DETECT_TMR6_8_PWM_BOTH_HIGH))
 
-#define IS_VALID_EMB_INT(x)                                                    \
+#define IS_EMB_INT(x)                                                          \
 (   ((x) != 0UL)                            &&                                 \
     (((x) | EMB_INT_ALL) == EMB_INT_ALL))
 
@@ -249,18 +246,17 @@
 (   ((x) != 0UL)                            &&                                 \
     (((x) | EMB_FLAG_ALL) == EMB_FLAG_ALL))
 
+#define IS_EMB_CLR_FLAG(x)                                                     \
+(   ((x) != 0UL)                            &&                                 \
+    (((x) | EMB_FLAG_CLR_ALL) == EMB_FLAG_CLR_ALL))
+
 #define IS_EMB_RELEASE_PWM_COND(x)                                             \
 (   ((x) == EMB_RELEASE_PWM_COND_FLAG_ZERO) ||                                 \
     ((x) == EMB_RELEASE_PWM_COND_STAT_ZERO))
 
 #define IS_EMB_MONITOR_EVT(x)                                                  \
-(   ((x) == EMB_EVT_PWMS)                   ||                                 \
-    ((x) == EMB_EVT_CMP)                    ||                                 \
-    ((x) == EMB_EVT_OSC)                    ||                                 \
-    ((x) == EMB_EVT_PORT1)                  ||                                 \
-    ((x) == EMB_EVT_PORT2)                  ||                                 \
-    ((x) == EMB_EVT_PORT3)                  ||                                 \
-    ((x) == EMB_EVT_PORT4))
+(   ((x) != 0UL)                            &&                                 \
+    (((x) | EMB_EVT_ALL) == EMB_EVT_ALL))
 
 /**
  * @}
@@ -464,7 +460,6 @@ int32_t EMB_TMR6_StructInit(stc_emb_tmr6_init_t *pstcEmbInit)
         pstcEmbInit->stcPort.stcPort4.u32PortLevel = EMB_PORT4_DETECT_LVL_HIGH;
         pstcEmbInit->stcPort.stcPort4.u32PortFilterDiv = EMB_PORT4_FILTER_CLK_DIV1;
         pstcEmbInit->stcPort.stcPort4.u32PortFilterState = EMB_PORT4_FILTER_DISABLE;
-
         /* PWM */
         pstcEmbInit->stcTmr6.stcTmr6_1.u32PwmLevel = EMB_DETECT_TMR6_1_PWM_BOTH_LOW;
         pstcEmbInit->stcTmr6.stcTmr6_1.u32PwmState = EMB_TMR6_1_PWM_DISABLE;
@@ -545,8 +540,8 @@ int32_t EMB_TMR6_Init(CM_EMB_TypeDef *EMBx, const stc_emb_tmr6_init_t *pstcEmbIn
         DDL_ASSERT(IS_EMB_TMR6_8_PWM_STAT(pstcEmbInit->stcTmr6.stcTmr6_8.u32PwmState));
         DDL_ASSERT(IS_EMB_DETECT_TMR6_8_PWM_LVL(pstcEmbInit->stcTmr6.stcTmr6_8.u32PwmLevel));
 
-        /* OSC */
         u32Reg2Value = 0UL;
+        /* OSC */
         u32Reg1Value = pstcEmbInit->stcOsc.u32OscState;
 
         /* PWM */
@@ -610,7 +605,7 @@ void EMB_DeInit(CM_EMB_TypeDef *EMBx)
 void EMB_IntCmd(CM_EMB_TypeDef *EMBx, uint32_t u32IntType, en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_EMB_GROUP(EMBx));
-    DDL_ASSERT(IS_VALID_EMB_INT(u32IntType));
+    DDL_ASSERT(IS_EMB_INT(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -621,7 +616,7 @@ void EMB_IntCmd(CM_EMB_TypeDef *EMBx, uint32_t u32IntType, en_functional_state_t
 }
 
 /**
- * @brief  Get EMB flag status.
+ * @brief  Clear EMB flag status.
  * @param  [in] EMBx                    Pointer to EMB instance register base
  *         This parameter can be one of the following values:
  *           @arg CM_EMBx:              EMB group instance register base
@@ -634,13 +629,13 @@ void EMB_ClearStatus(CM_EMB_TypeDef *EMBx, uint32_t u32Flag)
 {
     /* Check parameters */
     DDL_ASSERT(IS_EMB_GROUP(EMBx));
-    DDL_ASSERT(IS_EMB_FLAG(u32Flag));
+    DDL_ASSERT(IS_EMB_CLR_FLAG(u32Flag));
 
-    SET_REG32_BIT(EMBx->STATCLR, u32Flag);
+    WRITE_REG32(EMBx->STATCLR, u32Flag);
 }
 
 /**
- * @brief  Clear EMB flag status.
+ * @brief  Get EMB flag status.
  * @param  [in] EMBx                    Pointer to EMB instance register base
  *         This parameter can be one of the following values:
  *           @arg CM_EMBx:              EMB group instance register base

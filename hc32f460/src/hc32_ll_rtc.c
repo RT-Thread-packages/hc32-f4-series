@@ -7,9 +7,11 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2024-06-30       CDT             Modify RTC_EnterRwMode,RTC_ExitRwMode,RTC_ConfirmLPMCond,RTC_SetIntPeriod,RTC_AlarmCmd,RTC_IntCmd,RTC_ClearStatus for couping risk
+   2024-08-31       CDT             Optimized access code for some registers to improve readability
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -49,6 +51,9 @@
  * @defgroup RTC_Local_Macros RTC Local Macros
  * @{
  */
+
+/* RTC CR2 & TPSR flag mask */
+#define RTC_CR2_FLAG_MASK                       (RTC_CR2_ALMF)
 
 /* RTC software reset timeout(ms) */
 #define RTC_SW_RST_TIMEOUT                  (100UL)
@@ -268,7 +273,7 @@ int32_t RTC_EnterRwMode(void)
     /* Mode switch when RTC is running */
     if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
         if (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
-            WRITE_REG32(bCM_RTC->CR2_b.RWREQ, SET);
+            SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK);
             /* Waiting for RWEN bit set */
             u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
             while (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
@@ -299,7 +304,7 @@ int32_t RTC_ExitRwMode(void)
     /* Mode switch when RTC is running */
     if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
         if (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
-            WRITE_REG32(bCM_RTC->CR2_b.RWREQ, RESET);
+            MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK), ~RTC_CR2_RWREQ);
             /* Waiting for RWEN bit reset */
             u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
             while (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
@@ -329,7 +334,7 @@ int32_t RTC_ConfirmLPMCond(void)
 
     /* Check RTC work status */
     if (0UL != READ_REG32(bCM_RTC->CR1_b.START)) {
-        WRITE_REG32(bCM_RTC->CR2_b.RWREQ, SET);
+        SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK);
         /* Waiting for RTC RWEN bit set */
         u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
         while (1UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
@@ -341,7 +346,7 @@ int32_t RTC_ConfirmLPMCond(void)
         }
 
         if (LL_OK == i32Ret) {
-            WRITE_REG32(bCM_RTC->CR2_b.RWREQ, RESET);
+            MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_RWREQ | RTC_CR2_FLAG_MASK), ~RTC_CR2_RWREQ);
             /* Waiting for RTC RWEN bit reset */
             u32Count = RTC_MD_SWITCH_TIMEOUT * (HCLK_VALUE / 20000UL);
             while (0UL != READ_REG32(bCM_RTC->CR2_b.RWEN)) {
@@ -382,14 +387,14 @@ void RTC_SetIntPeriod(uint8_t u8Period)
     u32IntSta = READ_REG32(bCM_RTC->CR2_b.PRDIE);
     /* Disable period interrupt when START=1 and clear period flag after write */
     if ((0UL != u32IntSta) && (0UL != u32RtcSta)) {
-        WRITE_REG32(bCM_RTC->CR2_b.PRDIE, RESET);
+        MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_PRDIE | RTC_CR2_FLAG_MASK), ~RTC_CR2_PRDIE);
     }
 
     /* RTC CR1 Configuration */
     MODIFY_REG8(CM_RTC->CR1, RTC_CR1_PRDS, u8Period);
 
     if ((0UL != u32IntSta) && (0UL != u32RtcSta)) {
-        WRITE_REG32(bCM_RTC->CR2_b.PRDIE, SET);
+        SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_PRDIE | RTC_CR2_FLAG_MASK);
     }
 }
 
@@ -839,7 +844,11 @@ void RTC_AlarmCmd(en_functional_state_t enNewState)
     /* Check parameters */
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    WRITE_REG32(bCM_RTC->CR2_b.ALME, enNewState);
+    if (enNewState == ENABLE) {
+        SET_REG8_BIT(CM_RTC->CR2, RTC_CR2_ALME | RTC_CR2_FLAG_MASK);
+    } else {
+        MODIFY_REG8(CM_RTC->CR2, (RTC_CR2_ALME | RTC_CR2_FLAG_MASK), ~RTC_CR2_ALME);
+    }
 }
 
 /**
@@ -861,9 +870,9 @@ void RTC_IntCmd(uint32_t u32IntType, en_functional_state_t enNewState)
     u32IntTemp = u32IntType & 0x0000FFUL;
     if (0UL != u32IntTemp) {
         if (DISABLE != enNewState) {
-            SET_REG8_BIT(CM_RTC->CR2, u32IntTemp);
+            SET_REG8_BIT(CM_RTC->CR2, u32IntTemp | RTC_CR2_FLAG_MASK);
         } else {
-            CLR_REG8_BIT(CM_RTC->CR2, u32IntTemp);
+            MODIFY_REG8(CM_RTC->CR2, (u32IntTemp | RTC_CR2_FLAG_MASK), ~u32IntTemp);
         }
     }
 

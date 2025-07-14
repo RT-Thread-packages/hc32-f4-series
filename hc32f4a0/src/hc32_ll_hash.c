@@ -7,9 +7,11 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Add HASH_DeInit function
+   2024-06-30       CDT             Modify API about CR register for couping risk
+   2024-11-08       CDT             Fixed HASH_HMAC_Calculate function
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -95,6 +97,7 @@
 (   ((x) == HASH_MSG_GRP_FIRST)                 ||                             \
     ((x) == HASH_MSG_GRP_END)                   ||                             \
     ((x) == HASH_MSG_GRP_ONLY_ONE))
+
 /**
  * @}
  */
@@ -217,7 +220,7 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
     u32BitLenHigh = (u32DataSize >> 29U) & 0x7U;
     u32BitLenLow  = (u32DataSize << 3U);
 
-    /* Stop hash calculating. */
+    /* wait hash calculating stop. */
     i32Ret = HASH_Wait(HASH_ACTION_START);
 
     while ((i32Ret == LL_OK) && (u8HashEnd == 0U)) {
@@ -226,7 +229,7 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
             u32DataSize -= HASH_GROUP_SIZE;
             u32Index += HASH_GROUP_SIZE;
         } else if (u32DataSize >= HASH_LAST_GROUP_SIZE_MAX) {
-            HASH_MemSet(u8FillBuffer, 0, HASH_GROUP_SIZE);
+            HASH_MemSet(u8FillBuffer, 0U, HASH_GROUP_SIZE);
             HASH_MemCopy(u8FillBuffer, &pu8Data[u32Index], u32DataSize);
             u8FillBuffer[u32DataSize] = 0x80U;
             u8DataEndMark = 1U;
@@ -237,7 +240,7 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
         }
 
         if (u8HashEnd != 0U) {
-            HASH_MemSet(u8FillBuffer, 0, HASH_GROUP_SIZE);
+            HASH_MemSet(u8FillBuffer, 0U, HASH_GROUP_SIZE);
             if (u32DataSize > 0U) {
                 HASH_MemCopy(u8FillBuffer, &pu8Data[u32Index], u32DataSize);
             }
@@ -261,22 +264,21 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
         if (u8FirstGroup != 0U) {
             u8FirstGroup = 0U;
             /* Set first group. */
-            WRITE_REG32(bCM_HASH->CR_b.FST_GRP, 1U);
+            SET_REG32_BIT(CM_HASH->CR, HASH_CR_FST_GRP | HASH_FLAG_CLR_ALL);
         }
         /* check if last group */
         if (u8LastGroup != 0U) {
             u8LastGroup = 0U;
             /* Set last group. */
-            WRITE_REG32(bCM_HASH->CR_b.KMSG_END, 1U);
+            SET_REG32_BIT(CM_HASH->CR, HASH_CR_KMSG_END | HASH_FLAG_CLR_ALL);
         }
-
         /* Start hash calculating. */
-        WRITE_REG32(bCM_HASH->CR_b.START, 1U);
+        SET_REG32_BIT(CM_HASH->CR, HASH_CR_START | HASH_FLAG_CLR_ALL);
         i32Ret = HASH_Wait(HASH_ACTION_START);
     }
-    /* Stop hash calculating. */
-    WRITE_REG32(bCM_HASH->CR_b.START, 0U);
 
+    /* Stop hash calculating. */
+    MODIFY_REG32(CM_HASH->CR, HASH_CR_START | HASH_FLAG_CLR_ALL, ~HASH_CR_START);
     return i32Ret;
 }
 
@@ -351,6 +353,29 @@ int32_t HASH_Calculate(const uint8_t *pu8SrcData, uint32_t u32SrcDataSize, uint8
 }
 
 /**
+ * @brief  Wait for the flag
+ * @param  [in]  u32Action              HASH action. This parameter can be a value of @ref HASH_Action.
+ * @retval int32_t:
+ *           - LL_OK:                   No errors occurred
+ *           - LL_ERR_TIMEOUT:          Works timeout
+ */
+static int32_t FLAG_Wait(uint32_t u32Action)
+{
+    int32_t i32Ret = LL_OK;
+    __IO uint32_t u32TimeCount = 0UL;
+
+    /* Wait for the flag */
+    while (READ_REG32_BIT(CM_HASH->CR, u32Action) == 0UL) {
+        if (u32TimeCount++ > HASH_TIMEOUT) {
+            i32Ret = LL_ERR_TIMEOUT;
+            break;
+        }
+    }
+
+    return i32Ret;
+}
+
+/**
  * @brief  HMAC calculate.
  * @param  [in]  pu8SrcData             Pointer to the source data buffer.
  * @param  [in]  u32SrcDataSize         Length of the source data buffer in bytes.
@@ -376,32 +401,36 @@ int32_t HASH_HMAC_Calculate(const uint8_t *pu8SrcData, uint32_t u32SrcDataSize,
         (void)HASH_SetMode(HASH_MD_HMAC);
         if (u32KeySize > HASH_KEY_LONG_SIZE) {
             /* Key size longer than 64 bytes. */
-            WRITE_REG32(bCM_HASH->CR_b.LKEY, 1U);
+            SET_REG32_BIT(CM_HASH->CR, HASH_CR_LKEY | HASH_FLAG_CLR_ALL);
             /* Write the key to the data register */
             i32Ret = HASH_DoCalc(pu8Key, u32KeySize);
         } else {
+            /* We need the rest of it to be 0 */
+            HASH_MemSet(u8FillBuffer, 0U, HASH_GROUP_SIZE);
             HASH_MemCopy(u8FillBuffer, pu8Key, u32KeySize);
             /* Key size equal to or shorter than 64 bytes. */
-            WRITE_REG32(bCM_HASH->CR_b.LKEY, 0U);
+            MODIFY_REG32(CM_HASH->CR, HASH_CR_LKEY | HASH_FLAG_CLR_ALL, ~HASH_CR_LKEY);
             /* Write the key to the data register */
             HASH_WriteData(u8FillBuffer);
             /* Only one group. */
-            SET_REG32_BIT(CM_HASH->CR, HASH_MSG_GRP_ONLY_ONE);
+            SET_REG32_BIT(CM_HASH->CR, HASH_MSG_GRP_ONLY_ONE | HASH_FLAG_CLR_ALL);
             /* Start hash calculating. */
-            WRITE_REG32(bCM_HASH->CR_b.START, 1U);
+            SET_REG32_BIT(CM_HASH->CR, HASH_CR_START | HASH_FLAG_CLR_ALL);
             /* Wait for operation completion */
             i32Ret = HASH_Wait(HASH_ACTION_START);
         }
         /* Clear operation completion flag */
-        WRITE_REG32(bCM_HASH->CR_b.CYC_END, 0U);
+        MODIFY_REG32(CM_HASH->CR, HASH_FLAG_CLR_ALL, ~HASH_FLAG_CYC_END);
+
         if (i32Ret == LL_OK) {
             i32Ret = HASH_DoCalc(pu8SrcData, u32SrcDataSize);
             /* Write the message to the data register */
             if (i32Ret == LL_OK) {
-                i32Ret = HASH_Wait(HASH_ACTION_HMAC_END);
+                /* Write hmac Operation complete */
+                i32Ret = FLAG_Wait(HASH_ACTION_HMAC_END);
                 if (i32Ret == LL_OK) {
                     /* Clear operation completion flag */
-                    CLR_REG32_BIT(CM_HASH->CR, HASH_CR_CYC_END | HASH_CR_HMAC_END);
+                    CLR_REG32_BIT(CM_HASH->CR, HASH_FLAG_CLR_ALL);
                     /* Get the message digest result */
                     HASH_ReadMsgDigest(pu8MsgDigest);
                 }
@@ -434,9 +463,9 @@ int32_t HASH_IntCmd(uint32_t u32HashInt, en_functional_state_t enNewState)
     i32Ret = HASH_Wait(HASH_ACTION_START);
     if (i32Ret == LL_OK) {
         if (enNewState == ENABLE) {
-            SET_REG32_BIT(CM_HASH->CR, u32HashInt);
+            SET_REG32_BIT(CM_HASH->CR, u32HashInt | HASH_FLAG_CLR_ALL);
         } else {
-            CLR_REG32_BIT(CM_HASH->CR, u32HashInt);
+            MODIFY_REG32(CM_HASH->CR, HASH_INT_ALL | HASH_FLAG_CLR_ALL, ~u32HashInt);
         }
     }
 
@@ -483,7 +512,7 @@ int32_t HASH_ClearStatus(uint32_t u32Flag)
     /* Wait for the HASH to stop */
     i32Ret = HASH_Wait(HASH_ACTION_START);
     if (i32Ret == LL_OK) {
-        CLR_REG32_BIT(CM_HASH->CR, u32Flag);
+        MODIFY_REG32(CM_HASH->CR, HASH_FLAG_CLR_ALL, ~u32Flag);
     }
 
     return i32Ret;
@@ -507,7 +536,7 @@ int32_t HASH_SetMode(uint32_t u32HashMode)
     /* Wait for the HASH to stop */
     i32Ret = HASH_Wait(HASH_ACTION_START);
     if (i32Ret == LL_OK) {
-        MODIFY_REG32(CM_HASH->CR, HASH_CR_MODE, u32HashMode);
+        MODIFY_REG32(CM_HASH->CR, HASH_CR_MODE | HASH_FLAG_CLR_ALL, u32HashMode | HASH_FLAG_CLR_ALL);
     }
 
     return i32Ret;
@@ -515,7 +544,8 @@ int32_t HASH_SetMode(uint32_t u32HashMode)
 
 /**
  * @brief  Set HASH key size mode.
- * @param  [in] u32SizeMode             Key size mode. This parameter can be a value of @ref HASH_Key_Size_Mode
+ * @param  [in] u32SizeMode             Key size mode.
+ *                                      This parameter can be a value of @ref HASH_Key_Size_Mode
  *   @arg  HASH_KEY_MD_LONG_SIZE:       Key size > 64 Bytes
  *   @arg  HASH_KEY_MD_SHORT_SIZE:      Key size <= 64 Bytes
  * @retval int32_t:
@@ -530,7 +560,7 @@ int32_t HASH_SetKeySizeMode(uint32_t u32SizeMode)
     /* Wait for the HASH to stop */
     i32Ret = HASH_Wait(HASH_ACTION_START);
     if (i32Ret == LL_OK) {
-        MODIFY_REG32(CM_HASH->CR, HASH_CR_LKEY, u32SizeMode);
+        MODIFY_REG32(CM_HASH->CR, HASH_CR_LKEY | HASH_FLAG_CLR_ALL, u32SizeMode | HASH_FLAG_CLR_ALL);
     }
 
     return i32Ret;
@@ -538,15 +568,15 @@ int32_t HASH_SetKeySizeMode(uint32_t u32SizeMode)
 
 /**
  * @brief  Set message group.
- * @param  [in] u32MsgGroup         First group or Last group of messages.
- *                                  This parameter can be a value of @ref HASH_Msg_Group
+ * @param  [in] u32MsgGroup             First group or Last group of messages.
+ *                                      This parameter can be a value of @ref HASH_Msg_Group
 
- *   @arg  HASH_MSG_GRP_FIRST:      The first group of messages or keys
- *   @arg  HASH_MSG_GRP_END:        The last group of messages or keys
- *   @arg  HASH_MSG_GRP_ONLY_ONE:   Only one set of message or key
+ *   @arg  HASH_MSG_GRP_FIRST:          The first group of messages or keys
+ *   @arg  HASH_MSG_GRP_END:            The last group of messages or keys
+ *   @arg  HASH_MSG_GRP_ONLY_ONE:       Only one set of message or key
  * @retval int32_t:
- *           - LL_OK:               No errors occurred
- *           - LL_ERR_TIMEOUT:      Works timeout
+ *           - LL_OK:                   No errors occurred
+ *           - LL_ERR_TIMEOUT:          Works timeout
  */
 int32_t HASH_SetMsgGroup(uint32_t u32MsgGroup)
 {
@@ -556,7 +586,7 @@ int32_t HASH_SetMsgGroup(uint32_t u32MsgGroup)
     /* Wait for the HASH to stop */
     i32Ret = HASH_Wait(HASH_ACTION_START);
     if (i32Ret == LL_OK) {
-        SET_REG32_BIT(CM_HASH->CR, u32MsgGroup);
+        MODIFY_REG32(CM_HASH->CR, HASH_MSG_GRP_ONLY_ONE | HASH_FLAG_CLR_ALL, u32MsgGroup | HASH_FLAG_CLR_ALL);
     }
 
     return i32Ret;
@@ -566,8 +596,8 @@ int32_t HASH_SetMsgGroup(uint32_t u32MsgGroup)
  * @brief  Start HASH.
  * @param  None
  * @retval int32_t:
- *           - LL_OK:               No errors occurred
- *           - LL_ERR_TIMEOUT:      Works timeout
+ *           - LL_OK:                   No errors occurred
+ *           - LL_ERR_TIMEOUT:          Works timeout
  */
 int32_t HASH_Start(void)
 {
@@ -577,7 +607,7 @@ int32_t HASH_Start(void)
     i32Ret = HASH_Wait(HASH_ACTION_START);
     if (i32Ret == LL_OK) {
         /* Start hash calculating. */
-        SET_REG32_BIT(CM_HASH->CR, HASH_CR_START);
+        SET_REG32_BIT(CM_HASH->CR, HASH_CR_START | HASH_FLAG_CLR_ALL);
     }
 
     return i32Ret;

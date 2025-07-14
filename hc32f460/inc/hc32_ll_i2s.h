@@ -7,9 +7,11 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2024-08-31       CDT             Optimize I2S_DeInit()
+   2024-11-08       CDT             Removed I2S_RST_TYPE_CODEC
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -235,10 +237,9 @@ typedef struct {
  * @defgroup I2S_Reset_Type I2S Reset Type
  * @{
  */
-#define I2S_RST_TYPE_CODEC                      (I2S_CTRL_CODECRC)  /*!< Reset codec of I2S */
 #define I2S_RST_TYPE_FIFO                       (I2S_CTRL_FIFOR)    /*!< Reset FIFO of I2S  */
 
-#define I2S_RST_TYPE_ALL                        (I2S_RST_TYPE_CODEC | I2S_RST_TYPE_FIFO)
+#define I2S_RST_TYPE_ALL                        (I2S_RST_TYPE_FIFO)
 /**
  * @}
  */
@@ -292,7 +293,7 @@ typedef struct {
  */
 
 /* Initialization and configuration functions */
-void I2S_DeInit(CM_I2S_TypeDef *I2Sx);
+int32_t I2S_DeInit(CM_I2S_TypeDef *I2Sx);
 int32_t I2S_Init(CM_I2S_TypeDef *I2Sx, const stc_i2s_init_t *pstcI2sInit);
 int32_t I2S_StructInit(stc_i2s_init_t *pstcI2sInit);
 void I2S_SWReset(CM_I2S_TypeDef *I2Sx, uint32_t u32Type);

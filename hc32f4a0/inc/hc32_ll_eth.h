@@ -1,17 +1,21 @@
 /**
  *******************************************************************************
- * @file    hc32_ll_eth.h
- * @brief   This file contains all the Macro Definitions of the ETH driver
- *          library.
+ * @file  hc32_ll_eth.h
+ * @brief This file contains all the Macro Definitions of the ETH driver
+ *        library.
  @verbatim
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
                                     Add ETH_MAC_SetInterface function
+   2024-06-30       CDT             Rename _OPERA_ to _OP_ and delete redundant definition
+   2024-09-13       CDT             Modify ETH_PPS_OUTPUT_FREQ_1HZ as ETH_PPS_OUTPUT_PULSE_1HZ
+                                    Modify comment of defgroup ETH_PPS_Output_Frequency
+   2024-11-08       CDT             Extract the relevant code of PHY
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -61,10 +65,6 @@ extern "C"
  * @brief ETH Common Initialization Structure Definition
  */
 typedef struct {
-    uint16_t u16AutoNego;               /*!< Specifies the Auto Negotiation mode for the external PHY.
-                                             This parameter can be a value of @ref ETH_Auto_Negotiation */
-    uint16_t u16PhyAddr;                /*!< Specifies the Ethernet PHY address.
-                                             This parameter must be a number between Min_Data = 0 and Max_Data = 31 */
     uint8_t  au8MacAddr[6];             /*!< Specifies the MAC Address of used Hardware */
     uint32_t u32Interface;              /*!< Specifies the media interface.
                                              This parameter can be a value of @ref ETH_Interface */
@@ -644,11 +644,13 @@ typedef struct {
  */
 
 /**
- * @defgroup ETH_Auto_Negotiation ETH Auto Negotiation
+ * @defgroup ETH_SMI_Clock_Division ETH SMI Clock Division
  * @{
  */
-#define ETH_AUTO_NEGO_DISABLE                       (0x0000U)
-#define ETH_AUTO_NEGO_ENABLE                        (0x0001U)
+#define ETH_SMI_CLK_DIV16                           (0x02UL << ETH_MAC_SMIADDR_SMIC_POS)
+#define ETH_SMI_CLK_DIV26                           (0x03UL << ETH_MAC_SMIADDR_SMIC_POS)
+#define ETH_SMI_CLK_DIV42                           (0x00UL << ETH_MAC_SMIADDR_SMIC_POS)
+#define ETH_SMI_CLK_DIV62                           (0x01UL << ETH_MAC_SMIADDR_SMIC_POS)
 /**
  * @}
  */
@@ -750,8 +752,8 @@ typedef struct {
  * @defgroup ETH_Watchdog ETH Watchdog
  * @{
  */
-#define ETH_MAC_WATCHDOG_DISABLE                    (ETH_MAC_CONFIGR_MWD)
-#define ETH_MAC_WATCHDOG_ENABLE                     (0UL)
+#define ETH_MAC_WDT_DISABLE                         (ETH_MAC_CONFIGR_MWD)
+#define ETH_MAC_WDT_ENABLE                          (0UL)
 /**
  * @}
  */
@@ -1424,18 +1426,18 @@ typedef struct {
  * @defgroup ETH_Rx_DMA_Burst_Length ETH Rx DMA Burst Length
  * @{
  */
-#define ETH_DMA_RX_BURST_LEN_1BEAT                  (ETH_DMA_BUSMODR_RPBL_0)                          /*!< Maximum number of beats to be transferred in one RxDMA transaction is 1 */
-#define ETH_DMA_RX_BURST_LEN_2BEAT                  (ETH_DMA_BUSMODR_RPBL_1)                          /*!< Maximum number of beats to be transferred in one RxDMA transaction is 2 */
-#define ETH_DMA_RX_BURST_LEN_4BEAT                  (ETH_DMA_BUSMODR_RPBL_2)                          /*!< Maximum number of beats to be transferred in one RxDMA transaction is 4 */
-#define ETH_DMA_RX_BURST_LEN_8BEAT                  (ETH_DMA_BUSMODR_RPBL_3)                          /*!< Maximum number of beats to be transferred in one RxDMA transaction is 8 */
-#define ETH_DMA_RX_BURST_LEN_16BEAT                 (ETH_DMA_BUSMODR_RPBL_4)                          /*!< Maximum number of beats to be transferred in one RxDMA transaction is 16 */
-#define ETH_DMA_RX_BURST_LEN_32BEAT                 (ETH_DMA_BUSMODR_RPBL_5)                          /*!< Maximum number of beats to be transferred in one RxDMA transaction is 32 */
-#define ETH_DMA_RX_BURST_LEN_8XPBL_8BEAT            (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_RPBL_0)  /*!< Maximum number of beats to be transferred in one RxDMA transaction is 8 */
-#define ETH_DMA_RX_BURST_LEN_8XPBL_16BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_RPBL_1)  /*!< Maximum number of beats to be transferred in one RxDMA transaction is 16 */
-#define ETH_DMA_RX_BURST_LEN_8XPBL_32BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_RPBL_2)  /*!< Maximum number of beats to be transferred in one RxDMA transaction is 32 */
-#define ETH_DMA_RX_BURST_LEN_8XPBL_64BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_RPBL_3)  /*!< Maximum number of beats to be transferred in one RxDMA transaction is 64 */
-#define ETH_DMA_RX_BURST_LEN_8XPBL_128BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_RPBL_4)  /*!< Maximum number of beats to be transferred in one RxDMA transaction is 128 */
-#define ETH_DMA_RX_BURST_LEN_8XPBL_256BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_RPBL_5)  /*!< Maximum number of beats to be transferred in one RxDMA transaction is 256 */
+#define ETH_DMA_RX_BURST_LEN_1BEAT                  (0x01UL << ETH_DMA_BUSMODR_RPBL_POS)                    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 1 */
+#define ETH_DMA_RX_BURST_LEN_2BEAT                  (0x02UL << ETH_DMA_BUSMODR_RPBL_POS)                    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 2 */
+#define ETH_DMA_RX_BURST_LEN_4BEAT                  (0x04UL << ETH_DMA_BUSMODR_RPBL_POS)                    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 4 */
+#define ETH_DMA_RX_BURST_LEN_8BEAT                  (0x08UL << ETH_DMA_BUSMODR_RPBL_POS)                    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 8 */
+#define ETH_DMA_RX_BURST_LEN_16BEAT                 (0x10UL << ETH_DMA_BUSMODR_RPBL_POS)                    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 16 */
+#define ETH_DMA_RX_BURST_LEN_32BEAT                 (0x20UL << ETH_DMA_BUSMODR_RPBL_POS)                    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 32 */
+#define ETH_DMA_RX_BURST_LEN_8XPBL_8BEAT            (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_RX_BURST_LEN_1BEAT)    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 8 */
+#define ETH_DMA_RX_BURST_LEN_8XPBL_16BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_RX_BURST_LEN_2BEAT)    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 16 */
+#define ETH_DMA_RX_BURST_LEN_8XPBL_32BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_RX_BURST_LEN_4BEAT)    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 32 */
+#define ETH_DMA_RX_BURST_LEN_8XPBL_64BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_RX_BURST_LEN_8BEAT)    /*!< Maximum number of beats to be transferred in one RxDMA transaction is 64 */
+#define ETH_DMA_RX_BURST_LEN_8XPBL_128BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_RX_BURST_LEN_16BEAT)   /*!< Maximum number of beats to be transferred in one RxDMA transaction is 128 */
+#define ETH_DMA_RX_BURST_LEN_8XPBL_256BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_RX_BURST_LEN_32BEAT)   /*!< Maximum number of beats to be transferred in one RxDMA transaction is 256 */
 /**
  * @}
  */
@@ -1444,18 +1446,18 @@ typedef struct {
  * @defgroup ETH_Tx_DMA_Burst_Length ETH Tx DMA Burst Length
  * @{
  */
-#define ETH_DMA_TX_BURST_LEN_1BEAT                  (ETH_DMA_BUSMODR_TPBL_0)                          /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 1 */
-#define ETH_DMA_TX_BURST_LEN_2BEAT                  (ETH_DMA_BUSMODR_TPBL_1)                          /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 2 */
-#define ETH_DMA_TX_BURST_LEN_4BEAT                  (ETH_DMA_BUSMODR_TPBL_2)                          /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 4 */
-#define ETH_DMA_TX_BURST_LEN_8BEAT                  (ETH_DMA_BUSMODR_TPBL_3)                          /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 8 */
-#define ETH_DMA_TX_BURST_LEN_16BEAT                 (ETH_DMA_BUSMODR_TPBL_4)                          /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 16 */
-#define ETH_DMA_TX_BURST_LEN_32BEAT                 (ETH_DMA_BUSMODR_TPBL_5)                          /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 32 */
-#define ETH_DMA_TX_BURST_LEN_8XPBL_8BEAT            (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_TPBL_0)  /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 8 */
-#define ETH_DMA_TX_BURST_LEN_8XPBL_16BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_TPBL_1)  /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 16 */
-#define ETH_DMA_TX_BURST_LEN_8XPBL_32BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_TPBL_2)  /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 32 */
-#define ETH_DMA_TX_BURST_LEN_8XPBL_64BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_TPBL_3)  /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 64 */
-#define ETH_DMA_TX_BURST_LEN_8XPBL_128BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_TPBL_4)  /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 128 */
-#define ETH_DMA_TX_BURST_LEN_8XPBL_256BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_BUSMODR_TPBL_5)  /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 256 */
+#define ETH_DMA_TX_BURST_LEN_1BEAT                  (0x01UL << ETH_DMA_BUSMODR_TPBL_POS)                    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 1 */
+#define ETH_DMA_TX_BURST_LEN_2BEAT                  (0x02UL << ETH_DMA_BUSMODR_TPBL_POS)                    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 2 */
+#define ETH_DMA_TX_BURST_LEN_4BEAT                  (0x04UL << ETH_DMA_BUSMODR_TPBL_POS)                    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 4 */
+#define ETH_DMA_TX_BURST_LEN_8BEAT                  (0x08UL << ETH_DMA_BUSMODR_TPBL_POS)                    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 8 */
+#define ETH_DMA_TX_BURST_LEN_16BEAT                 (0x10UL << ETH_DMA_BUSMODR_TPBL_POS)                    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 16 */
+#define ETH_DMA_TX_BURST_LEN_32BEAT                 (0x20UL << ETH_DMA_BUSMODR_TPBL_POS)                    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 32 */
+#define ETH_DMA_TX_BURST_LEN_8XPBL_8BEAT            (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_TX_BURST_LEN_1BEAT)    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 8 */
+#define ETH_DMA_TX_BURST_LEN_8XPBL_16BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_TX_BURST_LEN_2BEAT)    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 16 */
+#define ETH_DMA_TX_BURST_LEN_8XPBL_32BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_TX_BURST_LEN_4BEAT)    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 32 */
+#define ETH_DMA_TX_BURST_LEN_8XPBL_64BEAT           (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_TX_BURST_LEN_8BEAT)    /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 64 */
+#define ETH_DMA_TX_BURST_LEN_8XPBL_128BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_TX_BURST_LEN_16BEAT)   /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 128 */
+#define ETH_DMA_TX_BURST_LEN_8XPBL_256BEAT          (ETH_DMA_BUSMODR_M8PBL | ETH_DMA_TX_BURST_LEN_32BEAT)   /*!< Maximum number of beats to be transferred in one TxDMA (or both) transaction is 256 */
 /**
  * @}
  */
@@ -1590,8 +1592,8 @@ typedef struct {
  * @defgroup ETH_Second_Frame_Operate ETH Second Frame Operate
  * @{
  */
-#define ETH_DMA_SEC_FRAME_OPERA_DISABLE             (0UL)
-#define ETH_DMA_SEC_FRAME_OPERA_ENABLE              (ETH_DMA_OPRMODR_OSF)
+#define ETH_DMA_SEC_FRAME_OP_DISABLE                (0UL)
+#define ETH_DMA_SEC_FRAME_OP_ENABLE                 (ETH_DMA_OPRMODR_OSF)
 /**
  * @}
  */
@@ -1603,9 +1605,6 @@ typedef struct {
 #define ETH_DMA_FLAG_PTPS                           (ETH_DMA_DMASTSR_PTPS)  /*!< Time-stamp trigger status */
 #define ETH_DMA_FLAG_PMTS                           (ETH_DMA_DMASTSR_PMTS)  /*!< PMT trigger status */
 #define ETH_DMA_FLAG_MMCS                           (ETH_DMA_DMASTSR_MMCS)  /*!< MMC trigger status */
-#define ETH_DMA_FLAG_EBUS                           (ETH_DMA_DMASTSR_EBUS)  /*!< Error state bits  */
-#define ETH_DMA_FLAG_TSTS                           (ETH_DMA_DMASTSR_TSTS)  /*!< Transmit state */
-#define ETH_DMA_FLAG_RSTS                           (ETH_DMA_DMASTSR_RSTS)  /*!< Receive state */
 #define ETH_DMA_FLAG_NIS                            (ETH_DMA_DMASTSR_NIS)   /*!< Normal interrupt summary flag */
 #define ETH_DMA_FLAG_AIS                            (ETH_DMA_DMASTSR_AIS)   /*!< Abnormal interrupt summary flag */
 #define ETH_DMA_FLAG_ERS                            (ETH_DMA_DMASTSR_ERS)   /*!< Early receive flag */
@@ -2056,7 +2055,7 @@ typedef struct {
  * @note PPS1(ETH_PPS_CH1) only supports single output mode(ETH_PPS_OUTPUT_MD_ONCE).
  * @{
  */
-#define ETH_PPS_OUTPUT_MD_CONTINUE                  (0UL)                     /*!< Continuous output mode */
+#define ETH_PPS_OUTPUT_MD_CONT                      (0UL)                     /*!< Continuous output mode */
 #define ETH_PPS_OUTPUT_MD_ONCE                      (ETH_PTP_PPSCTLR_PPSOMD)  /*!< Once output mode */
 /**
  * @}
@@ -2067,23 +2066,23 @@ typedef struct {
  * @note PPS1(ETH_PPS_CH1) only supports generate a pulse(ETH_PPS_OUTPUT_ONE_PULSE).
  * @{
  */
-#define ETH_PPS_OUTPUT_FREQ_1HZ                     (0UL)                                   /*!< Ouput pulse is 1HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_2HZ                     (0x01UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 2HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_4HZ                     (0x02UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 4HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_8HZ                     (0x03UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 8HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_16HZ                    (0x04UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 16HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_32HZ                    (0x05UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 32HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_64HZ                    (0x06UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 64HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_128HZ                   (0x07UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 128HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_256HZ                   (0x08UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 256HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_512HZ                   (0x09UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 512HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_1024HZ                  (0x0AUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 1024HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_2048HZ                  (0x0BUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 2048HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_4096HZ                  (0x0CUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 4096HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_8192HZ                  (0x0DUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 8192HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_16384HZ                 (0x0EUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 16384HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_FREQ_32768HZ                 (0x0FUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Ouput pulse is 32768HZ in continuous ouput mode */
-#define ETH_PPS_OUTPUT_ONE_PULSE                    (0x01UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< One pulse is generated in single ouput mode */
+#define ETH_PPS_OUTPUT_PULSE_1HZ                    (0UL)                                   /*!< Output 1HZ pulse signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_2HZ                     (0x01UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 2HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_4HZ                     (0x02UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 4HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_8HZ                     (0x03UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 8HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_16HZ                    (0x04UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 16HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_32HZ                    (0x05UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 32HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_64HZ                    (0x06UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 64HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_128HZ                   (0x07UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 128HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_256HZ                   (0x08UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 256HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_512HZ                   (0x09UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 512HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_1024HZ                  (0x0AUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 1024HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_2048HZ                  (0x0BUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 2048HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_4096HZ                  (0x0CUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 4096HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_8192HZ                  (0x0DUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 8192HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_16384HZ                 (0x0EUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 16384HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_FREQ_32768HZ                 (0x0FUL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< Output 32768HZ square signal in continuous output mode */
+#define ETH_PPS_OUTPUT_ONE_PULSE                    (0x01UL << ETH_PTP_PPSCTLR_PPSFRE0_POS) /*!< One pulse is generated in single output mode */
 /**
  * @}
  */
@@ -2285,14 +2284,14 @@ int32_t ETH_Start(void);
 int32_t ETH_Stop(void);
 
 /* PHY Functions */
-int32_t ETH_PHY_WriteReg(stc_eth_handle_t *pstcEthHandle, uint16_t u16Reg, uint16_t u16Value);
-int32_t ETH_PHY_ReadReg(stc_eth_handle_t *pstcEthHandle, uint16_t u16Reg, uint16_t *pu16Value);
-int32_t ETH_PHY_LoopBackCmd(stc_eth_handle_t *pstcEthHandle, en_functional_state_t enNewState);
+int32_t ETH_PHY_WriteReg(uint16_t u16PhyAddr, uint16_t u16Reg, uint16_t u16Value);
+int32_t ETH_PHY_ReadReg(uint16_t u16PhyAddr, uint16_t u16Reg, uint16_t *pu16Value);
 
 /* MAC Functions */
 void ETH_MAC_DeInit(void);
 int32_t ETH_MAC_Init(stc_eth_handle_t *pstcEthHandle, const stc_eth_mac_init_t *pstcMacInit);
 int32_t ETH_MAC_StructInit(stc_eth_mac_init_t *pstcMacInit);
+void ETH_MAC_SetMdcClock(void);
 void ETH_MAC_SetInterface(uint32_t u32Interface);
 void ETH_MAC_SetDuplexSpeed(uint32_t u32Mode, uint32_t u32Speed);
 void ETH_MAC_SetHashTable(uint32_t u32HashHigh, uint32_t u32HashLow);
@@ -2434,8 +2433,8 @@ int32_t ETH_PPS_Init(uint8_t u8Ch, const stc_eth_pps_config_t *pstcPpsInit);
 int32_t ETH_PPS_StructInit(stc_eth_pps_config_t *pstcPpsInit);
 void ETH_PPS_SetTargetTime(uint8_t u8Ch, uint32_t u32Sec, uint32_t u32Subsec);
 void ETH_PPS_SetTriggerFunc(uint8_t u8Ch, uint32_t u32Func);
+void ETH_PPS_SetPpsOutputFreq(uint8_t u8Ch, uint32_t u32Freq);
 void ETH_PPS_SetPps0OutputMode(uint32_t u32Mode);
-void ETH_PPS_SetPps0OutputFreq(uint32_t u32Freq);
 
 /**
  * @}

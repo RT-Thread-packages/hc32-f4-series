@@ -7,9 +7,10 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
- @endverbatim
+   2024-08-31       CDT             Add __USED for optimize
+  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -71,17 +72,20 @@
  * Local variable definitions ('static')
  ******************************************************************************/
 /**
+ * @defgroup ICG_Local_Variables ICG Local Variables
+ * @{
  * @brief ICG parameters configuration
  */
+
 #if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
-const uint32_t u32ICGValue[] __attribute__((section(ICG_START_ADDR_AC6))) =
+__USED const uint32_t u32ICGValue[] __attribute__((section(ICG_START_ADDR_AC6))) =
 #elif defined (__GNUC__) && !defined (__CC_ARM)
-const uint32_t u32ICGValue[] __attribute__((section(".icg_sec"))) =
+__USED const uint32_t u32ICGValue[] __attribute__((section(".icg_sec"))) =
 #elif defined (__CC_ARM)
-const uint32_t u32ICGValue[] __attribute__((at(ICG_START_ADDR))) =
+__USED const uint32_t u32ICGValue[] __attribute__((at(ICG_START_ADDR))) =
 #elif defined (__ICCARM__)
 #pragma location = ICG_START_ADDR
-__root static const uint32_t u32ICGValue[] =
+__USED __root static const uint32_t u32ICGValue[] =
 #else
 #error "unsupported compiler!!"
 #endif
@@ -89,7 +93,7 @@ __root static const uint32_t u32ICGValue[] =
     /* ICG 0~1 */
     ICG_REG_CFG0_CONST,
     ICG_REG_CFG1_CONST,
-    /* Reserved 2~7 */
+    /* Reserved */
     ICG_REG_RESV_CONST,
     ICG_REG_RESV_CONST,
     ICG_REG_RESV_CONST,
@@ -98,6 +102,9 @@ __root static const uint32_t u32ICGValue[] =
     ICG_REG_RESV_CONST,
 };
 
+/**
+ * @}
+ */
 /*******************************************************************************
  * Function implementation - global ('extern') and local ('static')
  ******************************************************************************/

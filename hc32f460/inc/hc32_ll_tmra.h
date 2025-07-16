@@ -11,11 +11,12 @@
    2023-06-30       CDT             Modify typo
                                     Update about split 16bit register TMRA_BCSTR into two 8bit registers TMRA_BCSTRH and TMRA_BCSTRL
                                     Delete union in stc_tmra_init_t structure
-   2023-09-30       CDT             Modify some of member type of struct stc_tmra_init_t and relate fuction about these member
+   2023-09-30       CDT             Modify some of member type of struct stc_tmra_init_t and relate function about these member
                                     Modify macro-definition value for group TMRA_Interrupt_Type/TMRA_Status_Flag
+   2024-06-30       CDT             API TMRA_DeInit() added return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -166,7 +167,7 @@ typedef struct {
  * @defgroup TMRA_Function_Mode TMRA TMRA Function Mode
  * @{
  */
-#define TMRA_FUNC_CMP                       (0x0U)                      /*!< Function mode of TMRA channel is ouput compare. */
+#define TMRA_FUNC_CMP                       (0x0U)                      /*!< Function mode of TMRA channel is output compare. */
 #define TMRA_FUNC_CAPT                      (TMRA_CCONR_CAPMD)          /*!< Function mode of TMRA channel is input capture. */
 /**
  * @}
@@ -484,7 +485,7 @@ void TMRA_HWCountDownCondCmd(CM_TMRA_TypeDef *TMRAx, uint16_t u16Cond, en_functi
 /* Set function mode */
 void TMRA_SetFunc(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16Func);
 
-/* Ouput compare */
+/* Output compare */
 int32_t TMRA_PWM_Init(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, const stc_tmra_pwm_init_t *pstcPwmInit);
 int32_t TMRA_PWM_StructInit(stc_tmra_pwm_init_t *pstcPwmInit);
 void TMRA_PWM_OutputCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, en_functional_state_t enNewState);
@@ -503,7 +504,7 @@ void TMRA_SetFilterClockDiv(CM_TMRA_TypeDef *TMRAx, uint32_t u32Pin, uint16_t u1
 void TMRA_FilterCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Pin, en_functional_state_t enNewState);
 
 /* Global */
-void TMRA_DeInit(CM_TMRA_TypeDef *TMRAx);
+int32_t TMRA_DeInit(CM_TMRA_TypeDef *TMRAx);
 /* Counting direction, period value, counter value, compare value */
 uint8_t TMRA_GetCountDir(const CM_TMRA_TypeDef *TMRAx);
 

@@ -9,9 +9,11 @@
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
                                     Add API function: EXMC_NFC_Read/EXMC_NFC_Write
+   2024-06-30       CDT             Update API function parameter: EXMC_NFC_Read/EXMC_NFC_Write
+   2024-08-31       CDT             API EXMC_NFC_DeInit add return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -61,6 +63,16 @@ extern "C"
  * @defgroup EXMC_NFC_Global_Types EXMC_NFC Global Types
  * @{
  */
+
+/**
+ * @brief  EXMC_NFC Column for NFC_IDXR0/1 Structure definition
+ */
+typedef struct {
+    uint32_t u32Bank;                   /*!< Defines IDXR bank.
+                                             This parameter can be a value of @ref EXMC_NFC_Bank */
+    uint32_t u32Page;                   /*!< Defines IDXR page. */
+    uint32_t u32Column;                 /*!< Defines IDXR column. */
+} stc_exmc_nfc_column_t;
 
 /**
  * @brief  EXMC_NFC Base Configuration Structure definition
@@ -524,7 +536,7 @@ __STATIC_INLINE uint16_t EXMC_NFC_Get4BitEccErrSection(void)
 /* Initialization and configuration EXMC_NFC functions */
 int32_t EXMC_NFC_StructInit(stc_exmc_nfc_init_t *pstcNfcInit);
 int32_t EXMC_NFC_Init(const stc_exmc_nfc_init_t *pstcNfcInit);
-void EXMC_NFC_DeInit(void);
+int32_t EXMC_NFC_DeInit(void);
 
 void EXMC_NFC_Cmd(en_functional_state_t enNewState);
 void EXMC_NFC_EccCmd(en_functional_state_t enNewState);
@@ -556,10 +568,10 @@ int32_t EXMC_NFC_SetFeature(uint32_t u32Bank, uint8_t u8FeatureAddr,
 int32_t EXMC_NFC_GetFeature(uint32_t u32Bank, uint8_t u8FeatureAddr,
                             uint32_t au32Data[], uint8_t u8NumWords, uint32_t u32Timeout);
 int32_t EXMC_NFC_EraseBlock(uint32_t u32Bank, uint32_t u32RowAddr, uint32_t u32Timeout);
-int32_t EXMC_NFC_Read(uint32_t u32Bank, uint32_t u32Page, uint32_t u32Col,
+int32_t EXMC_NFC_Read(stc_exmc_nfc_column_t *pstcColumn,
                       uint32_t au32Data[], uint32_t u32NumWords,
                       en_functional_state_t enEccState, uint32_t u32Timeout);
-int32_t EXMC_NFC_Write(uint32_t u32Bank, uint32_t u32Page, uint32_t u32Col,
+int32_t EXMC_NFC_Write(stc_exmc_nfc_column_t *pstcColumn,
                        const uint32_t au32Data[], uint32_t u32NumWords,
                        en_functional_state_t enEccState, uint32_t u32Timeout);
 int32_t EXMC_NFC_ReadPageMeta(uint32_t u32Bank, uint32_t u32Page, uint8_t *pu8Data,

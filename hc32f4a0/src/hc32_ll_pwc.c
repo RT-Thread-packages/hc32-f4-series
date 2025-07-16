@@ -12,9 +12,23 @@
    2023-06-30       CDT             Modify typo
                                     Add api PWC_LVD_DeInit()
                                     Modify API PWC_STOP_Enter() & add assert IS_PWC_STOP_TYPE()
+   2023-12-15       CDT             Remove redundant assert
+                                    Modify API PWC_PD_Enter() #use assert to replace the unlock, and add return value
+                                    Modify API PWC_STOP_Enter() #delete redundancies code
+                                    Unified the operation mode for register
+                                    Refine PWC_SLEEP_Enter()
+                                    Add API PWC_PD_SetIoState() & PWC_PD_SetMode()
+                                    Add assert in PWC_PD_Config()
+   2024-06-30       CDT             Modify LVD initialize process
+                                    Remove macro PWC_LVD_EXT_INPUT_EN_REG & PWC_LVD_EXT_INPUT_EN_BIT & PWC_LVD_CMP_OUTPUT_EN_REG & PWC_LVD_CMP_OUTPUT_EN_BIT
+                                    Modify PWC_LVD_ClearStatus & PWC_PD_ClearWakeupStatus for couping risk
+                                    Couping Risks caused by modifying the status bits of the WKTM
+   2024-08-31       CDT             Modify macro name IS_PWC_WKT_COMPARISION_VALUE as IS_PWC_WKT_COMPARISON_VALUE
+                                    Accessed CM_PWC->WKTC2 in 8-bit
+   2024-11-08       CDT             Add assert for PWC_STOP_Enter()
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -61,12 +75,11 @@
 #define PWC_MD_SWITCH_TIMEOUT           (30UL)
 #define PWC_MD_SWITCH_TIMEOUT2          (0x1000UL)
 
+#define PWC_PD_PDWKF0_MSK               (0x3FU)
+#define PWC_PD_PDWKF1_MSK               (0xB0U)
+
 #define PWC_LVD_EN_REG                  (CM_PWC->PVDCR0)
 #define PWC_LVD_EN_BIT                  (PWC_PVDCR0_PVD1EN)
-#define PWC_LVD_EXT_INPUT_EN_REG        (CM_PWC->PVDCR0)
-#define PWC_LVD_EXT_INPUT_EN_BIT        (PWC_PVDCR0_EXVCCINEN)
-#define PWC_LVD_CMP_OUTPUT_EN_REG       (CM_PWC->PVDCR1)
-#define PWC_LVD_CMP_OUTPUT_EN_BIT       (PWC_PVDCR1_PVD1CMPOE)
 #define PWC_LVD_FILTER_EN_REG           (CM_PWC->PVDFCR)
 #define PWC_LVD_FILTER_EN_BIT           (PWC_PVDFCR_PVD1NFDIS)
 #define PWC_LVD_STATUS_REG              (CM_PWC->PVDDSR)
@@ -110,6 +123,12 @@
 (   ((x) == PWC_STOP_WFI)                           ||                          \
     ((x) == PWC_STOP_WFE_INT)                       ||                          \
     ((x) == PWC_STOP_WFE_EVT))
+
+/* Parameter validity check for sleep type */
+#define IS_PWC_SLEEP_TYPE(x)                                                    \
+(   ((x) == PWC_SLEEP_WFI)                          ||                          \
+    ((x) == PWC_SLEEP_WFE_INT)                      ||                          \
+    ((x) == PWC_SLEEP_WFE_EVT))
 
 /* Parameter validity check for internal RAM setting of power mode control */
 #define IS_PWC_RAM_CONTROL(x)                                                   \
@@ -171,11 +190,6 @@
     ((x) == PWC_LVD_THRESHOLD_LVL6)                 ||                          \
     ((x) == PWC_LVD_THRESHOLD_LVL7))
 
-/* Parameter validity check for LVD NMI function setting. */
-#define IS_PWC_LVD_NMI(x)                                                       \
-(   ((x) == PWC_LVD_INT_MASK)                       ||                          \
-    ((x) == PWC_LVD_INT_NONMASK))
-
 /* Parameter validity check for LVD trigger setting. */
 #define IS_PWC_LVD_TRIG_EDGE(x)                                                 \
 (   ((x) == PWC_LVD_TRIG_FALLING)                   ||                          \
@@ -191,6 +205,19 @@
 #define IS_PWC_LVD_GET_FLAG(x)                                                  \
 (   ((x) != 0x00U)                                  &&                          \
     (((x) | PWC_LVD_FLAG_MASK) == PWC_LVD_FLAG_MASK))
+
+/* Parameter validity check for power down mode. */
+#define IS_PWC_PD_MD(x)                                                         \
+(   ((x) == PWC_PD_MD1)                             ||                          \
+    ((x) == PWC_PD_MD2)                             ||                          \
+    ((x) == PWC_PD_MD3)                             ||                          \
+    ((x) == PWC_PD_MD4))
+
+/* Parameter validity check for IO state while power down mode. */
+#define IS_PWC_PD_IO_STATE(x)                                                   \
+(   ((x) == PWC_PD_IO_KEEP1)                        ||                          \
+    ((x) == PWC_PD_IO_KEEP2)                        ||                          \
+    ((x) == PWC_PD_IO_HIZ))
 
 /* Parameter validity check for power down mode wake up event with trigger. */
 #define IS_PWC_WAKEUP_TRIG_EVT(x)                                               \
@@ -211,6 +238,11 @@
 #define IS_PWC_STOP_DRV(drv)                                                    \
 (   ((drv) == PWC_STOP_DRV_HIGH)                    ||                          \
     ((drv) == PWC_STOP_DRV_LOW))
+
+/* Parameter validity check for vcap selection while power down mode. */
+#define IS_PWC_PD_VCAP_SEL(x)                                                   \
+(   ((x) == PWC_PD_VCAP_0P1UF)                      ||                          \
+    ((x) == PWC_PD_VCAP_0P047UF))
 
 /* Parameter validity check for clock setting after wake-up from stop mode. */
 #define IS_PWC_STOP_CLK(x)                                                      \
@@ -254,8 +286,8 @@
     ((x)== PWC_WKT_CLK_SRC_XTAL32)                  ||                          \
     ((x)== PWC_WKT_CLK_SRC_RTCLRC))
 
-/* Parameter validity check for WKT Comparision Value. */
-#define IS_PWC_WKT_COMPARISION_VALUE(x)             ((x) <= 0x0FFFU)
+/* Parameter validity check for WKT Comparison Value. */
+#define IS_PWC_WKT_COMPARISON_VALUE(x)             ((x) <= 0x0FFFU)
 
 /**
  * @}
@@ -288,23 +320,37 @@
 /**
  * @brief  Enter power down mode.
  * @param  None
- * @retval None
+ * @retval int32_t:
+ *          - LL_ERR_TIMEOUT:   Enter PD mode timeout
+ * @note   Not return LL_OK because if enter PD mode OK, the MCU will shut down, and reset after woken-up.
  */
-void PWC_PD_Enter(void)
+int32_t PWC_PD_Enter(void)
 {
-    WRITE_REG16(CM_PWC->FPRC, PWC_UNLOCK_CODE1);
+    int32_t i32Ret;
+    uint32_t u32Timeout = 0UL;
 
+    DDL_ASSERT(IS_PWC_UNLOCKED());
+    DDL_ASSERT(IS_PWC_LVD_UNLOCKED());
+
+    /* Ensure pvd not reset exception */
     CLR_REG8_BIT(CM_PWC->PVDCR1, PWC_PVDCR1_PVD1IRS | PWC_PVDCR1_PVD2IRS);
-    SET_REG16_BIT(CM_PWC->STPMCR, PWC_STPMCR_STOP);
+    for (; ;) {
+        SET_REG16_BIT(CM_PWC->STPMCR, PWC_STPMCR_STOP);
+        SET_REG8_BIT(CM_PWC->PWRC0, PWC_PWRC0_PWDN);
+        __WFI();
+        u32Timeout++;
+        if (u32Timeout > 1000UL) {
+            i32Ret = LL_ERR_TIMEOUT;
+            break;
+        }
+    }
 
-    SET_REG8_BIT(CM_PWC->PWRC0, PWC_PWRC0_PWDN);
-
-    __WFI();
+    return i32Ret;
 }
 
 /**
  * @brief  Enter stop mode.
- * @param  [in] u8StopType specifies the XTAL initial config.
+ * @param  [in] u8StopType specifies the type of enter stop's command.
  *   @arg  PWC_STOP_WFI             Enter stop mode by WFI, and wake-up by interrupt handle.
  *   @arg  PWC_STOP_WFE_INT         Enter stop mode by WFE, and wake-up by interrupt request.
  *   @arg  PWC_STOP_WFE_EVT         Enter stop mode by WFE, and wake-up by event.
@@ -315,6 +361,7 @@ void PWC_STOP_Enter(uint8_t u8StopType)
 
     DDL_ASSERT(IS_PWC_UNLOCKED());
     DDL_ASSERT(IS_PWC_STOP_TYPE(u8StopType));
+    DDL_ASSERT(0U == (CM_PWC->PWRC0 & PWC_PWRC0_PDMDS));
 
     SET_REG16_BIT(CM_PWC->STPMCR, PWC_STPMCR_STOP);
     CLR_REG8_BIT(CM_PWC->PWRC0, PWC_PWRC0_PWDN);
@@ -323,28 +370,41 @@ void PWC_STOP_Enter(uint8_t u8StopType)
     } else {
         if (PWC_STOP_WFE_INT == u8StopType) {
             SET_REG32_BIT(SCB->SCR, SCB_SCR_SEVONPEND_Msk);
-        } else {
-            CLR_REG32_BIT(SCB->SCR, SCB_SCR_SEVONPEND_Msk);
         }
         __SEV();
         __WFE();
         __WFE();
     }
+
 }
 
 /**
  * @brief  Enter sleep mode.
- * @param  None
+ * @param  [in] u8SleepType specifies the type of enter sleep's command.
+ *   @arg  PWC_SLEEP_WFI            Enter sleep mode by WFI, and wake-up by interrupt handle.
+ *   @arg  PWC_SLEEP_WFE_INT        Enter sleep mode by WFE, and wake-up by interrupt request.
+ *   @arg  PWC_SLEEP_WFE_EVT        Enter sleep mode by WFE, and wake-up by event.
+
  * @retval None
  */
-void PWC_SLEEP_Enter(void)
+void PWC_SLEEP_Enter(uint8_t u8SleepType)
 {
     DDL_ASSERT(IS_PWC_UNLOCKED());
+    DDL_ASSERT(IS_PWC_SLEEP_TYPE(u8SleepType));
 
     CLR_REG16_BIT(CM_PWC->STPMCR, PWC_STPMCR_STOP);
     CLR_REG8_BIT(CM_PWC->PWRC0, PWC_PWRC0_PWDN);
 
-    __WFI();
+    if (PWC_SLEEP_WFI == u8SleepType) {
+        __WFI();
+    } else {
+        if (PWC_SLEEP_WFE_INT == u8SleepType) {
+            SET_REG32_BIT(SCB->SCR, SCB_SCR_SEVONPEND_Msk);
+        }
+        __SEV();
+        __WFE();
+        __WFE();
+    }
 }
 
 /**
@@ -416,23 +476,32 @@ int32_t PWC_LVD_Init(uint8_t u8Ch, const stc_pwc_lvd_init_t *pstcLvdInit)
 
         /* disable filter function in advance */
         SET_REG8_BIT(CM_PWC->PVDFCR, (PWC_PVDFCR_PVD1NFDIS << PWC_LVD_BIT_OFFSET(u8Ch)));
+        /* Enable LVD */
+        MODIFY_REG8(CM_PWC->PVDCR0, PWC_PVDCR0_PVD1EN << u8Ch, pstcLvdInit->u32State << u8Ch);
+        /* Delay 10us */
+        DDL_DelayUS(10U);
+        /* Configure the filter */
         MODIFY_REG8(CM_PWC->PVDFCR, (PWC_PVDFCR_PVD1NFDIS | PWC_PVDFCR_PVD1NFCKS) << PWC_LVD_BIT_OFFSET(u8Ch), \
                     (pstcLvdInit->u32Filter | pstcLvdInit->u32FilterClock) << PWC_LVD_BIT_OFFSET(u8Ch));
         /* Config LVD threshold voltage */
         MODIFY_REG8(CM_PWC->PVDLCR, PWC_PVDLCR_PVD1LVL << PWC_LVD_BIT_OFFSET(u8Ch), \
                     pstcLvdInit->u32ThresholdVoltage << PWC_LVD_BIT_OFFSET(u8Ch));
-        /* Enable LVD */
-        MODIFY_REG8(CM_PWC->PVDCR0, PWC_PVDCR0_PVD1EN << u8Ch, pstcLvdInit->u32State << u8Ch);
+        /* Config the trigger edge */
+        MODIFY_REG8(CM_PWC->PVDICR, PWC_PVDICR_PVD1EDGS <<  PWC_LVD_BIT_OFFSET(u8Ch), \
+                    pstcLvdInit->u32TriggerEdge << PWC_LVD_BIT_OFFSET(u8Ch));
         /* Enable compare output */
         MODIFY_REG8(CM_PWC->PVDCR1, PWC_PVDCR1_PVD1CMPOE << PWC_LVD_BIT_OFFSET(u8Ch), \
                     pstcLvdInit->u32CompareOutputState << PWC_LVD_BIT_OFFSET(u8Ch));
-        MODIFY_REG8(CM_PWC->PVDICR, PWC_PVDICR_PVD1EDGS <<  PWC_LVD_BIT_OFFSET(u8Ch), \
-                    pstcLvdInit->u32TriggerEdge << PWC_LVD_BIT_OFFSET(u8Ch));
-        /* config PVDIRE & PWC_PVDCR1_PVD1IRS while PVDEN & PVDCMPOE enable */
-        MODIFY_REG8(CM_PWC->PVDCR1, (PWC_PVDCR1_PVD1IRE | PWC_PVDCR1_PVD1IRS) << PWC_LVD_BIT_OFFSET(u8Ch), \
+        /* config exception type while PVDEN & PVDCMPOE enable */
+        MODIFY_REG8(CM_PWC->PVDCR1, PWC_PVDCR1_PVD1IRS << PWC_LVD_BIT_OFFSET(u8Ch), \
                     (pstcLvdInit->u32ExceptionType & 0xFFU) << PWC_LVD_BIT_OFFSET(u8Ch));
         MODIFY_REG8(CM_PWC->PVDICR, PWC_PVDICR_PVD1NMIS <<  PWC_LVD_BIT_OFFSET(u8Ch), \
                     ((pstcLvdInit->u32ExceptionType >> PWC_LVD_EXP_NMI_POS) & 0xFFU) << PWC_LVD_BIT_OFFSET(u8Ch));
+        /* Clear the flag */
+        CLR_REG8_BIT(CM_PWC->PVDDSR, PWC_PVDDSR_PVD1DETFLG);
+        /* Enable exception */
+        MODIFY_REG8(CM_PWC->PVDCR1, PWC_PVDCR1_PVD1IRE << PWC_LVD_BIT_OFFSET(u8Ch), \
+                    (pstcLvdInit->u32ExceptionType & 0xFFU) << PWC_LVD_BIT_OFFSET(u8Ch));
 
     }
     return i32Ret;
@@ -497,9 +566,9 @@ void PWC_LVD_ExtInputCmd(en_functional_state_t enNewState)
     DDL_ASSERT(IS_PWC_LVD_UNLOCKED());
 
     if (ENABLE == enNewState) {
-        SET_REG_BIT(PWC_LVD_EXT_INPUT_EN_REG, PWC_LVD_EXT_INPUT_EN_BIT);
+        SET_REG8_BIT(CM_PWC->PVDCR0, PWC_PVDCR0_EXVCCINEN);
     } else {
-        CLR_REG_BIT(PWC_LVD_EXT_INPUT_EN_REG, PWC_LVD_EXT_INPUT_EN_BIT);
+        CLR_REG8_BIT(CM_PWC->PVDCR0, PWC_PVDCR0_EXVCCINEN);
     }
 }
 
@@ -511,14 +580,15 @@ void PWC_LVD_ExtInputCmd(en_functional_state_t enNewState)
  */
 void PWC_LVD_CompareOutputCmd(uint8_t u8Ch, en_functional_state_t enNewState)
 {
+
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
     DDL_ASSERT(IS_PWC_LVD_CH(u8Ch));
     DDL_ASSERT(IS_PWC_LVD_UNLOCKED());
 
     if (ENABLE == enNewState) {
-        SET_REG_BIT(PWC_LVD_CMP_OUTPUT_EN_REG, PWC_LVD_CMP_OUTPUT_EN_BIT << PWC_LVD_BIT_OFFSET(u8Ch));
+        SET_REG8_BIT(CM_PWC->PVDCR1, PWC_PVDCR1_PVD1CMPOE << PWC_LVD_BIT_OFFSET(u8Ch));
     } else {
-        CLR_REG_BIT(PWC_LVD_CMP_OUTPUT_EN_REG, PWC_LVD_CMP_OUTPUT_EN_BIT << PWC_LVD_BIT_OFFSET(u8Ch));
+        CLR_REG8_BIT(CM_PWC->PVDCR1, PWC_PVDCR1_PVD1CMPOE << PWC_LVD_BIT_OFFSET(u8Ch));
     }
 }
 
@@ -595,18 +665,17 @@ en_flag_status_t PWC_LVD_GetStatus(uint8_t u8Flag)
  */
 void PWC_LVD_ClearStatus(uint8_t u8Flag)
 {
+    (void)u8Flag;
+
     DDL_ASSERT(IS_PWC_LVD_UNLOCKED());
     DDL_ASSERT(IS_PWC_LVD_CLR_FLAG(u8Flag));
 
-    if (PWC_LVD2_FLAG_DETECT == u8Flag) {
-        u8Flag = PWC_PVDDSR_PVD1DETFLG;
-    }
-    CLR_REG8_BIT(PWC_LVD_STATUS_REG, u8Flag);
+    CLR_REG8_BIT(PWC_LVD_STATUS_REG, PWC_PVDDSR_PVD1DETFLG);
 }
 
 /**
  * @brief  LDO(HRC & PLL) command.
- * @param  [in] u16Ldo  Specifies the ldo to command.
+ * @param  [in] u16Ldo  Specifies the LDO to command.
  *  @arg    PWC_LDO_PLL
  *  @arg    PWC_LDO_HRC
  * @param  [in] enNewState An @ref en_functional_state_t enumeration value.
@@ -735,9 +804,9 @@ void PWC_PD_RamCmd(uint32_t u32Ram, en_functional_state_t enNewState)
     DDL_ASSERT(IS_PWC_UNLOCKED());
 
     if (ENABLE == enNewState) {
-        CM_PWC->RAMPC0 |= u32Ram;
+        SET_REG8_BIT(CM_PWC->RAMPC0, u32Ram);
     } else {
-        CM_PWC->RAMPC0 &= ~u32Ram;
+        CLR_REG8_BIT(CM_PWC->RAMPC0, u32Ram);
     }
 }
 
@@ -756,9 +825,9 @@ void PWC_PD_PeriphRamCmd(uint32_t u32PeriphRam, en_functional_state_t enNewState
     DDL_ASSERT(IS_PWC_UNLOCKED());
 
     if (ENABLE == enNewState) {
-        CM_PWC->PRAMLPC |= u32PeriphRam;
+        SET_REG8_BIT(CM_PWC->PRAMLPC, u32PeriphRam);
     } else {
-        CM_PWC->PRAMLPC &= ~u32PeriphRam;
+        CLR_REG8_BIT(CM_PWC->PRAMLPC, u32PeriphRam);
     }
 }
 
@@ -802,12 +871,48 @@ int32_t PWC_PD_Config(const stc_pwc_pd_mode_config_t *pstcPDModeConfig)
         i32Ret = LL_ERR_INVD_PARAM;
     } else {
         DDL_ASSERT(IS_PWC_UNLOCKED());
+        DDL_ASSERT(IS_PWC_PD_IO_STATE(pstcPDModeConfig->u8IOState));
+        DDL_ASSERT(IS_PWC_PD_MD(pstcPDModeConfig->u8Mode));
+        DDL_ASSERT(IS_PWC_PD_VCAP_SEL(pstcPDModeConfig->u8VcapCtrl));
 
         MODIFY_REG8(CM_PWC->PWRC0, (PWC_PWRC0_IORTN | PWC_PWRC0_PDMDS),         \
                     (pstcPDModeConfig->u8IOState | pstcPDModeConfig->u8Mode));
         MODIFY_REG8(CM_PWC->PWRC1, PWC_PWRC1_PDTS, pstcPDModeConfig->u8VcapCtrl << PWC_PWRC1_PDTS_POS);
     }
     return i32Ret;
+}
+
+/**
+ * @brief  Set IO state while PD mode.
+ * @param  [in] u8IoState IO state while power down mode
+ *   @arg  PWC_PD_IO_KEEP1
+ *   @arg  PWC_PD_IO_KEEP2
+ *   @arg  PWC_PD_IO_HIZ
+ * @retval None
+ */
+void PWC_PD_SetIoState(uint8_t u8IoState)
+{
+    DDL_ASSERT(IS_PWC_UNLOCKED());
+    DDL_ASSERT(IS_PWC_PD_IO_STATE(u8IoState));
+
+    MODIFY_REG8(CM_PWC->PWRC0, PWC_PWRC0_IORTN, u8IoState);
+}
+
+/**
+ * @brief  Set power down mode.
+ * @param  [in] u8PdMode Power down mode
+ *   @arg  PWC_PD_MD1       Power down mode 1
+ *   @arg  PWC_PD_MD2       Power down mode 2
+ *   @arg  PWC_PD_MD3       Power down mode 3
+ *   @arg  PWC_PD_MD4       Power down mode 4
+ * @retval None
+ */
+void PWC_PD_SetMode(uint8_t u8PdMode)
+{
+    DDL_ASSERT(IS_PWC_UNLOCKED());
+    DDL_ASSERT(IS_PWC_PD_MD(u8PdMode));
+
+    MODIFY_REG8(CM_PWC->PWRC0, PWC_PWRC0_PDMDS, u8PdMode);
 }
 
 /**
@@ -886,8 +991,8 @@ void PWC_PD_ClearWakeupStatus(uint16_t u16Flag)
     u8Flag0 = (uint8_t)u16Flag;
     u8Flag1 = (uint8_t)(u16Flag >> PWC_PD_WKUP_FLAG1_POS);
 
-    CLR_REG8_BIT(CM_PWC->PDWKF0, u8Flag0);
-    CLR_REG8_BIT(CM_PWC->PDWKF1, u8Flag1);
+    WRITE_REG8(CM_PWC->PDWKF0, (~u8Flag0) & PWC_PD_PDWKF0_MSK);
+    WRITE_REG8(CM_PWC->PDWKF1, (~u8Flag1) & PWC_PD_PDWKF1_MSK);
 }
 
 /**
@@ -1032,10 +1137,9 @@ void PWC_PowerMonitorCmd(en_functional_state_t enNewState)
  * @param  [in] u8VoltageSrc   PWC power monitor voltage config @ref PWC_Monitor_Power.
  *         This parameter can be one of the following values
  *  @arg    PWC_PWR_MON_IREF
- *  @arg    PWC_PWR_MON_TSENSOR or PWC_PWR_MON_VBAT_DIV2
+ *  @arg    PWC_PWR_MON_VBAT_DIV2
  * @retval None
  * @note   This monitor power is used for ADC and output to REGC pin.
- *         PWC_PWR_MON_VBAT_DIV2 is only valid while HC32F4A0.
  */
 void PWC_SetPowerMonitorVoltageSrc(uint8_t u8VoltageSrc)
 {
@@ -1210,7 +1314,7 @@ uint8_t PWC_BKR_Read(uint8_t u8RegNum)
 
 /**
  * @brief  WKT Timer Initialize.
- * @param  [in] u16ClkSrc                Clock source.
+ * @param  [in] u16ClkSrc               Clock source.
  *         This parameter can be one of the values @ref PWC_WKT_Clock_Source.
  * @param  [in] u16CmpVal               Comparison value of the Counter.
  *  @arg    This parameter can be a number between Min_Data = 0 and Max_Data = 0xFFF.
@@ -1220,10 +1324,10 @@ void PWC_WKT_Config(uint16_t u16ClkSrc, uint16_t u16CmpVal)
 {
     /* Check parameters */
     DDL_ASSERT(IS_PWC_WKT_CLK_SRC(u16ClkSrc));
-    DDL_ASSERT(IS_PWC_WKT_COMPARISION_VALUE(u16CmpVal));
+    DDL_ASSERT(IS_PWC_WKT_COMPARISON_VALUE(u16CmpVal));
     DDL_ASSERT(IS_PWC_UNLOCKED());
 
-    MODIFY_REG8(CM_PWC->WKTC2, PWC_WKTC2_WKCKS, u16ClkSrc);
+    MODIFY_REG8(CM_PWC->WKTC2, PWC_WKTC2_WKCKS | PWC_WKTC2_WKOVF, u16ClkSrc | PWC_WKTC2_WKOVF);
     WRITE_REG8(CM_PWC->WKTC0, (u16CmpVal & PWC_WKTC0_WKTMCMP));
     WRITE_REG8(CM_PWC->WKTC1, ((u16CmpVal >> 8U) & PWC_WKTC1_WKTMCMP));
 }
@@ -1237,7 +1341,7 @@ void PWC_WKT_Config(uint16_t u16ClkSrc, uint16_t u16CmpVal)
 void PWC_WKT_SetCompareValue(uint16_t u16CmpVal)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_PWC_WKT_COMPARISION_VALUE(u16CmpVal));
+    DDL_ASSERT(IS_PWC_WKT_COMPARISON_VALUE(u16CmpVal));
     DDL_ASSERT(IS_PWC_UNLOCKED());
     WRITE_REG8(CM_PWC->WKTC0, (u16CmpVal & PWC_WKTC0_WKTMCMP));
     WRITE_REG8(CM_PWC->WKTC1, ((u16CmpVal >> 8U) & PWC_WKTC1_WKTMCMP));
@@ -1269,7 +1373,11 @@ void PWC_WKT_Cmd(en_functional_state_t enNewState)
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
     DDL_ASSERT(IS_PWC_UNLOCKED());
 
-    WRITE_REG32(bCM_PWC->WKTC2_b.WKTCE, enNewState);
+    if (ENABLE == enNewState) {
+        MODIFY_REG8(CM_PWC->WKTC2, PWC_WKTC2_WKTCE | PWC_WKTC2_WKOVF, PWC_WKT_ON | PWC_WKTC2_WKOVF);
+    } else {
+        MODIFY_REG8(CM_PWC->WKTC2, PWC_WKTC2_WKTCE, PWC_WKT_OFF);
+    }
 }
 
 /**

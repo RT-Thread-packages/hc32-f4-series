@@ -12,9 +12,11 @@
    2023-06-30       CDT             IRQxxx_Handler add __DSB for Arm Errata 838869
    2023-09-30       CDT             Modify micro define EIRQCFR_REG and EIRQFR_REG base RM
                                     Remove space line
+   2024-06-30       CDT             Modify API NMI_ClearNmiStatus(),EXTINT_ClearExtIntStatus() Clear status by write instruction
+                                    clear EFEN bit in EXTINT_Init()
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -400,6 +402,8 @@ int32_t NMI_Init(const stc_nmi_init_t *pstcNmiInit)
         DDL_ASSERT(IS_NMI_FAE(pstcNmiInit->u32Filter));
         DDL_ASSERT(IS_NMI_FACLK(pstcNmiInit->u32FilterClock));
         u32NMICR |= pstcNmiInit->u32Edge | pstcNmiInit->u32Filter | pstcNmiInit->u32FilterClock;
+        CLR_REG32_BIT(CM_INTC->NMICR, INTC_NMICR_NFEN);
+
         WRITE_REG32(CM_INTC->NMICR, u32NMICR);
     }
     return i32Ret;
@@ -447,7 +451,7 @@ void NMI_ClearNmiStatus(uint32_t u32Src)
     /* Parameter validity checking */
     DDL_ASSERT(IS_NMI_SRC(u32Src));
 
-    SET_REG32_BIT(NMICFR_REG, u32Src);
+    WRITE_REG32(NMICFR_REG, u32Src);
 }
 
 /**
@@ -477,9 +481,10 @@ int32_t EXTINT_Init(uint32_t u32Ch, const stc_extint_init_t *pstcExtIntInit)
         DDL_ASSERT(IS_EXTINT_TRIG(pstcExtIntInit->u32Edge));
         for (u8ExtIntPos = 0U; u8ExtIntPos < EXTINT_CH_NUM_MAX; u8ExtIntPos++) {
             if (0UL != (u32Ch & (1UL << u8ExtIntPos))) {
+                EIRQCRx = (__IO uint32_t *)((uint32_t)&CM_INTC->EIRQCR0 + 4UL * u8ExtIntPos);
                 EIRQCRVal = pstcExtIntInit->u32Filter | pstcExtIntInit->u32FilterClock  |   \
                             pstcExtIntInit->u32Edge;
-                EIRQCRx = (__IO uint32_t *)((uint32_t)&CM_INTC->EIRQCR0 + 4UL * u8ExtIntPos);
+                CLR_REG32_BIT(*EIRQCRx, INTC_EIRQCR_EFEN);
                 WRITE_REG32(*EIRQCRx, EIRQCRVal);
             }
         }
@@ -521,7 +526,7 @@ void EXTINT_ClearExtIntStatus(uint32_t u32ExtIntCh)
     /* Parameter validity checking */
     DDL_ASSERT(IS_EXTINT_CH(u32ExtIntCh));
 
-    SET_REG32_BIT(EIRQCFR_REG, u32ExtIntCh);
+    WRITE_REG32(EIRQCFR_REG, u32ExtIntCh);
 }
 
 /**

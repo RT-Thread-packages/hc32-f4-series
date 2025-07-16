@@ -10,9 +10,14 @@
    2022-10-31       CDT             Add Flash protect level define
    2023-01-15       CDT             Code refine
    2023-09-30       CDT             Add FLASH security addr define
+   2023-12-15       CDT             Rename EFM_DataCacheResetCmd() as EFM_CacheRamReset() and modify comment
+                                    Optimized macro group EFM_Remap_Size definitions
+   2024-06-30       CDT             Move EFM_CACHE_ALL from c file to head file
+                                    Add prefix EFM to SECTOR_SIZE and macro EFM_PROTECT_LEVEL_ALL
+   2024-10-17       CDT             Add const before buffer pointer to cater top-level calls
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -70,6 +75,7 @@ typedef struct {
     uint32_t u32Addr;
     uint32_t u32Size;
 } stc_efm_remap_init_t;
+
 /**
  * @}
  */
@@ -88,6 +94,7 @@ typedef struct {
 #define EFM_START_ADDR                  (0x00000000UL)    /*!< Flash start address */
 
 #define EFM_END_ADDR                    (0x001FFFFFUL)    /*!< Flash end address */
+#define EFM_FLASH_1_START_ADDR          (0x00100000UL)
 #define EFM_OTP_START_ADDR1             (0x00000000UL)    /*!< OTP start address */
 #define EFM_OTP_END_ADDR1               (0x0001FFFFUL)
 #define EFM_OTP_START_ADDR              (0x03000000UL)
@@ -95,7 +102,6 @@ typedef struct {
 #define EFM_OTP_LOCK_ADDR_START         (0x03001800UL)    /*!< OTP lock address */
 #define EFM_OTP_LOCK_ADDR_END           (0x03001AD7UL)    /*!< OTP lock address */
 #define EFM_OTP_ENABLE_ADDR             (0x03001AD8UL)    /*!< OTP Enable address */
-#define EFM_FLASH_1_START_ADDR          (0x00100000UL)
 #define EFM_SECURITY_START_ADDR         (0x03004000UL)    /*!< Flash security start address */
 #define EFM_SECURITY_END_ADDR           (0x0300400BUL)    /*!< Flash security end address */
 
@@ -235,6 +241,16 @@ typedef struct {
  */
 
 /**
+ * @defgroup EFM_Cache_Mask EFM Cache Bit Mask
+ * @{
+ */
+#define EFM_CACHE_ALL                   (EFM_FRMC_CRST | EFM_FRMC_PREFETE | EFM_FRMC_DCACHE | EFM_FRMC_ICACHE)
+
+/**
+ * @}
+ */
+
+/**
  * @defgroup EFM_Keys EFM Keys
  * @{
  */
@@ -250,7 +266,6 @@ typedef struct {
  * @{
  */
 #define EFM_SECTOR_SIZE                 (0x2000UL)
-
 /**
  * @}
  */
@@ -284,7 +299,6 @@ typedef struct {
 #define EFM_OTP_BASE5_SIZE          (0x04UL)
 #define EFM_OTP_BASE5_OFFSET        (54UL)
 #define EFM_OTP_LOCK_ADDR           (0x03001800UL)
-
 /**
  * @}
  */
@@ -495,9 +509,16 @@ typedef struct {
  * @}
  */
 
+/**
+ * @defgroup EFM_Remap_Reg_Write_Protection Write Protection Keys For EFM Remap Registers
+ * @{
+ */
 #define EFM_REMAP_REG_LOCK_KEY      (0x0000UL)
 #define EFM_REMAP_REG_UNLOCK_KEY1   (0x0123UL)
 #define EFM_REMAP_REG_UNLOCK_KEY2   (0x3210UL)
+/**
+ * @}
+ */
 
 /**
  * @defgroup EFM_Remap_State EFM remap function state
@@ -522,6 +543,7 @@ typedef struct {
 #define EFM_REMAP_128K              (17UL)
 #define EFM_REMAP_256K              (18UL)
 #define EFM_REMAP_512K              (19UL)
+#define EFM_REMAP_SIZE_MAX          EFM_REMAP_512K
 /**
  * @}
  */
@@ -562,9 +584,11 @@ typedef struct {
  * @defgroup EFM_Protect_Level EFM protect level
  * @{
  */
-#define EFM_PROTECT_LEVEL1          (1U)
-#define EFM_PROTECT_LEVEL2          (2U)
-#define EFM_PROTECT_LEVEL3          (4U)
+#define EFM_PROTECT_LEVEL1          (1UL << 0UL)
+#define EFM_PROTECT_LEVEL2          (1UL << 1UL)
+#define EFM_PROTECT_LEVEL3          (1UL << 2UL)
+#define EFM_PROTECT_LEVEL_ALL       (EFM_PROTECT_LEVEL1 | EFM_PROTECT_LEVEL2 | EFM_PROTECT_LEVEL3)
+
 /**
  * @}
  */
@@ -647,22 +671,22 @@ void EFM_ClearStatus(uint32_t u32Flag);
 int32_t EFM_SetWaitCycle(uint32_t u32WaitCycle);
 int32_t EFM_SetOperateMode(uint32_t u32Mode);
 int32_t EFM_ReadByte(uint32_t u32Addr, uint8_t *pu8ReadBuf, uint32_t u32ByteLen);
-int32_t EFM_Program(uint32_t u32Addr, uint8_t *pu8Buf, uint32_t u32Len);
+int32_t EFM_Program(uint32_t u32Addr, const uint8_t *pu8Buf, uint32_t u32Len);
+int32_t EFM_SequenceProgram(uint32_t u32Addr, const  uint8_t *pu8Buf, uint32_t u32Len);
 int32_t EFM_ProgramWord(uint32_t u32Addr, uint32_t u32Data);
 int32_t EFM_ProgramWordReadBack(uint32_t u32Addr, uint32_t u32Data);
-int32_t EFM_SequenceProgram(uint32_t u32Addr, uint8_t *pu8Buf, uint32_t u32Len);
-int32_t EFM_SectorErase(uint32_t u32Addr);
 int32_t EFM_ChipErase(uint8_t u8Chip);
+
+int32_t EFM_SectorErase(uint32_t u32Addr);
 
 en_flag_status_t EFM_GetAnyStatus(uint32_t u32Flag);
 en_flag_status_t EFM_GetStatus(uint32_t u32Flag);
 void EFM_GetUID(stc_efm_unique_id_t *pstcUID);
 
-void EFM_DataCacheResetCmd(en_functional_state_t enNewState);
+void EFM_CacheRamReset(en_functional_state_t enNewState);
 void EFM_PrefetchCmd(en_functional_state_t enNewState);
 void EFM_DCacheCmd(en_functional_state_t enNewState);
 void EFM_ICacheCmd(en_functional_state_t enNewState);
-
 void EFM_LowVoltageReadCmd(en_functional_state_t enNewState);
 int32_t EFM_SwapCmd(en_functional_state_t enNewState);
 en_flag_status_t EFM_GetSwapStatus(void);
@@ -684,7 +708,7 @@ void EFM_SingleSectorOperateCmd(uint8_t u8SectorNum, en_functional_state_t enNew
 void EFM_SequenceSectorOperateCmd(uint32_t u32StartSectorNum, uint16_t u16Count, en_functional_state_t enNewState);
 
 void EFM_Protect_Enable(uint8_t u8Level);
-int32_t EFM_WriteSecurityCode(uint8_t *pu8Buf, uint32_t u32Len);
+int32_t EFM_WriteSecurityCode(const uint8_t *pu8Buf, uint32_t u32Len);
 
 /**
  * @}

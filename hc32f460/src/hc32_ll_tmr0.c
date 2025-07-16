@@ -7,9 +7,11 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2024-06-30       CDT             Modify API of TMR0_DeInit()
+                                    Modify TMR0_ClearStatus for couping risk
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -142,10 +144,13 @@
  * @param  [in] TMR0x                   Pointer to TMR0 unit instance
  *         This parameter can be one of the following values:
  *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:           Reset success.
  */
-void TMR0_DeInit(CM_TMR0_TypeDef *TMR0x)
+int32_t TMR0_DeInit(CM_TMR0_TypeDef *TMR0x)
 {
+    int32_t i32Ret = LL_OK;
+
     uint32_t u32Ch;
     __IO uint32_t *CNTR;
     __IO uint32_t *CMPR;
@@ -161,6 +166,7 @@ void TMR0_DeInit(CM_TMR0_TypeDef *TMR0x)
         CMPR = TMR0_CMPR_ADDR(TMR0x, u32Ch);
         WRITE_REG32(*CMPR, 0x0000FFFFUL);
     }
+    return i32Ret;
 }
 
 /**
@@ -437,7 +443,7 @@ void TMR0_SetFunc(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, uint32_t u32Func)
 }
 
 /**
- * @brief  Enable or disable HardWare trigger capture function.
+ * @brief  Enable or disable hardware trigger capture function.
  * @param  [in] TMR0x                   Pointer to TMR0 unit instance
  *         This parameter can be one of the following values:
  *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
@@ -462,7 +468,7 @@ void TMR0_HWCaptureCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional
 }
 
 /**
- * @brief  Enable or disable HardWare trigger start function.
+ * @brief  Enable or disable hardware trigger start function.
  * @param  [in] TMR0x                   Pointer to TMR0 unit instance
  *         This parameter can be one of the following values:
  *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
@@ -487,7 +493,7 @@ void TMR0_HWStartCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_s
 }
 
 /**
- * @brief  Enable or disable HardWare trigger stop function.
+ * @brief  Enable or disable hardware trigger stop function.
  * @param  [in] TMR0x                   Pointer to TMR0 unit instance
  *         This parameter can be one of the following values:
  *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
@@ -512,7 +518,7 @@ void TMR0_HWStopCondCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, en_functional_st
 }
 
 /**
- * @brief  Enable or disable HardWare trigger clear function.
+ * @brief  Enable or disable hardware trigger clear function.
  * @param  [in] TMR0x                   Pointer to TMR0 unit instance
  *         This parameter can be one of the following values:
  *           @arg CM_TMR0 or CM_TMR0_x: TMR0 unit instance
@@ -555,7 +561,7 @@ void TMR0_IntCmd(CM_TMR0_TypeDef *TMR0x, uint32_t u32IntType, en_functional_stat
     DDL_ASSERT(IS_TMR0_INT(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    if (DISABLE != enNewState) {
+    if (ENABLE == enNewState) {
         SET_REG32_BIT(TMR0x->BCONR, u32IntType);
     } else {
         CLR_REG32_BIT(TMR0x->BCONR, u32IntType);
@@ -603,7 +609,7 @@ void TMR0_ClearStatus(CM_TMR0_TypeDef *TMR0x, uint32_t u32Flag)
     DDL_ASSERT(IS_TMR0_UNIT(TMR0x));
     DDL_ASSERT(IS_TMR0_FLAG(u32Flag));
 
-    CLR_REG32_BIT(TMR0x->STFLR, u32Flag);
+    WRITE_REG32(TMR0x->STFLR, (~u32Flag) & TMR0_FLAG_ALL);
 }
 
 /**

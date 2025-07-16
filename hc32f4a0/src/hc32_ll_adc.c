@@ -10,9 +10,12 @@
    2023-01-15       CDT             API fixed: ADC_DeInit()
    2023-06-30       CDT             Modify typo
                                     API fixed: ADC_DeInit()
+   2023-12-15       CDT             Add API ADC_MxChCmd(),ADC_ConvDataAverageMxChCmd
+                                    Add API ADC_GetResolution()
+   2024-06-30       CDT             Optimized access code for some registers to improve readability
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -109,6 +112,12 @@
     (((adc) == CM_ADC2) && ((ch) <= ADC2_CH_MAX))   ||                         \
     (((adc) == CM_ADC3) && ((ch) <= ADC3_CH_MAX)))
 
+/* ADC MX channel check */
+#define IS_ADC_MX_CH(adc, ch)                                                  \
+(   (((adc) == CM_ADC1) && IS_ADC_BIT_MASK(ch, ADC1_MX_CH_ALL))   ||           \
+    (((adc) == CM_ADC2) && IS_ADC_BIT_MASK(ch, ADC2_MX_CH_ALL))   ||           \
+    (((adc) == CM_ADC3) && IS_ADC_BIT_MASK(ch, ADC3_MX_CH_ALL)))
+
 #define IS_ADC_SCAN_MD(x)                                                      \
 (   ((x) == ADC_MD_SEQA_SINGLESHOT)         ||                                 \
     ((x) == ADC_MD_SEQA_CONT)               ||                                 \
@@ -158,7 +167,9 @@
     ((x) == ADC_SYNC_CYCLIC_DELAY_TRIG)     ||                                 \
     ((x) == ADC_SYNC_CYCLIC_PARALLEL_TRIG))
 
-#define IS_ADC_SYNC(x)                  (((x) == ADC_SYNC_ADC1_ADC2) || ((x) == ADC_SYNC_ADC1_ADC2_ADC3))
+#define IS_ADC_SYNC(x)                                                         \
+(   ((x) == ADC_SYNC_ADC1_ADC2)             ||                                 \
+    ((x) == ADC_SYNC_ADC1_ADC2_ADC3))
 
 /* Analog watchdog. */
 #define IS_ADC_AWD_MD(x)                                                       \
@@ -182,7 +193,7 @@
 /* Sample hold. */
 #define IS_ADC_SPLHOLD_SPLTIME(x)       ((x) >= 4U)
 
-#define IS_ADC_SPLHOLD_UNIT(x)          ((x) == CM_ADC1)
+#define IS_ADC_SH_UNIT(x)               ((x) == CM_ADC1)
 
 #define IS_ADC_SH_CH(x)                 ((x) <= ADC_CH2)
 
@@ -373,19 +384,55 @@ int32_t ADC_StructInit(stc_adc_init_t *pstcAdcInit)
  */
 void ADC_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8Ch, en_functional_state_t enNewState)
 {
-    uint32_t u32CHSELAddr;
+    __IO uint32_t *CHSELRx;
 
     DDL_ASSERT(IS_ADC_CH(ADCx, u8Ch));
     DDL_ASSERT(IS_ADC_SEQ(u8Seq));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    u32CHSELAddr = (uint32_t)&ADCx->CHSELRA + (u8Seq * 4UL);
+    CHSELRx = (__IO uint32_t *)((uint32_t)(&ADCx->CHSELRA) + (u8Seq * 4UL));
     if (enNewState == ENABLE) {
         /* Enable the specified channel. */
-        SET_REG32_BIT(RW_MEM32(u32CHSELAddr), 1UL << u8Ch);
+        SET_REG32_BIT(*CHSELRx, 1UL << u8Ch);
     } else {
         /* Disable the specified channel. */
-        CLR_REG32_BIT(RW_MEM32(u32CHSELAddr), 1UL << u8Ch);
+        CLR_REG32_BIT(*CHSELRx, 1UL << u8Ch);
+    }
+}
+
+/**
+ * @brief  Enable or disable the specified ADC channel.
+ * @param  [in]  ADCx                   Pointer to ADC instance register base.
+ *                                      This parameter can be a value of the following:
+ *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param  [in]  u8Seq                  The sequence whose channel specified by 'u32MxCh' will be enabled or disabled.
+ *                                      This parameter can be a value of @ref ADC_Sequence
+ *   @arg  ADC_SEQ_A:                   ADC sequence A.
+ *   @arg  ADC_SEQ_B:                   ADC sequence B.
+ * @param  [in]  u32MxCh                The ADC channel.
+ *                                      This parameter can be any component of @ref ADC_Mx_Channel
+ * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @note   Sequence A and Sequence B CAN NOT include the same channel!
+ * @note   Sequence A can always started by software(by calling @ref ADC_Start()),
+ *         regardless of whether the hardware trigger source is valid or not.
+ * @note   Sequence B must be specified a valid hard trigger by calling functions @ref ADC_TriggerConfig()
+ *         and @ref ADC_TriggerCmd().
+ */
+void ADC_MxChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint32_t u32MxCh, en_functional_state_t enNewState)
+{
+    __IO uint32_t *CHSELRx;
+
+    DDL_ASSERT(IS_ADC_MX_CH(ADCx, u32MxCh));
+    DDL_ASSERT(IS_ADC_SEQ(u8Seq));
+    DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
+
+    CHSELRx = (__IO uint32_t *)((uint32_t)(&ADCx->CHSELRA) + (u8Seq * 4UL));
+    if (enNewState == ENABLE) {
+        /* Enable the specified channel. */
+        SET_REG32_BIT(*CHSELRx, u32MxCh);
+    } else {
+        /* Disable the specified channel. */
+        CLR_REG32_BIT(*CHSELRx, u32MxCh);
     }
 }
 
@@ -401,14 +448,14 @@ void ADC_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint8_t u8Ch, en_functional_
  */
 void ADC_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8SampleTime)
 {
-    uint32_t u32Addr;
+    __IO uint8_t *SSTRx;
 
     DDL_ASSERT(IS_ADC_SAMPLE_TIME(u8SampleTime));
 
     DDL_ASSERT(IS_ADC_CH(ADCx, u8Ch));
+    SSTRx = (__IO uint8_t *)((uint32_t)&ADCx->SSTR0 + u8Ch);
     if (u8Ch < ADC_SSTR_NUM) {
-        u32Addr = (uint32_t)&ADCx->SSTR0 + u8Ch;
-        WRITE_REG8(RW_MEM8(u32Addr), u8SampleTime);
+        WRITE_REG8(*SSTRx, u8SampleTime);
     } else {
         WRITE_REG8(ADCx->SSTRL, u8SampleTime);
     }
@@ -457,6 +504,28 @@ void ADC_ConvDataAverageChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, en_functional_
         SET_REG32_BIT(ADCx->AVCHSELR, 1UL << u8Ch);
     } else {
         CLR_REG32_BIT(ADCx->AVCHSELR, 1UL << u8Ch);
+    }
+}
+
+/**
+ * @brief  Enable or disable conversion data average calculation channel.
+ * @param  [in]  ADCx                   Pointer to ADC instance register base.
+ *                                      This parameter can be a value of the following:
+ *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
+ * @param  [in]  u32MxCh                The ADC channel.
+ *                                      This parameter can be any component of @ref ADC_Mx_Channel
+ * @param  [in]  enNewState             An @ref en_functional_state_t enumeration value.
+ * @retval None
+ */
+void ADC_ConvDataAverageMxChCmd(CM_ADC_TypeDef *ADCx, uint32_t u32MxCh, en_functional_state_t enNewState)
+{
+    DDL_ASSERT(IS_ADC_MX_CH(ADCx, u32MxCh));
+    DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
+
+    if (enNewState == ENABLE) {
+        SET_REG32_BIT(ADCx->AVCHSELR, u32MxCh);
+    } else {
+        CLR_REG32_BIT(ADCx->AVCHSELR, u32MxCh);
     }
 }
 
@@ -522,15 +591,15 @@ void ADC_TriggerConfig(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, uint16_t u16TriggerS
  */
 void ADC_TriggerCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Seq, en_functional_state_t enNewState)
 {
-    uint32_t u32Addr;
-
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_SEQ(u8Seq));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    u32Addr = (uint32_t)&ADCx->TRGSR;
-    /* Enable bit position: u8Seq * sequence_offset + enable_bit_base. */
-    WRITE_REG32(PERIPH_BIT_BAND(u32Addr, (uint32_t)u8Seq * ADC_TRGSR_TRGSELB_POS + ADC_TRGSR_TRGENA_POS), enNewState);
+    if (enNewState == ENABLE) {
+        SET_REG16_BIT(ADCx->TRGSR, (uint32_t)ADC_TRGSR_TRGENA << (u8Seq * ADC_TRGSR_TRGSELB_POS));
+    } else {
+        CLR_REG16_BIT(ADCx->TRGSR, (uint32_t)ADC_TRGSR_TRGENA << (u8Seq * ADC_TRGSR_TRGSELB_POS));
+    }
 }
 
 /**
@@ -563,12 +632,23 @@ void ADC_IntCmd(CM_ADC_TypeDef *ADCx, uint8_t u8IntType, en_functional_state_t e
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @retval None
+ * @retval int32_t
+ *           - LL_OK:                   Start success.
+ *           - LL_ERR_BUSY:             ADC is busy.
  */
-void ADC_Start(CM_ADC_TypeDef *ADCx)
+int32_t ADC_Start(CM_ADC_TypeDef *ADCx)
 {
+    int32_t i32Ret = LL_OK;
+
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
-    WRITE_REG8(ADCx->STR, ADC_STR_STRT);
+
+    if (1U == READ_REG8(ADCx->STR)) {
+        i32Ret = LL_ERR_BUSY;
+    } else {
+        WRITE_REG8(ADCx->STR, ADC_STR_STRT);
+    }
+
+    return i32Ret;
 }
 
 /**
@@ -605,13 +685,13 @@ uint16_t ADC_GetValue(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch)
  * @param  [in]  ADCx                   Pointer to ADC instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
- * @retval An uint16_t type value of ADC resolution.
+ * @retval An uint16_t type value of ADC resolution. @ref ADC_Resolution
  */
 uint16_t ADC_GetResolution(const CM_ADC_TypeDef *ADCx)
 {
     DDL_ASSERT(IS_ADC_UNIT(ADCx));
 
-    return (READ_REG16_BIT(ADCx->CR0, ADC_CR0_ACCSEL));
+    return READ_REG16_BIT(ADCx->CR0, ADC_CR0_ACCSEL);
 }
 
 /**
@@ -643,7 +723,7 @@ en_flag_status_t ADC_GetStatus(const CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
  *                                      This parameter can be a value of the following:
  *   @arg  CM_ADC or CM_ADCx:           ADC instance register base.
  * @param  [in]  u8Flag                 ADC status flag.
- *                                      This parameter can be valueS of @ref ADC_Status_Flag
+ *                                      This parameter can be values of @ref ADC_Status_Flag
  * @retval None
  */
 void ADC_ClearStatus(CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
@@ -666,16 +746,14 @@ void ADC_ClearStatus(CM_ADC_TypeDef *ADCx, uint8_t u8Flag)
 void ADC_ChRemap(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, uint8_t u8AdcPin)
 {
     uint8_t u8FieldOfs;
-    uint8_t u8RegIdx;
-    __IO uint16_t *regCHMUXR;
+    __IO uint16_t *CHMUXRx;
 
     DDL_ASSERT(IS_ADC_REMAP_CH(ADCx, u8Ch));
     DDL_ASSERT(IS_ADC_REMAP_PIN(ADCx, u8AdcPin));
 
-    regCHMUXR  = (__IO uint16_t *)((uint32_t)&ADCx->CHMUXR0);
-    u8RegIdx   = u8Ch / 4U;
+    CHMUXRx    = (__IO uint16_t *)(((uint32_t)&ADCx->CHMUXR0) + (u8Ch / 4UL) * 2UL);
     u8FieldOfs = (u8Ch % 4U) * 4U;
-    MODIFY_REG16(regCHMUXR[u8RegIdx], ((uint32_t)ADC_CHMUXR0_CH00MUX << u8FieldOfs), ((uint32_t)u8AdcPin << u8FieldOfs));
+    MODIFY_REG16(*CHMUXRx, ((uint32_t)ADC_CHMUXR0_CH00MUX << u8FieldOfs), ((uint32_t)u8AdcPin << u8FieldOfs));
 }
 
 /**
@@ -691,15 +769,13 @@ uint8_t ADC_GetChPin(const CM_ADC_TypeDef *ADCx, uint8_t u8Ch)
 {
     uint8_t u8RetPin;
     uint8_t u8FieldOfs;
-    uint8_t u8RegIdx;
-    __IO uint16_t *regCHMUXR;
+    __IO uint16_t *CHMUXRx;
 
     DDL_ASSERT(IS_ADC_REMAP_CH(ADCx, u8Ch));
 
-    regCHMUXR  = (__IO uint16_t *)((uint32_t)&ADCx->CHMUXR0);
-    u8RegIdx   = u8Ch / 4U;
+    CHMUXRx    = (__IO uint16_t *)(((uint32_t)&ADCx->CHMUXR0) + (u8Ch / 4UL) * 2UL);
     u8FieldOfs = (u8Ch % 4U) * 4U;
-    u8RetPin   = ((uint8_t)(regCHMUXR[u8RegIdx] >> u8FieldOfs)) & 0xFU;
+    u8RetPin   = ((uint8_t)(*CHMUXRx >> u8FieldOfs)) & 0xFU;
 
     return u8RetPin;
 }
@@ -735,10 +811,10 @@ void ADC_ResetChMapping(CM_ADC_TypeDef *ADCx)
  *                                        All ADCs scan once.
  *   @arg  ADC_SYNC_CYCLIC_DELAY_TRIG:  Cyclic delayed trigger mode.
  *                                      When the trigger condition occurs, ADC1 starts first, then ADC2, last ADC3(if has).
- *                                      All ADCs scan cyclicly(keep scanning till you stop them).
+ *                                      All ADCs scan cyclically(keep scanning till you stop them).
  *   @arg  ADC_SYNC_CYCLIC_PARALLEL_TRIG: Single shot parallel trigger mode.
  *                                        When the trigger condition occurs, all ADCs start at the same time.
- *                                        All ADCs scan cyclicly(keep scanning till you stop them).
+ *                                        All ADCs scan cyclically(keep scanning till you stop them).
  * @param  [in]  u8TriggerDelay         Trigger delay time(ADCLK cycle), range is [1, 255].
  * @retval None
  */
@@ -1023,7 +1099,7 @@ void ADC_AWD_ClearStatus(CM_ADC_TypeDef *ADCx, uint32_t u32Flag)
  */
 void ADC_SH_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8SampleTime)
 {
-    DDL_ASSERT(IS_ADC_SPLHOLD_UNIT(ADCx));
+    DDL_ASSERT(IS_ADC_SH_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_SPLHOLD_SPLTIME(u8SampleTime));
     MODIFY_REG16(ADCx->SHCR, ADC_SHCR_SHSST, u8SampleTime);
 }
@@ -1040,7 +1116,7 @@ void ADC_SH_SetSampleTime(CM_ADC_TypeDef *ADCx, uint8_t u8SampleTime)
  */
 void ADC_SH_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_ADC_SPLHOLD_UNIT(ADCx));
+    DDL_ASSERT(IS_ADC_SH_UNIT(ADCx));
     DDL_ASSERT(IS_ADC_SH_CH(u8Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
@@ -1084,7 +1160,7 @@ void ADC_SH_ChCmd(CM_ADC_TypeDef *ADCx, uint8_t u8Ch, en_functional_state_t enNe
 void ADC_PGA_Config(CM_ADC_TypeDef *ADCx, uint8_t u8PgaUnit, uint8_t u8Gain, uint8_t u8PgaVss)
 {
     uint32_t u32Addr;
-    uint32_t u32PGACRAddr;
+    __IO uint8_t *PGACRx;
     DDL_ASSERT(IS_ADC_PGA(ADCx, u8PgaUnit));
     DDL_ASSERT(IS_ADC_PGA_GAIN(u8Gain));
     DDL_ASSERT(IS_ADC_PGA_VSS(u8PgaVss));
@@ -1092,8 +1168,8 @@ void ADC_PGA_Config(CM_ADC_TypeDef *ADCx, uint8_t u8PgaUnit, uint8_t u8Gain, uin
     if (ADCx == CM_ADC2) {
         u8PgaUnit = 0U;
     }
-    u32PGACRAddr = (uint32_t)&ADCx->PGACR1 + u8PgaUnit;
-    MODIFY_REG8(RW_MEM8(u32PGACRAddr), ADC_PGACR_PGAGAIN, u8Gain << ADC_PGACR_PGAGAIN_POS);
+    PGACRx = (__IO uint8_t *)((uint32_t)&ADCx->PGACR1 + u8PgaUnit);
+    MODIFY_REG8(*PGACRx, ADC_PGACR_PGAGAIN, u8Gain << ADC_PGACR_PGAGAIN_POS);
     u32Addr = (uint32_t)&ADCx->PGAVSSENR;
     WRITE_REG32(PERIPH_BIT_BAND(u32Addr, u8PgaUnit), u8PgaVss);
 }
@@ -1111,7 +1187,7 @@ void ADC_PGA_Config(CM_ADC_TypeDef *ADCx, uint8_t u8PgaUnit, uint8_t u8Gain, uin
 void ADC_PGA_Cmd(CM_ADC_TypeDef *ADCx, uint8_t u8PgaUnit, en_functional_state_t enNewState)
 {
     const uint8_t au8Cmd[] = {ADC_PGA_DISABLE, ADC_PGA_ENABLE};
-    uint32_t u32PGACRAddr;
+    __IO uint8_t *PGACRx;
 
     DDL_ASSERT(IS_ADC_PGA(ADCx, u8PgaUnit));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
@@ -1119,8 +1195,8 @@ void ADC_PGA_Cmd(CM_ADC_TypeDef *ADCx, uint8_t u8PgaUnit, en_functional_state_t 
     if (ADCx == CM_ADC2) {
         u8PgaUnit = 0U;
     }
-    u32PGACRAddr = (uint32_t)&ADCx->PGACR1 + u8PgaUnit;
-    MODIFY_REG8(RW_MEM8(u32PGACRAddr), ADC_PGACR_PGACTL, au8Cmd[(uint8_t)enNewState]);
+    PGACRx = (__IO uint8_t *)((uint32_t)&ADCx->PGACR1 + u8PgaUnit);
+    MODIFY_REG8(*PGACRx, ADC_PGACR_PGACTL, au8Cmd[(uint8_t)enNewState]);
 }
 
 /**

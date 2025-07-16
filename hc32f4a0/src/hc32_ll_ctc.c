@@ -11,7 +11,7 @@
                                     Modify the init assignment of i32Ret in CTC_DeInit()
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -83,7 +83,7 @@
 
 #define IS_CTC_FLAG(x)                                                         \
 (   ((x) != 0UL)                            &&                                 \
-    (((x) | CTC_FLAG_ALL) ==  CTC_FLAG_ALL))
+    (((x) | CTC_FLAG_ALL) == CTC_FLAG_ALL))
 
 /**
  * @}
@@ -185,7 +185,7 @@ int32_t CTC_CT_StructInit(stc_ctc_ct_init_t *pstcCtcInit)
 }
 
 /**
- * @brief  Initialize CTC function.
+ * @brief  Initialize CTC continuous trim function.
  * @param  [in] pstcCtcInit             Pointer to a @ref stc_ctc_ct_init_t structure.
  * @retval int32_t:
  *           - LL_OK:                   Initialize successfully.
@@ -256,9 +256,8 @@ int32_t CTC_CT_Init(const stc_ctc_ct_init_t *pstcCtcInit)
  */
 int32_t CTC_DeInit(void)
 {
-    int32_t i32Ret;
+    int32_t i32Ret = LL_ERR_BUSY;
 
-    i32Ret = LL_ERR_BUSY;
     /* Check CTC status */
     if (CTC_FLAG_BUSY != (READ_REG32_BIT(CM_CTC->STR, CTC_FLAG_BUSY))) {
         /* Configures the registers to reset value. */

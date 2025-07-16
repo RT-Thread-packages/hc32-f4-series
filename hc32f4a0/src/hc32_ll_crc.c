@@ -12,9 +12,12 @@
                                     Optimize CRC_DeInit function
    2023-09-30       CDT             Delete and modify some of group/function relate to calculate CRC
                                     Modify typo
+   2024-06-30       CDT             Add API CRC_GetResult() & CRC_SetInitValue()
+                                    Optimized APIs CRC_WriteData8/16/32
+   2024-11-08       CDT             Modify interface of AccumulateData and Calculate functions
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -129,72 +132,45 @@
  * @brief  Calculate the CRC value of a 8-bit data buffer.
  * @param  [in] au8Data                 Pointer to the input data buffer.
  * @param  [in] u32Len                  The length(counted in byte) of the data to be calculated.
- * @retval int32_t:
- *           - LL_OK:                   No errors occurred.
- *           - LL_ERR_INVD_PARAM:       The au8Data value is NULL or u32Len value is 0.
+ * @retval None
  */
-static int32_t CRC_WriteData8(const uint8_t au8Data[], uint32_t u32Len)
+static void CRC_WriteData8(const uint8_t au8Data[], uint32_t u32Len)
 {
     uint32_t i;
-    int32_t i32Ret = LL_ERR_INVD_PARAM;
-    const uint32_t u32DataAddr = CRC_DATA_ADDR;
-
-    if ((au8Data != NULL) && (u32Len != 0UL)) {
-        for (i = 0UL; i < u32Len; i++) {
-            RW_MEM8(u32DataAddr) = au8Data[i];
-        }
-        i32Ret = LL_OK;
+    __IO uint8_t *reg8DR = (__IO uint8_t *)CRC_DATA_ADDR;
+    for (i = 0UL; i < u32Len; i++) {
+        *reg8DR = au8Data[i];
     }
-
-    return i32Ret;
 }
 
 /**
  * @brief  Calculate the CRC value of a 16-bit data buffer.
  * @param  [in] au16Data                Pointer to the input data buffer.
  * @param  [in] u32Len                  The length(counted in half-word) of the data to be calculated.
- * @retval int32_t:
- *           - LL_OK:                   No errors occurred.
- *           - LL_ERR_INVD_PARAM:       The au16Data value is NULL or u32Len value is 0.
+ * @retval None
  */
-static int32_t CRC_WriteData16(const uint16_t au16Data[], uint32_t u32Len)
+static void CRC_WriteData16(const uint16_t au16Data[], uint32_t u32Len)
 {
     uint32_t i;
-    int32_t i32Ret = LL_ERR_INVD_PARAM;
-    const uint32_t u32DataAddr = CRC_DATA_ADDR;
-
-    if ((au16Data != NULL) && (u32Len != 0UL)) {
-        for (i = 0UL; i < u32Len; i++) {
-            RW_MEM16(u32DataAddr) = au16Data[i];
-        }
-        i32Ret = LL_OK;
+    __IO uint16_t *reg16DR = (__IO uint16_t *)CRC_DATA_ADDR;
+    for (i = 0UL; i < u32Len; i++) {
+        *reg16DR = au16Data[i];
     }
-
-    return i32Ret;
 }
 
 /**
  * @brief  Calculate the CRC value of a 32-bit data buffer.
  * @param  [in] au32Data                Pointer to the input data buffer.
  * @param  [in] u32Len                  The length(counted in word) of the data to be calculated.
- * @retval int32_t:
- *           - LL_OK:                   No errors occurred.
- *           - LL_ERR_INVD_PARAM:       The au32Data value is NULL or u32Len value is 0.
+ * @retval None
  */
-static int32_t CRC_WriteData32(const uint32_t au32Data[], uint32_t u32Len)
+static void CRC_WriteData32(const uint32_t au32Data[], uint32_t u32Len)
 {
     uint32_t i;
-    int32_t i32Ret = LL_ERR_INVD_PARAM;
-    const uint32_t u32DataAddr = CRC_DATA_ADDR;
-
-    if ((au32Data != NULL) && (u32Len != 0UL)) {
-        for (i = 0UL; i < u32Len; i++) {
-            RW_MEM32(u32DataAddr) = au32Data[i];
-        }
-        i32Ret = LL_OK;
+    __IO uint32_t *reg32DR = (__IO uint32_t *)CRC_DATA_ADDR;
+    for (i = 0UL; i < u32Len; i++) {
+        *reg32DR = au32Data[i];
     }
-
-    return i32Ret;
 }
 
 /**
@@ -268,6 +244,36 @@ int32_t CRC_DeInit(void)
 }
 
 /**
+ * @brief  Get the CRC result
+ * @param  None
+ * @retval The CRC result.
+ * @note   None.
+ */
+uint32_t CRC_GetResult(void)
+{
+    if (CRC_CRC32 == READ_REG32_BIT(CM_CRC->CR, CRC_CR_CR)) {
+        return READ_REG32(CM_CRC->RESLT);
+    } else {
+        return READ_REG32_BIT(CM_CRC->RESLT, 0x0000FFFFUL);
+    }
+}
+
+/**
+ * @brief  Set the CRC initial value
+ * @param  [in] u32Value        The CRC initial value.
+ * @retval None
+ * @note   None.
+ */
+void CRC_SetInitValue(uint32_t u32Value)
+{
+    if (CRC_CRC32 == READ_REG32_BIT(CM_CRC->CR, CRC_CR_CR)) {
+        WRITE_REG32(CM_CRC->RESLT, u32Value);
+    } else {
+        WRITE_REG32(CM_CRC->RESLT, u32Value & 0x0000FFFFUL);
+    }
+}
+
+/**
  * @brief  Get status of the CRC operation result.
  * @param  None
  * @retval An @ref en_flag_status_t enumeration type value.
@@ -291,30 +297,36 @@ en_flag_status_t CRC_GetResultStatus(void)
  * @param  [in] pvData                  Pointer to the buffer containing the data to be calculated.
  * @param  [in] u32Len                  The length(counted in bytes or half word or word, depending on
  *                                      the bit width) of the data to be calculated.
- * @retval The CRC16 value.
+ * @param  [out] pu16Out                Pointer to the calculated CRC value.
+ * @retval int32_t:
+ *          - LL_OK:                   Initialize successfully.
+ *          - LL_ERR_INVD_PARAM:       The pointer pstcCrcInit value is NULL.
  * @note   The function fetch data in byte or half word or word depending on the data bit width(the parameter u8DataWidth).
  */
-uint16_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len)
+int32_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t *pu16Out)
 {
-    uint16_t u16CrcValue = 0U;
+    int32_t i32Ret = LL_ERR_INVD_PARAM;
 
     if ((pvData != NULL) && (u32Len != 0UL)) {
         DDL_ASSERT(IS_CRC_DATA_WIDTH(u8DataWidth));
 
         /* Write data */
         if (CRC_DATA_WIDTH_32BIT == u8DataWidth) {
-            (void)CRC_WriteData32((const uint32_t *)pvData, u32Len);
+            CRC_WriteData32((const uint32_t *)pvData, u32Len);
         } else if (CRC_DATA_WIDTH_16BIT == u8DataWidth) {
-            (void)CRC_WriteData16((const uint16_t *)pvData, u32Len);
+            CRC_WriteData16((const uint16_t *)pvData, u32Len);
         } else {
-            (void)CRC_WriteData8((const uint8_t *)pvData, u32Len);
+            CRC_WriteData8((const uint8_t *)pvData, u32Len);
         }
 
-        /* Get checksum */
-        u16CrcValue = (uint16_t)READ_REG16(CM_CRC->RESLT);
+        if (pu16Out != NULL) {
+            /* Get checksum */
+            *pu16Out = (uint16_t)READ_REG16(CM_CRC->RESLT);
+            i32Ret = LL_OK;
+        }
     }
 
-    return u16CrcValue;
+    return i32Ret;
 }
 
 /**
@@ -327,30 +339,36 @@ uint16_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint3
  * @param  [in] pvData                  Pointer to the buffer containing the data to be calculated.
  * @param  [in] u32Len                  The length(counted in bytes or half word or word, depending on
  *                                      the bit width) of the data to be calculated.
- * @retval The CRC32 value.
+ * @param  [out] pu32Out                Pointer to the calculated CRC value.
+ * @retval int32_t:
+ *          - LL_OK:                   Initialize successfully.
+ *          - LL_ERR_INVD_PARAM:       The pointer pstcCrcInit value is NULL.
  * @note   The function fetch data in byte or half word or word depending on the data bit width(the parameter u8DataWidth).
  */
-uint32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len)
+int32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t *pu32Out)
 {
-    uint32_t u32CrcValue = 0UL;
+    int32_t i32Ret = LL_ERR_INVD_PARAM;
 
     if ((pvData != NULL) && (u32Len != 0UL)) {
         DDL_ASSERT(IS_CRC_DATA_WIDTH(u8DataWidth));
 
         /* Write data */
         if (CRC_DATA_WIDTH_32BIT == u8DataWidth) {
-            (void)CRC_WriteData32((const uint32_t *)pvData, u32Len);
+            CRC_WriteData32((const uint32_t *)pvData, u32Len);
         } else if (CRC_DATA_WIDTH_16BIT == u8DataWidth) {
-            (void)CRC_WriteData16((const uint16_t *)pvData, u32Len);
+            CRC_WriteData16((const uint16_t *)pvData, u32Len);
         } else {
-            (void)CRC_WriteData8((const uint8_t *)pvData, u32Len);
+            CRC_WriteData8((const uint8_t *)pvData, u32Len);
         }
 
-        /* Get checksum */
-        u32CrcValue = READ_REG32(CM_CRC->RESLT);
+        if (pu32Out != NULL) {
+            /* Get checksum */
+            *pu32Out = READ_REG32(CM_CRC->RESLT);
+            i32Ret = LL_OK;
+        }
     }
 
-    return u32CrcValue;
+    return i32Ret;
 }
 
 /**
@@ -365,21 +383,23 @@ uint32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint3
  * @param  [in] pvData                  Pointer to the buffer containing the data to be computed.
  * @param  [in] u32Len                  The length(counted in bytes or half word or word, depending on
  *                                      the bit width) of the data to be computed.
- * @retval The CRC16 value.
+ * @param  [out] pu16Out                Pointer to the calculated CRC value.
+ * @retval int32_t:
+ *          - LL_OK:                   Initialize successfully.
+ *          - LL_ERR_INVD_PARAM:       The pointer pstcCrcInit value is NULL.
  * @note   The function fetch data in byte or half word or word depending on the data bit width(the parameter u8DataWidth).
  */
-uint16_t CRC_CRC16_Calculate(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len)
+int32_t CRC_CRC16_Calculate(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t *pu16Out)
 {
-    uint16_t u16CrcValue = 0U;
+    int32_t i32Ret = LL_ERR_INVD_PARAM;
 
     if ((pvData != NULL) && (u32Len != 0UL)) {
         /* Set initial value */
         WRITE_REG16(CM_CRC->RESLT, u16InitValue);
-
-        u16CrcValue = CRC_CRC16_AccumulateData(u8DataWidth, pvData, u32Len);
+        i32Ret = CRC_CRC16_AccumulateData(u8DataWidth, pvData, u32Len, pu16Out);
     }
 
-    return u16CrcValue;
+    return i32Ret;
 }
 
 /**
@@ -394,21 +414,23 @@ uint16_t CRC_CRC16_Calculate(uint16_t u16InitValue, uint8_t u8DataWidth, const v
  * @param  [in] pvData                  Pointer to the buffer containing the data to be computed.
  * @param  [in] u32Len                  The length(counted in bytes or half word or word, depending on
  *                                      the bit width) of the data to be computed.
- * @retval The CRC32 value.
+ * @param  [out] pu32Out                Pointer to the calculated CRC value.
+ * @retval int32_t:
+ *          - LL_OK:                   Initialize successfully.
+ *          - LL_ERR_INVD_PARAM:       The pointer pstcCrcInit value is NULL.
  * @note   The function fetch data in byte or half word or word depending on the data bit width(the parameter u8DataWidth).
  */
-uint32_t CRC_CRC32_Calculate(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len)
+int32_t CRC_CRC32_Calculate(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t *pu32Out)
 {
-    uint32_t u32CrcValue = 0UL;
+    int32_t i32Ret = LL_ERR_INVD_PARAM;
 
     if ((pvData != NULL) && (u32Len != 0UL)) {
         /* Set initial value */
         WRITE_REG32(CM_CRC->RESLT, u32InitValue);
-
-        u32CrcValue = CRC_CRC32_AccumulateData(u8DataWidth, pvData, u32Len);
+        i32Ret = CRC_CRC32_AccumulateData(u8DataWidth, pvData, u32Len, pu32Out);
     }
 
-    return u32CrcValue;
+    return i32Ret;
 }
 
 /**
@@ -429,13 +451,13 @@ en_flag_status_t CRC_CRC16_CheckData(uint16_t u16InitValue, uint8_t u8DataWidth,
 {
     __IO uint32_t u32Count = CRC_CALC_CLK_COUNT;
     en_flag_status_t enStatus = RESET;
-    uint32_t u32Expect_Value = u16ExpectValue;
+    uint32_t u32ExpectValueTemp = u16ExpectValue;
 
     if ((pvData != NULL) && (u32Len != 0UL)) {
-        (void)CRC_CRC16_Calculate(u16InitValue, u8DataWidth, pvData, u32Len);
+        (void)CRC_CRC16_Calculate(u16InitValue, u8DataWidth, pvData, u32Len, NULL);
 
         /* Writes the expected CRC value to be checked */
-        (void)CRC_WriteData16((uint16_t *)((void *)&u32Expect_Value), 1UL);
+        CRC_WriteData16((uint16_t *)((void *)&u32ExpectValueTemp), 1UL);
 
         /* Delay for waiting CRC result flag */
         while (u32Count-- != 0UL) {
@@ -466,13 +488,13 @@ en_flag_status_t CRC_CRC32_CheckData(uint32_t u32InitValue, uint8_t u8DataWidth,
 {
     __IO uint32_t u32Count = CRC_CALC_CLK_COUNT;
     en_flag_status_t enStatus = RESET;
-    uint32_t u32Expect_Value = u32ExpectValue;
+    uint32_t u32ExpectValueTemp = u32ExpectValue;
 
     if ((pvData != NULL) && (u32Len != 0UL)) {
-        (void)CRC_CRC32_Calculate(u32InitValue, u8DataWidth, pvData, u32Len);
+        (void)CRC_CRC32_Calculate(u32InitValue, u8DataWidth, pvData, u32Len, NULL);
 
         /* Writes the expected CRC value to be checked */
-        (void)CRC_WriteData32(&u32Expect_Value, 1UL);
+        CRC_WriteData32(&u32ExpectValueTemp, 1UL);
 
         /* Delay for waiting CRC result flag */
         while (u32Count-- != 0UL) {
@@ -494,10 +516,10 @@ en_flag_status_t CRC_CRC16_GetCheckResult(uint16_t u16ExpectValue)
 {
     __IO uint32_t u32Count = CRC_CALC_CLK_COUNT;
     en_flag_status_t enStatus;
-    uint32_t u32Expect_Value = u16ExpectValue;
+    uint32_t u32ExpectValueTemp = u16ExpectValue;
 
     /* Writes the expected CRC value to be checked */
-    (void)CRC_WriteData16((uint16_t *)((void *)&u32Expect_Value), 1UL);
+    CRC_WriteData16((uint16_t *)((void *)&u32ExpectValueTemp), 1UL);
 
     /* Delay for waiting CRC result flag */
     while (u32Count-- != 0UL) {
@@ -518,10 +540,10 @@ en_flag_status_t CRC_CRC32_GetCheckResult(uint32_t u32ExpectValue)
 {
     __IO uint32_t u32Count = CRC_CALC_CLK_COUNT;
     en_flag_status_t enStatus;
-    uint32_t u32Expect_Value = u32ExpectValue;
+    uint32_t u32ExpectValueTemp = u32ExpectValue;
 
     /* Writes the expected CRC value to be checked */
-    (void)CRC_WriteData32(&u32Expect_Value, 1UL);
+    CRC_WriteData32(&u32ExpectValueTemp, 1UL);
 
     /* Delay for waiting CRC result flag */
     while (u32Count-- != 0UL) {

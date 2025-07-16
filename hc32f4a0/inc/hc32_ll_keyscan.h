@@ -10,7 +10,7 @@
    2023-06-30       CDT             Add function KEYSCAN_DeInit
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -88,17 +88,17 @@ typedef struct {
  */
 
 /**
- * @defgroup KEYSCAN_Hiz_Cycle_Sel KEYSCAN Hiz cycles during low ouput selection
+ * @defgroup KEYSCAN_Hiz_Cycle_Sel KEYSCAN Hiz cycles during low output selection
  * @{
  */
-#define KEYSCAN_HIZ_CYCLE_4     (0x00UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 4 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_8     (0x01UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 8 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_16    (0x02UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 16 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_32    (0x03UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 32 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_64    (0x04UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 64 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_256   (0x05UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 256 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_512   (0x06UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 512 cycles during low ouput */
-#define KEYSCAN_HIZ_CYCLE_1024  (0x07UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 1024 cycles during low ouput */
+#define KEYSCAN_HIZ_CYCLE_4     (0x00UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 4 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_8     (0x01UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 8 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_16    (0x02UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 16 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_32    (0x03UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 32 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_64    (0x04UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 64 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_256   (0x05UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 256 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_512   (0x06UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 512 cycles during low output */
+#define KEYSCAN_HIZ_CYCLE_1024  (0x07UL << KEYSCAN_SCR_T_HIZ_POS)       /*!< KEYSCAN HiZ keep 1024 cycles during low output */
 /**
  * @}
  */

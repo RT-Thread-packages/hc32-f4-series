@@ -11,9 +11,11 @@
    2023-06-30       CDT             Modify GPIO_SetFunc()
                                     Rename GPIO_ExIntCmd() as GPIO_ExtIntCmd
                                     Optimize API: GPIO_Init(), GPIO_SetFunc(), GPIO_SubFuncCmd(), GPIO_InputMOSCmd(), GPIO_AnalogCmd(), GPIO_ExtIntCmd()
+   2023-12-15       CDT             Add assert for GPIO register lock status in API GPIO_AnalogCmd(), GPIO_ExtIntCmd()
+   2024-06-30       CDT             clear EFEN bit or NOCEN bit in GPIO_ExtIntCmd() before enable interrupt
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -46,7 +48,7 @@
  * Local type definitions ('typedef')
  ******************************************************************************/
 /**
- * @defgroup GPIO_Local_Types GPIO Local Typedefs
+ * @defgroup GPIO_Local_Types GPIO Local Types
  * @{
  */
 /**
@@ -331,7 +333,6 @@ int32_t GPIO_StructInit(stc_gpio_init_t *pstcGpioInit)
         pstcGpioInit->u16PinDir         = PIN_DIR_IN;
         pstcGpioInit->u16PinDrv         = PIN_LOW_DRV;
         pstcGpioInit->u16PinAttr        = PIN_ATTR_DIGITAL;
-
         pstcGpioInit->u16Latch          = PIN_LATCH_OFF;
         pstcGpioInit->u16PullUp         = PIN_PU_OFF;
         pstcGpioInit->u16Invert         = PIN_INVT_OFF;
@@ -637,6 +638,7 @@ void GPIO_AnalogCmd(uint8_t u8Port, uint16_t u16Pin, en_functional_state_t enNew
     uint8_t u8PinPos;
 
     /* Parameter validity checking */
+    DDL_ASSERT(IS_GPIO_UNLOCK());
     DDL_ASSERT(IS_GPIO_PORT(u8Port));
     DDL_ASSERT(IS_GPIO_PIN(u16Pin));
 
@@ -667,16 +669,24 @@ void GPIO_ExtIntCmd(uint8_t u8Port, uint16_t u16Pin, en_functional_state_t enNew
 {
     __IO uint16_t *PCRx;
     uint8_t u8PinPos;
+    __IO uint32_t *EIRQCRx;
+    uint32_t EIRQ_Value;
 
     /* Parameter validity checking */
+    DDL_ASSERT(IS_GPIO_UNLOCK());
     DDL_ASSERT(IS_GPIO_PORT(u8Port));
     DDL_ASSERT(IS_GPIO_PIN(u16Pin));
 
     for (u8PinPos = 0U; u8PinPos < GPIO_PIN_NUM_MAX; u8PinPos++) {
         if ((u16Pin & 1U) != 0U) {
             PCRx = &PCR_REG(u8Port, u8PinPos);
+            EIRQCRx = (__IO uint32_t *)((uint32_t)&CM_INTC->EIRQCR0 + 4UL * u8PinPos);
             if (ENABLE == enNewState) {
+                EIRQ_Value = (uint32_t) * EIRQCRx;
+                /*  disable digital filter A */
+                CLR_REG32_BIT(*EIRQCRx, INTC_EIRQCR_EFEN);
                 SET_REG16_BIT(*PCRx, GPIO_PCR_INTE);
+                WRITE_REG32(*EIRQCRx, EIRQ_Value);
             } else {
                 CLR_REG16_BIT(*PCRx, GPIO_PCR_INTE);
             }
@@ -687,6 +697,7 @@ void GPIO_ExtIntCmd(uint8_t u8Port, uint16_t u16Pin, en_functional_state_t enNew
         }
     }
 }
+
 /**
  * @}
  */

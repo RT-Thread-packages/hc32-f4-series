@@ -10,7 +10,7 @@
                                     Modify for new head file
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -90,7 +90,7 @@
     ((filter) == EP_FILTER_ON))
 
 /*! Parameter validity check for pin. */
-#define IS_EVENT_PIN(pin)               (((pin) & EVT_PIN_MASK ) != 0x0000U)
+#define IS_EVENT_PIN(pin)               (((pin) & EVT_PIN_MASK) != 0x0000U)
 
 /*! Parameter valid check for event port operation after triggered. */
 #define IS_EP_OPS(ops)                                                          \

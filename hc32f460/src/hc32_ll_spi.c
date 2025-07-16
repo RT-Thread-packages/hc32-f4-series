@@ -10,10 +10,15 @@
    2023-01-15       CDT             Add frame level processing for API SPI_TxRx(),SPI_Tx()
    2023-06-30       CDT             Modify SPI_GetStatus,SPI_TxRx,SPI_Tx function
                                     Add SPI_SetSckPolarity,SPI_SetSckPhase functions
-                                    Modify return type of fuction SPI_DeInit
+                                    Modify return type of function SPI_DeInit
+   2023-12-15       CDT             Modify some assert
+                                    Rename some API SPI_xxxConfig as SPI_Setxxx
+                                    Refine API SPI_Init()
+                                    Add Send restriction in SPI_TxRx function
+   2024-06-30       CDT             Modify SPI_DeInit,SPI_ClearStatus for couping risk
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -53,7 +58,6 @@
  * @defgroup SPI_Local_Macros SPI Local Macros
  * @{
  */
-
 #define SPI_CFG1_DEFAULT        (0x00000010UL)
 #define SPI_CFG2_DEFAULT        (0x00000F1DUL)
 
@@ -62,19 +66,17 @@
 #define SPI_SS2_VALID_CFG       (SPI_CFG2_SSA_1)
 #define SPI_SS3_VALID_CFG       (SPI_CFG2_SSA_0 | SPI_CFG2_SSA_1)
 
-#define SPI_SR_DEFAULT          (0x00000020UL)
-
 /**
  * @defgroup SPI_Check_Parameters_Validity SPI Check Parameters Validity
  * @{
  */
 
 /*! Parameter valid check for SPI peripheral */
-#define IS_VALID_SPI_UNIT(x)                                                   \
-(   (CM_SPI1 == (x))                        ||                                 \
-    (CM_SPI2 == (x))                        ||                                 \
-    (CM_SPI3 == (x))                        ||                                 \
-    (CM_SPI4 == (x)))
+#define IS_SPI_UNIT(x)                                                         \
+(   ((x) == CM_SPI1)                        ||                                 \
+    ((x) == CM_SPI2)                        ||                                 \
+    ((x) == CM_SPI3)                        ||                                 \
+    ((x) == CM_SPI4))
 
 /*! Parameter valid check for SPI wire mode */
 #define IS_SPI_WIRE_MD(x)                                                      \
@@ -98,7 +100,7 @@
     ((x) == SPI_LOOPBACK_MOSI))
 
 /*! Parameter valid check for SPI communication suspend function status */
-#define IS_SPI_SUSPD_MD_STD(x)                                                 \
+#define IS_SPI_SUSPD_MD_STAT(x)                                                \
 (   ((x) == SPI_COM_SUSP_FUNC_OFF)          ||                                 \
     ((x) == SPI_COM_SUSP_FUNC_ON))
 
@@ -182,8 +184,13 @@
     ((x) == SPI_PIN_SS2)                    ||                                 \
     ((x) == SPI_PIN_SS3))
 
+/*! Parameter valid check for SPI SS valid level */
+#define IS_SPI_SS_VALID_LVL(x)                                                 \
+(   ((x) == SPI_SS_VALID_LVL_HIGH)          ||                                 \
+    ((x) == SPI_SS_VALID_LVL_LOW))
+
 /*! Parameter valid check for SPI baudrate prescaler */
-#define IS_SPI_BIT_RATE_DIV(x)                                                 \
+#define IS_SPI_CLK_DIV(x)                                                      \
 (   ((x) == SPI_BR_CLK_DIV2)                ||                                 \
     ((x) == SPI_BR_CLK_DIV4)                ||                                 \
     ((x) == SPI_BR_CLK_DIV8)                ||                                 \
@@ -220,20 +227,20 @@
 /*! Parameter valid check for SPI Communication mode */
 #define IS_SPI_COMM_MD(x)                                                      \
 (   ((x) == SPI_COMM_MD_NORMAL)             ||                                 \
-    ((x) == SPI_COMM_MD_CONTINUE))
+    ((x) == SPI_COMM_MD_CONT))
 
 /*! Parameter valid check for interrupt flag */
 #define IS_SPI_INT(x)                                                          \
 (   ((x) != 0UL)                            &&                                 \
-    (((x) | SPI_IRQ_ALL) == SPI_IRQ_ALL))
+    (((x) | SPI_INT_ALL) == SPI_INT_ALL))
 
 /*! Parameter valid check for SPI status flag */
-#define IS_SPI_STD_FLAG(x)                                                     \
+#define IS_SPI_FLAG(x)                                                         \
 (   ((x) != 0UL)                            &&                                 \
     (((x) | SPI_FLAG_ALL) == SPI_FLAG_ALL))
 
 /*! Parameter valid check for SPI status flag for clear */
-#define IS_SPI_CLR_STD_FLAG(x)                                                 \
+#define IS_SPI_CLR_FLAG(x)                                                     \
 (   ((x) != 0UL)                            &&                                 \
     (((x) | SPI_FLAG_CLR_ALL) == SPI_FLAG_CLR_ALL))
 
@@ -329,7 +336,7 @@ static int32_t SPI_TxRx(CM_SPI_TypeDef *SPIx, const void *pvTxBuf, void *pvRxBuf
         if (u32TxCnt < u32Len) {
             /* Wait TX buffer empty. */
             i32Ret = SPI_WaitStatus(SPIx, SPI_FLAG_TX_BUF_EMPTY, SPI_FLAG_TX_BUF_EMPTY, 0U);
-            if ((i32Ret == LL_OK) && (((u32MSMode == SPI_MASTER) && (u32TxAllow == 1U)) || (u32MSMode == SPI_SLAVE))) {
+            if ((u32TxAllow == 1U) && (i32Ret == LL_OK) && (((u32MSMode == SPI_MASTER)) || (u32MSMode == SPI_SLAVE))) {
                 if (pvTxBuf != NULL) {
                     u32FrameCnt = 0UL;
                     while (u32FrameCnt < u32FrameNum) {
@@ -477,12 +484,13 @@ static int32_t SPI_Tx(CM_SPI_TypeDef *SPIx, const void *pvTxBuf, uint32_t u32Len
  * @retval int32_t:
  *         - LL_OK:                 No errors occurred
  *         - LL_ERR_INVD_PARAM:     pstcSpiInit == NULL or configuration parameter error.
+ * @note   -The parameter u32BaudRatePrescaler is invalid while slave mode
  */
 int32_t SPI_Init(CM_SPI_TypeDef *SPIx, const stc_spi_init_t *pstcSpiInit)
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
 
     if (NULL != pstcSpiInit) {
         DDL_ASSERT(IS_SPI_WIRE_MD(pstcSpiInit->u32WireMode));
@@ -491,10 +499,10 @@ int32_t SPI_Init(CM_SPI_TypeDef *SPIx, const stc_spi_init_t *pstcSpiInit)
         DDL_ASSERT(IS_SPI_MD_FAULT_DETECT_CMD(pstcSpiInit->u32ModeFaultDetect));
         DDL_ASSERT(IS_SPI_PARITY_CHECK(pstcSpiInit->u32Parity));
         DDL_ASSERT(IS_SPI_SPI_MD(pstcSpiInit->u32SpiMode));
-        DDL_ASSERT(IS_SPI_BIT_RATE_DIV(pstcSpiInit->u32BaudRatePrescaler));
+        DDL_ASSERT(IS_SPI_CLK_DIV(pstcSpiInit->u32BaudRatePrescaler));
         DDL_ASSERT(IS_SPI_DATA_SIZE(pstcSpiInit->u32DataBits));
         DDL_ASSERT(IS_SPI_FIRST_BIT(pstcSpiInit->u32FirstBit));
-        DDL_ASSERT(IS_SPI_SUSPD_MD_STD(pstcSpiInit->u32SuspendMode));
+        DDL_ASSERT(IS_SPI_SUSPD_MD_STAT(pstcSpiInit->u32SuspendMode));
         DDL_ASSERT(IS_SPI_DATA_FRAME(pstcSpiInit->u32FrameLevel));
 
         /* Configuration parameter check */
@@ -504,11 +512,16 @@ int32_t SPI_Init(CM_SPI_TypeDef *SPIx, const stc_spi_init_t *pstcSpiInit)
                    && ((SPI_MD_0 == pstcSpiInit->u32SpiMode) || (SPI_MD_2 == pstcSpiInit->u32SpiMode))) {
             /* SPI_3_WIRE can not support SPI_MD_0 and SPI_MD_2 */
         } else {
-            WRITE_REG32(SPIx->CR1, pstcSpiInit->u32WireMode | pstcSpiInit->u32TransMode | pstcSpiInit->u32MasterSlave
-                        | pstcSpiInit->u32SuspendMode | pstcSpiInit->u32ModeFaultDetect | pstcSpiInit->u32Parity);
+            WRITE_REG32(SPIx->CR1, pstcSpiInit->u32WireMode | pstcSpiInit->u32TransMode | pstcSpiInit->u32MasterSlave | \
+                        pstcSpiInit->u32SuspendMode | pstcSpiInit->u32ModeFaultDetect | pstcSpiInit->u32Parity);
             MODIFY_REG32(SPIx->CFG1, SPI_CFG1_FTHLV, pstcSpiInit->u32FrameLevel);
-            WRITE_REG32(SPIx->CFG2, pstcSpiInit->u32SpiMode | pstcSpiInit->u32BaudRatePrescaler | pstcSpiInit->u32DataBits
-                        | pstcSpiInit->u32FirstBit);
+            if (SPI_MASTER == pstcSpiInit->u32MasterSlave) {
+                WRITE_REG32(SPIx->CFG2, pstcSpiInit->u32SpiMode | pstcSpiInit->u32BaudRatePrescaler | pstcSpiInit->u32DataBits | \
+                            pstcSpiInit->u32FirstBit);
+            } else {
+                WRITE_REG32(SPIx->CFG2, pstcSpiInit->u32SpiMode | pstcSpiInit->u32DataBits | pstcSpiInit->u32FirstBit);
+            }
+
             i32Ret = LL_OK;
         }
     }
@@ -524,12 +537,12 @@ int32_t SPI_Init(CM_SPI_TypeDef *SPIx, const stc_spi_init_t *pstcSpiInit)
  */
 int32_t SPI_DeInit(CM_SPI_TypeDef *SPIx)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
 
     WRITE_REG32(SPIx->CR1, 0UL);
     WRITE_REG32(SPIx->CFG1, SPI_CFG1_DEFAULT);
     WRITE_REG32(SPIx->CFG2, SPI_CFG2_DEFAULT);
-    CLR_REG32_BIT(SPIx->SR, SPI_FLAG_CLR_ALL);
+    WRITE_REG32(SPIx->SR, (~SPI_FLAG_CLR_ALL) & SPI_FLAG_ALL);
 
     return LL_OK;
 }
@@ -574,7 +587,7 @@ int32_t SPI_StructInit(stc_spi_init_t *pstcSpiInit)
  */
 void SPI_IntCmd(CM_SPI_TypeDef *SPIx, uint32_t u32IntType, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
     DDL_ASSERT(IS_SPI_INT(u32IntType));
 
@@ -594,7 +607,7 @@ void SPI_IntCmd(CM_SPI_TypeDef *SPIx, uint32_t u32IntType, en_functional_state_t
  */
 void SPI_Cmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
     DDL_ASSERT(IS_SPI_CMD_ALLOWED(enNewState));
 
@@ -614,7 +627,7 @@ void SPI_Cmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNewState)
  */
 void SPI_WriteData(CM_SPI_TypeDef *SPIx, uint32_t u32Data)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     WRITE_REG32(SPIx->DR, u32Data);
 }
 
@@ -626,7 +639,7 @@ void SPI_WriteData(CM_SPI_TypeDef *SPIx, uint32_t u32Data)
  */
 uint32_t SPI_ReadData(const CM_SPI_TypeDef *SPIx)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
 
     return READ_REG32(SPIx->DR);
 }
@@ -644,8 +657,8 @@ en_flag_status_t SPI_GetStatus(const CM_SPI_TypeDef *SPIx, uint32_t u32Flag)
     en_flag_status_t enFlag = RESET;
     uint32_t u32Status;
 
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
-    DDL_ASSERT(IS_SPI_STD_FLAG(u32Flag));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_FLAG(u32Flag));
 
     u32Status = READ_REG32(SPIx->SR);
     if (SPI_FLAG_IDLE == (SPI_FLAG_IDLE & u32Flag)) {
@@ -666,18 +679,18 @@ en_flag_status_t SPI_GetStatus(const CM_SPI_TypeDef *SPIx, uint32_t u32Flag)
  * @param  [in]  SPIx               SPI unit
  *   @arg CM_SPIx or CM_SPI
  * @param  [in]  u32Flag            SPI state flag. Can be one or any combination of the parameter below
- *   @arg  SPI_FLAG_OVERLOAD
+ *   @arg  SPI_FLAG_OVERRUN
  *   @arg  SPI_FLAG_MD_FAULT
  *   @arg  SPI_FLAG_PARITY_ERR
- *   @arg  SPI_FLAG_UNDERLOAD
+ *   @arg  SPI_FLAG_UNDERRUN
  * @retval None
  */
 void SPI_ClearStatus(CM_SPI_TypeDef *SPIx, uint32_t u32Flag)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
-    DDL_ASSERT(IS_SPI_CLR_STD_FLAG(u32Flag));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_CLR_FLAG(u32Flag));
 
-    CLR_REG32_BIT(SPIx->SR, u32Flag);
+    WRITE_REG32(SPIx->SR, (~u32Flag) & SPI_FLAG_ALL);
 }
 
 /**
@@ -687,9 +700,9 @@ void SPI_ClearStatus(CM_SPI_TypeDef *SPIx, uint32_t u32Flag)
  * @param  [in]  u32Mode            Loopback mode. Can be one parameter @ref SPI_Loopback_Selection_Define
  * @retval None
  */
-void SPI_LoopbackModeConfig(CM_SPI_TypeDef *SPIx, uint32_t u32Mode)
+void SPI_SetLoopbackMode(CM_SPI_TypeDef *SPIx, uint32_t u32Mode)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_SPI_SPLPBK(u32Mode));
 
     MODIFY_REG32(SPIx->CR1, SPI_CR1_SPLPBK | SPI_CR1_SPLPBK2, u32Mode);
@@ -705,7 +718,7 @@ void SPI_LoopbackModeConfig(CM_SPI_TypeDef *SPIx, uint32_t u32Mode)
 
 void SPI_ParityCheckCmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -729,7 +742,7 @@ int32_t SPI_DelayTimeConfig(CM_SPI_TypeDef *SPIx, const stc_spi_delay_t *pstcDel
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
 
     if (NULL != pstcDelayConfig) {
         DDL_ASSERT(IS_SPI_INTERVAL_DELAY(pstcDelayConfig->u32IntervalDelay));
@@ -794,16 +807,18 @@ int32_t SPI_DelayStructInit(stc_spi_delay_t *pstcDelayConfig)
  * @param  [in]  SPIx               SPI unit
  *   @arg CM_SPIx or CM_SPI
  * @param  [in]  u32SSPin           Specify the SS pin @ref SPI_SS_Pin_Define
- * @param  [in]  enNewState         An @ref en_functional_state_t enumeration value.
+ * @param  [in]  u32SSLevel         Specify the SS valid level @ref SPI_SS_Level
+ *   @arg  SPI_SS_VALID_LVL_HIGH:   SS high level valid
+ *   @arg  SPI_SS_VALID_LVL_LOW:    SS low level valid
  * @retval None
  */
-void SPI_SSValidLevelConfig(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin, en_functional_state_t enNewState)
+void SPI_SetSSValidLevel(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin, uint32_t u32SSLevel)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_SPI_SS_PIN(u32SSPin));
-    DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
+    DDL_ASSERT(IS_SPI_SS_VALID_LVL(u32SSLevel));
 
-    if (ENABLE == enNewState) {
+    if (SPI_SS_VALID_LVL_HIGH == u32SSLevel) {
         SET_REG32_BIT(SPIx->CFG1, u32SSPin);
     } else {
         CLR_REG32_BIT(SPIx->CFG1, u32SSPin);
@@ -819,7 +834,7 @@ void SPI_SSValidLevelConfig(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin, en_function
  */
 void SPI_SetSckPolarity(CM_SPI_TypeDef *SPIx, uint32_t u32Polarity)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_SPI_SCK_POLARITY(u32Polarity));
 
     if (SPI_SCK_POLARITY_LOW == u32Polarity) {
@@ -838,7 +853,7 @@ void SPI_SetSckPolarity(CM_SPI_TypeDef *SPIx, uint32_t u32Polarity)
  */
 void SPI_SetSckPhase(CM_SPI_TypeDef *SPIx, uint32_t u32Phase)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_SPI_SCK_PHASE(u32Phase));
 
     if (SPI_SCK_PHASE_ODD_EDGE_SAMPLE == u32Phase) {
@@ -858,7 +873,7 @@ void SPI_SetSckPhase(CM_SPI_TypeDef *SPIx, uint32_t u32Phase)
 void SPI_SSPinSelect(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin)
 {
     uint32_t    u32RegConfig;
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_SPI_SS_PIN(u32SSPin));
 
     switch (u32SSPin) {
@@ -874,7 +889,6 @@ void SPI_SSPinSelect(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin)
         case SPI_PIN_SS3:
             u32RegConfig = SPI_SS3_VALID_CFG;
             break;
-
         default:
             u32RegConfig = SPI_SS0_VALID_CFG;
             break;
@@ -889,9 +903,9 @@ void SPI_SSPinSelect(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin)
  * @param  [in]  u32ReadBuf         Target buffer for read operation @ref SPI_Read_Target_Buf_Define
  * @retval None
  */
-void SPI_ReadBufConfig(CM_SPI_TypeDef *SPIx, uint32_t u32ReadBuf)
+void SPI_SetReadBuf(CM_SPI_TypeDef *SPIx, uint32_t u32ReadBuf)
 {
-    DDL_ASSERT(IS_VALID_SPI_UNIT(SPIx));
+    DDL_ASSERT(IS_SPI_UNIT(SPIx));
     DDL_ASSERT(IS_SPI_RD_TARGET_BUFF(u32ReadBuf));
 
     MODIFY_REG32(SPIx->CFG1, SPI_CFG1_SPRDTD, u32ReadBuf);
@@ -960,7 +974,7 @@ int32_t SPI_Receive(CM_SPI_TypeDef *SPIx, void *pvRxBuf, uint32_t u32RxLen, uint
  *   @arg CM_SPIx or CM_SPI
  * @param  [in]  pvTxBuf            The pointer to the buffer which contains the data to be sent.
  *                                  If this pointer is NULL and the pvRxBuf is NOT NULL, the MOSI output high
- *                                  and the the received data will be stored in the buffer pointed by pvRxBuf.
+ *                                  and the received data will be stored in the buffer pointed by pvRxBuf.
  * @param  [out] pvRxBuf            The pointer to the buffer which the received data will be stored.
  *                                  This for full duplex transfer.
  * @param  [in]  u32Len             The length of the data(in byte or half word) to be sent and received.

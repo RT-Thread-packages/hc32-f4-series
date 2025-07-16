@@ -11,9 +11,11 @@
                                     Remove CAN_FLAG_RX_BUF_OVF from CAN_FLAG_CLR_ALL
    2023-06-30       CDT             Added 3 APIs for local-reset
                                     Modify typo
+   2024-06-30       CDT             API CAN_DeInit() added return value
+                                    Added macro group CAN_ID_Mask
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -459,6 +461,16 @@ typedef struct {
  */
 
 /**
+ * @defgroup CAN_ID_Mask CAN ID Mask
+ * @{
+ */
+#define CAN_STD_ID_MASK                (0x7FFUL)                /*!< Standard ID mask */
+#define CAN_EXT_ID_MASK                (0x1FFFFFFFUL)           /*!< Extended ID mask */
+/**
+ * @}
+ */
+
+/**
  * @defgroup CAN_Err_Type CAN Error Type
  * @{
  */
@@ -604,7 +616,7 @@ typedef struct {
 /* Classical CAN */
 int32_t CAN_Init(CM_CAN_TypeDef *CANx, const stc_can_init_t *pstcCanInit);
 int32_t CAN_StructInit(stc_can_init_t *pstcCanInit);
-void CAN_DeInit(CM_CAN_TypeDef *CANx);
+int32_t CAN_DeInit(CM_CAN_TypeDef *CANx);
 void CAN_IntCmd(CM_CAN_TypeDef *CANx, uint32_t u32IntType, en_functional_state_t enNewState);
 int32_t CAN_FillTxFrame(CM_CAN_TypeDef *CANx, uint8_t u8TxBufType, const stc_can_tx_frame_t *pstcTx);
 void CAN_StartTx(CM_CAN_TypeDef *CANx, uint8_t u8TxRequest);

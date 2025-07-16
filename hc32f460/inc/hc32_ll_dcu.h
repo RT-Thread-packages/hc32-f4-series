@@ -11,7 +11,7 @@
    2023-06-30       CDT             Modify macro-definition according to RM:DCU_CTL_COMP_TRG->DCU_CTL_COMPTRG
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -173,7 +173,7 @@ typedef struct {
  * @{
  */
 #define DCU_INT_CMP_WIN_INSIDE              (DCU_INTEVTSEL_SEL_WIN_0)  /*!< DCU comparison(DATA2 <= DATA0 <= DATA1) interrupt */
-#define DCU_INT_CMP_WIN_OUTSIDE             (DCU_INTEVTSEL_SEL_WIN_1)  /*!< DCU comparison(DATA0 < DATA2 & DATA0 > DATA1 ) interrupt */
+#define DCU_INT_CMP_WIN_OUTSIDE             (DCU_INTEVTSEL_SEL_WIN_1)  /*!< DCU comparison(DATA0 < DATA2 & DATA0 > DATA1) interrupt */
 #define DCU_INT_CMP_WIN_ALL                 (DCU_INT_CMP_WIN_INSIDE | DCU_INT_CMP_WIN_OUTSIDE)
 /**
  * @}

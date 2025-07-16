@@ -12,9 +12,12 @@
    2023-06-30       CDT             IRQxxx_Handler add __DSB for Arm Errata 838869
    2023-09-30       CDT             Modify micro define EIRQCFR_REG and EIRQFR_REG base RM
                                     Remove space line
+   2024-06-30       CDT             Modify INTC filter B macros correspond with RM
+                                    Modify API NMI_ClearNmiStatus(),EXTINT_ClearExtIntStatus() Clear status by write instruction
+                                    clear EFEN bit in EXTINT_Init()
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -117,16 +120,15 @@
     ((faclk) == EXTINT_FCLK_DIV64))
 
 /*! Parameter validity check for EXTINT filter B function. */
-#define IS_NMI_EXTINT_FBE(fbe)                                                  \
-(   ((fbe) == NMI_EXTINT_FILTER_B_OFF)          ||                              \
-    ((fbe) == NMI_EXTINT_FILTER_B_ON))
-
+#define IS_EXTINT_FBE(fbe)                                                      \
+(   ((fbe) == EXTINT_FILTER_B_OFF)              ||                              \
+    ((fbe) == EXTINT_FILTER_B_ON))
 /*! Parameter validity check for EXTINT filter B time. */
-#define IS_NMI_EXTINT_FBTIME(fbtime)                                            \
-(   ((fbtime) == NMI_EXTINT_FCLK_B_500NS)       ||                              \
-    ((fbtime) == NMI_EXTINT_FCLK_B_1US)         ||                              \
-    ((fbtime) == NMI_EXTINT_FCLK_B_2US)         ||                              \
-    ((fbtime) == NMI_EXTINT_FCLK_B_4US))
+#define IS_EXTINT_FBTIME(fbtime)                                                \
+(   ((fbtime) == EXTINT_FILTER_B_LVL1)          ||                              \
+    ((fbtime) == EXTINT_FILTER_B_LVL2)          ||                              \
+    ((fbtime) == EXTINT_FILTER_B_LVL3)          ||                              \
+    ((fbtime) == EXTINT_FILTER_B_LVL4))
 
 /*! Parameter validity check for EXTINT trigger edge. */
 #define IS_EXTINT_TRIG(trigger)                                                 \
@@ -433,7 +435,7 @@ void NMI_ClearNmiStatus(uint32_t u32Src)
     /* Parameter validity checking */
     DDL_ASSERT(IS_NMI_SRC(u32Src));
 
-    SET_REG32_BIT(NMICFR_REG, u32Src);
+    WRITE_REG32(NMICFR_REG, u32Src);
 }
 
 /**
@@ -461,15 +463,17 @@ int32_t EXTINT_Init(uint32_t u32Ch, const stc_extint_init_t *pstcExtIntInit)
         DDL_ASSERT(IS_EXTINT_FAE(pstcExtIntInit->u32Filter));
         DDL_ASSERT(IS_EXTINT_FACLK(pstcExtIntInit->u32FilterClock));
         DDL_ASSERT(IS_EXTINT_TRIG(pstcExtIntInit->u32Edge));
-        DDL_ASSERT(IS_NMI_EXTINT_FBE(pstcExtIntInit->u32FilterB));
-        DDL_ASSERT(IS_NMI_EXTINT_FBTIME(pstcExtIntInit->u32FilterBClock));
+        DDL_ASSERT(IS_EXTINT_FBE(pstcExtIntInit->u32FilterB));
+        DDL_ASSERT(IS_EXTINT_FBTIME(pstcExtIntInit->u32FilterBClock));
         for (u8ExtIntPos = 0U; u8ExtIntPos < EXTINT_CH_NUM_MAX; u8ExtIntPos++) {
             if (0UL != (u32Ch & (1UL << u8ExtIntPos))) {
+                EIRQCRx = (__IO uint32_t *)((uint32_t)&CM_INTC->EIRQCR0 + 4UL * u8ExtIntPos);
                 EIRQCRVal = pstcExtIntInit->u32Filter | pstcExtIntInit->u32FilterClock  |   \
                             pstcExtIntInit->u32Edge;
                 EIRQCRVal |= pstcExtIntInit->u32FilterB;
                 WRITE_REG32(CM_INTC->NOCCR, pstcExtIntInit->u32FilterBClock);
-                EIRQCRx = (__IO uint32_t *)((uint32_t)&CM_INTC->EIRQCR0 + 4UL * u8ExtIntPos);
+                CLR_REG32_BIT(*EIRQCRx, INTC_EIRQCR_NOCEN);
+                CLR_REG32_BIT(*EIRQCRx, INTC_EIRQCR_EFEN);
                 WRITE_REG32(*EIRQCRx, EIRQCRVal);
             }
         }
@@ -497,8 +501,8 @@ int32_t EXTINT_StructInit(stc_extint_init_t *pstcExtIntInit)
         pstcExtIntInit->u32Filter      = EXTINT_FILTER_OFF;
         pstcExtIntInit->u32FilterClock = EXTINT_FCLK_DIV1;
         pstcExtIntInit->u32Edge        = EXTINT_TRIG_FALLING;
-        pstcExtIntInit->u32FilterB      = NMI_EXTINT_FILTER_B_OFF;
-        pstcExtIntInit->u32FilterBClock = NMI_EXTINT_FCLK_B_500NS;
+        pstcExtIntInit->u32FilterB      = EXTINT_FILTER_B_OFF;
+        pstcExtIntInit->u32FilterBClock = EXTINT_FILTER_B_LVL1;
     }
     return i32Ret;
 }
@@ -513,7 +517,7 @@ void EXTINT_ClearExtIntStatus(uint32_t u32ExtIntCh)
     /* Parameter validity checking */
     DDL_ASSERT(IS_EXTINT_CH(u32ExtIntCh));
 
-    SET_REG32_BIT(EIRQCFR_REG, u32ExtIntCh);
+    WRITE_REG32(EIRQCFR_REG, u32ExtIntCh);
 }
 
 /**

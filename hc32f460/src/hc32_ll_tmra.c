@@ -10,11 +10,16 @@
    2023-06-30       CDT             Modify typo
                                     Update about split 16bit register TMRA_BCSTR into two 8bit registers TMRA_BCSTRH and TMRA_BCSTRL
                                     Delete union in stc_tmra_init_t structure
-   2023-09-30       CDT             Modify some of member type of struct stc_tmra_init_t and relate fuction about these member
-                                    Rename marco definition IS_TMRA_CMPVAL_BUF_COND to IS_TMRA_BUF_TRANS_COND
+   2023-09-30       CDT             Modify some of member type of struct stc_tmra_init_t and relate function about these member
+                                    Rename macro definition IS_TMRA_CMPVAL_BUF_COND to IS_TMRA_BUF_TRANS_COND
+   2024-06-30       CDT             API TMRA_DeInit() refined
+                                    API TMRA_DeInit() added return value
+                                    Modify PCONR reg from RW_MEM16 to MODIFY_REG16 in TMRA_PWM_Init() function
+                                    Modify TMRA_CountReloadCmd,TMRA_ClearStatus,TMRA_IntCmd for couping risk
+   2024-08-31       CDT             Optimized access code for some registers to improve readability
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -61,8 +66,15 @@
 #define TMRA_REG_TYPE                       uint16_t
 #define TMRA_REG_VALUE_MAX                  (0xFFFFUL)
 
-#define SET_VAL_BY_ADDR(addr, v)            (*(__IO TMRA_REG_TYPE *)(addr)) = (TMRA_REG_TYPE)(v)
-#define GET_VAL_BY_ADDR(addr)               (*(__IO TMRA_REG_TYPE *)(addr))
+#define CMPAR_ADDR(ch)                      ((uint32_t)(&TMRAx->CMPAR1) + ((ch) * 4UL))
+#define BCONR_ADDR(ch)                      ((uint32_t)(&TMRAx->BCONR1) + ((ch) * 4UL))
+#define CCONR_ADDR(ch)                      ((uint32_t)(&TMRAx->CCONR1) + ((ch) * 4UL))
+#define PCONR_ADDR(ch)                      ((uint32_t)(&TMRAx->PCONR1) + ((ch) * 4UL))
+
+#define CMPAR_REG(ch)                       (*(__IO TMRA_REG_TYPE *)CMPAR_ADDR(ch))
+#define BCONR_REG(ch)                       (*(__IO uint16_t *)BCONR_ADDR(ch))
+#define CCONR_REG(ch)                       (*(__IO uint16_t *)CCONR_ADDR(ch))
+#define PCONR_REG(ch)                       (*(__IO uint16_t *)PCONR_ADDR(ch))
 /**
  * @}
  */
@@ -76,6 +88,7 @@
 #define TMRA_FCONR_FILTER_CLK_MASK          (0x3UL)
 #define TMRA_CCONR_FILTER_CLK_MASK          (TMRA_CCONR_NOFICKCP)
 #define TMRA_PWM_POLARITY_MASK              (TMRA_PCONR_STAC)
+#define TMRA_STFLR_FLAG_MASK                (0xFFU)
 /**
  * @}
  */
@@ -218,6 +231,7 @@
 #define TMRA_PIN_PWM_OFFSET         (3U)
 
 #define TMRA_CH_NUM                 (8U)
+
 /**
  * @}
  */
@@ -428,13 +442,13 @@ void TMRA_HWCountDownCondCmd(CM_TMRA_TypeDef *TMRAx, uint16_t u16Cond, en_functi
  */
 void TMRA_SetFunc(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16Func)
 {
-    uint32_t u32CCONRAddr;
+    __IO uint16_t *CCONRx;
 
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
     DDL_ASSERT(IS_TMRA_FUNC(u16Func));
 
-    u32CCONRAddr = (uint32_t)&TMRAx->CCONR1 + (u32Ch * 4U);
-    MODIFY_REG16(RW_MEM16(u32CCONRAddr), TMRA_CCONR_CAPMD, u16Func);
+    CCONRx = &CCONR_REG(u32Ch);
+    MODIFY_REG16(*CCONRx, TMRA_CCONR_CAPMD, u16Func);
 }
 
 /**
@@ -453,8 +467,8 @@ void TMRA_SetFunc(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16Func)
  */
 int32_t TMRA_PWM_Init(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, const stc_tmra_pwm_init_t *pstcPwmInit)
 {
-    uint32_t u32CMPARAddr;
-    uint32_t u32PCONRAddr;
+    __IO uint16_t *PCONRx;
+    __IO TMRA_REG_TYPE *CMPARx;
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
@@ -465,15 +479,16 @@ int32_t TMRA_PWM_Init(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, const stc_tmra_pwm
         DDL_ASSERT(IS_TMRA_PWM_CMP_POLARITY(pstcPwmInit->u16CompareMatchPolarity));
         DDL_ASSERT(IS_TMRA_PWM_PERIOD_POLARITY(pstcPwmInit->u16PeriodMatchPolarity));
 
-        u32Ch *= 4U;
-        u32CMPARAddr = (uint32_t)&TMRAx->CMPAR1 + u32Ch;
-        SET_VAL_BY_ADDR(u32CMPARAddr, pstcPwmInit->u32CompareValue);
+        CMPARx = &CMPAR_REG(u32Ch);
+        WRITE_REG(*CMPARx, (TMRA_REG_TYPE)pstcPwmInit->u32CompareValue);
 
-        u32PCONRAddr = (uint32_t)&TMRAx->PCONR1 + u32Ch;
-        RW_MEM16(u32PCONRAddr) = (uint16_t)((pstcPwmInit->u16StartPolarity << TMRA_PCONR_STAC_POS) | \
-                                            (pstcPwmInit->u16StopPolarity << TMRA_PCONR_STPC_POS)  | \
-                                            (pstcPwmInit->u16CompareMatchPolarity << TMRA_PCONR_CMPC_POS) | \
-                                            (pstcPwmInit->u16PeriodMatchPolarity << TMRA_PCONR_PERC_POS));
+        PCONRx = &PCONR_REG(u32Ch);
+        MODIFY_REG16(*PCONRx, (TMRA_PCONR_STAC | TMRA_PCONR_STPC | TMRA_PCONR_CMPC | TMRA_PCONR_PERC),
+                     ((pstcPwmInit->u16StartPolarity << TMRA_PCONR_STAC_POS)        | \
+                      (pstcPwmInit->u16StopPolarity << TMRA_PCONR_STPC_POS)         | \
+                      (pstcPwmInit->u16CompareMatchPolarity << TMRA_PCONR_CMPC_POS) | \
+                      (pstcPwmInit->u16PeriodMatchPolarity << TMRA_PCONR_PERC_POS)));
+
         i32Ret = LL_OK;
     }
 
@@ -505,7 +520,7 @@ int32_t TMRA_PWM_StructInit(stc_tmra_pwm_init_t *pstcPwmInit)
 }
 
 /**
- * @brief  Enable or disable the PWM ouput of the specified channel.
+ * @brief  Enable or disable the PWM output of the specified channel.
  * @param  [in]  TMRAx                  Pointer to TMRA instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_TMRA_x or CM_TMRA
@@ -521,12 +536,12 @@ void TMRA_PWM_OutputCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, en_functional_st
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    u32PCONRAddr = (uint32_t)&TMRAx->PCONR1 + (u32Ch * 4U);
+    u32PCONRAddr = PCONR_ADDR(u32Ch);
     WRITE_REG32(PERIPH_BIT_BAND(u32PCONRAddr, TMRA_PCONR_OUTEN_POS), enNewState);
 }
 
 /**
- * @brief  Specifies the ouput polarity of the PWM at the specified state of counter.
+ * @brief  Specifies the output polarity of the PWM at the specified state of counter.
  * @param  [in]  TMRAx                  Pointer to TMRA instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_TMRA_x or CM_TMRA
@@ -541,14 +556,13 @@ void TMRA_PWM_OutputCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, en_functional_st
  */
 void TMRA_PWM_SetPolarity(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint8_t u8CountState, uint16_t u16Polarity)
 {
-    uint32_t u32PCONRAddr;
+    __IO uint16_t *PCONRx;
 
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
     DDL_ASSERT(IS_TMRA_PWM_POLARITY(u8CountState, u16Polarity));
 
-    u32PCONRAddr = (uint32_t)&TMRAx->PCONR1 + (u32Ch * 4U);
-    MODIFY_REG16(RW_MEM16(u32PCONRAddr),
-                 (uint16_t)TMRA_PWM_POLARITY_MASK << (u8CountState * 2U),
+    PCONRx = &PCONR_REG(u32Ch);
+    MODIFY_REG16(*PCONRx, (uint16_t)TMRA_PWM_POLARITY_MASK << (u8CountState * 2U),
                  u16Polarity << (u8CountState * 2U));
 }
 
@@ -565,13 +579,13 @@ void TMRA_PWM_SetPolarity(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint8_t u8Coun
  */
 void TMRA_PWM_SetForcePolarity(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16Polarity)
 {
-    uint32_t u32PCONRAddr;
+    __IO uint16_t *PCONRx;
 
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
     DDL_ASSERT(IS_TMRA_PWM_FORCE_POLARITY(u16Polarity));
 
-    u32PCONRAddr = (uint32_t)&TMRAx->PCONR1 + (u32Ch * 4U);
-    MODIFY_REG16(RW_MEM16(u32PCONRAddr), TMRA_PCONR_FORC, u16Polarity);
+    PCONRx = &PCONR_REG(u32Ch);
+    MODIFY_REG16(*PCONRx, TMRA_PCONR_FORC, u16Polarity);
 }
 
 /**
@@ -588,7 +602,7 @@ void TMRA_PWM_SetForcePolarity(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t 
  */
 void TMRA_HWCaptureCondCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16Cond, en_functional_state_t enNewState)
 {
-    uint32_t u32CCONRAddr;
+    __IO uint16_t *CCONRx;
 
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
     DDL_ASSERT(IS_TMRA_CAPT_COND(u16Cond));
@@ -599,11 +613,11 @@ void TMRA_HWCaptureCondCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16C
         DDL_ASSERT(u32Ch == TMRA_CH3);
     }
 #endif
-    u32CCONRAddr = (uint32_t)&TMRAx->CCONR1 + (u32Ch * 4U);
+    CCONRx = &CCONR_REG(u32Ch);
     if (enNewState == ENABLE) {
-        SET_REG16_BIT(RW_MEM16(u32CCONRAddr), u16Cond);
+        SET_REG16_BIT(*CCONRx, u16Cond);
     } else {
-        CLR_REG16_BIT(RW_MEM16(u32CCONRAddr), u16Cond);
+        CLR_REG16_BIT(*CCONRx, u16Cond);
     }
 }
 
@@ -692,8 +706,7 @@ void TMRA_HWClearCondCmd(CM_TMRA_TypeDef *TMRAx, uint16_t u16Cond, en_functional
  */
 void TMRA_SetFilterClockDiv(CM_TMRA_TypeDef *TMRAx, uint32_t u32Pin, uint16_t u16Div)
 {
-    uint32_t u32Ch;
-    uint32_t u32CCONRAddr;
+    __IO uint16_t *CCONRx;
     const uint8_t au8Offset[] = {
         TMRA_FCONR_NOFICKTG_POS, TMRA_FCONR_NOFICKCA_POS, TMRA_FCONR_NOFICKCB_POS,
     };
@@ -706,11 +719,8 @@ void TMRA_SetFilterClockDiv(CM_TMRA_TypeDef *TMRAx, uint32_t u32Pin, uint16_t u1
                      (TMRA_FCONR_FILTER_CLK_MASK << au8Offset[u32Pin]),
                      (u16Div << au8Offset[u32Pin]));
     } else {
-        u32Ch = u32Pin - TMRA_PIN_PWM_OFFSET;
-        u32CCONRAddr = (uint32_t)&TMRAx->CCONR1 + u32Ch * 4U;
-        MODIFY_REG16(RW_MEM16(u32CCONRAddr),
-                     TMRA_CCONR_FILTER_CLK_MASK,
-                     (u16Div << TMRA_CCONR_NOFICKCP_POS));
+        CCONRx = &CCONR_REG(u32Pin - TMRA_PIN_PWM_OFFSET);
+        MODIFY_REG16(*CCONRx, TMRA_CCONR_FILTER_CLK_MASK, (u16Div << TMRA_CCONR_NOFICKCP_POS));
     }
 }
 
@@ -741,7 +751,7 @@ void TMRA_FilterCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Pin, en_functional_state
         u8EnPos    = au8Offset[u32Pin];
     } else {
         u32Ch      = u32Pin - TMRA_PIN_PWM_OFFSET;
-        u32RegAddr = (uint32_t)&TMRAx->CCONR1 + u32Ch * 4U;
+        u32RegAddr = CCONR_ADDR(u32Ch);
         u8EnPos    = TMRA_CCONR_NOFIENCP_POS;
     }
     WRITE_REG32(PERIPH_BIT_BAND(u32RegAddr, u8EnPos), enNewState);
@@ -752,38 +762,35 @@ void TMRA_FilterCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Pin, en_functional_state
  * @param  [in]  TMRAx                  Pointer to TMRA instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_TMRA_x or CM_TMRA
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:                   De-Initialize success.
  */
-void TMRA_DeInit(CM_TMRA_TypeDef *TMRAx)
+int32_t TMRA_DeInit(CM_TMRA_TypeDef *TMRAx)
 {
     uint32_t i;
     uint32_t u32ChNum = TMRA_CH_NUM;
-    uint32_t u32AddrOffset;
-    uint32_t u32PERARAddr;
-    uint32_t u32CNTERAddr;
-    uint32_t u32CMPARAddr;
-    uint32_t u32CCONRAddr;
-    uint32_t u32PCONRAddr;
+    __IO TMRA_REG_TYPE *CMPARx;
+    __IO uint16_t *CCONRx;
+    __IO uint16_t *PCONRx;
 
     DDL_ASSERT(IS_TMRA_UNIT(TMRAx));
 
-    u32PERARAddr = (uint32_t)&TMRAx->PERAR;
-    u32CNTERAddr = (uint32_t)&TMRAx->CNTER;
-    u32CMPARAddr = (uint32_t)&TMRAx->CMPAR1;
-    u32CCONRAddr = (uint32_t)&TMRAx->CCONR1;
-    u32PCONRAddr = (uint32_t)&TMRAx->PCONR1;
-
-    for (i = 0U; i < u32ChNum; i++) {
-        u32AddrOffset = i * 4U;
-        RW_MEM16(u32CMPARAddr + u32AddrOffset) = 0xFFFFU;
-        RW_MEM16(u32CCONRAddr + u32AddrOffset) = 0x0U;
-        RW_MEM16(u32PCONRAddr + u32AddrOffset) = 0x0U;
-    }
-
-    SET_VAL_BY_ADDR(u32PERARAddr, 0xFFFFFFFFUL);
-    SET_VAL_BY_ADDR(u32CNTERAddr, 0x0U);
+    /* Stop TMRA */
     WRITE_REG8(TMRAx->BCSTRL, 0x2U);
     WRITE_REG8(TMRAx->BCSTRH, 0x0U);
+    WRITE_REG(TMRAx->CNTER, 0x0U);
+    WRITE_REG(TMRAx->PERAR, (TMRA_REG_TYPE)0xFFFFFFFFUL);
+
+    CCONRx = &TMRAx->CCONR1;
+    PCONRx = &TMRAx->PCONR1;
+    for (i = 0U; i < u32ChNum; i++) {
+        CMPARx = &CMPAR_REG(i);
+        WRITE_REG(*CMPARx, (TMRA_REG_TYPE)0xFFFFFFUL);
+
+        CCONRx[i * 2U] = 0x0U;
+        PCONRx[i * 2U] = 0x0U;
+    }
+
     WRITE_REG16(TMRAx->ICONR, 0x0U);
     WRITE_REG16(TMRAx->ECONR, 0x0U);
     WRITE_REG16(TMRAx->FCONR, 0x0U);
@@ -795,6 +802,7 @@ void TMRA_DeInit(CM_TMRA_TypeDef *TMRAx)
     WRITE_REG16(TMRAx->BCONR2, 0x0U);
     WRITE_REG16(TMRAx->BCONR3, 0x0U);
     WRITE_REG16(TMRAx->BCONR4, 0x0U);
+    return LL_OK;
 }
 
 /**
@@ -825,11 +833,8 @@ uint8_t TMRA_GetCountDir(const CM_TMRA_TypeDef *TMRAx)
  */
 void TMRA_SetPeriodValue(CM_TMRA_TypeDef *TMRAx, uint32_t u32Value)
 {
-    uint32_t u32PERARAddr;
-
     DDL_ASSERT(IS_TMRA_UNIT(TMRAx));
-    u32PERARAddr = (uint32_t)&TMRAx->PERAR;
-    SET_VAL_BY_ADDR(u32PERARAddr, u32Value);
+    WRITE_REG(TMRAx->PERAR, (TMRA_REG_TYPE)u32Value);
 }
 
 /**
@@ -844,7 +849,7 @@ void TMRA_SetPeriodValue(CM_TMRA_TypeDef *TMRAx, uint32_t u32Value)
 uint32_t TMRA_GetPeriodValue(const CM_TMRA_TypeDef *TMRAx)
 {
     DDL_ASSERT(IS_TMRA_UNIT(TMRAx));
-    return (TMRAx->PERAR);
+    return READ_REG(TMRAx->PERAR);
 }
 
 /**
@@ -860,11 +865,8 @@ uint32_t TMRA_GetPeriodValue(const CM_TMRA_TypeDef *TMRAx)
  */
 void TMRA_SetCountValue(CM_TMRA_TypeDef *TMRAx, uint32_t u32Value)
 {
-    uint32_t u32CNTERAddr;
-
     DDL_ASSERT(IS_TMRA_UNIT(TMRAx));
-    u32CNTERAddr = (uint32_t)&TMRAx->CNTER;
-    SET_VAL_BY_ADDR(u32CNTERAddr, u32Value);
+    WRITE_REG(TMRAx->CNTER, (TMRA_REG_TYPE)u32Value);
 }
 
 /**
@@ -879,7 +881,7 @@ void TMRA_SetCountValue(CM_TMRA_TypeDef *TMRAx, uint32_t u32Value)
 uint32_t TMRA_GetCountValue(const CM_TMRA_TypeDef *TMRAx)
 {
     DDL_ASSERT(IS_TMRA_UNIT(TMRAx));
-    return (TMRAx->CNTER);
+    return READ_REG(TMRAx->CNTER);
 }
 
 /**
@@ -897,12 +899,12 @@ uint32_t TMRA_GetCountValue(const CM_TMRA_TypeDef *TMRAx)
  */
 void TMRA_SetCompareValue(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint32_t u32Value)
 {
-    uint32_t u32CMPARAddr;
+    __IO TMRA_REG_TYPE *CMPARx;
 
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
 
-    u32CMPARAddr = (uint32_t)&TMRAx->CMPAR1 + u32Ch * 4U;
-    SET_VAL_BY_ADDR(u32CMPARAddr, u32Value);
+    CMPARx = &CMPAR_REG(u32Ch);
+    WRITE_REG(*CMPARx, (TMRA_REG_TYPE)u32Value);
 }
 
 /**
@@ -918,12 +920,8 @@ void TMRA_SetCompareValue(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint32_t u32Va
  */
 uint32_t TMRA_GetCompareValue(const CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch)
 {
-    uint32_t u32CMPARAddr;
-
     DDL_ASSERT(IS_TMRA_UNIT_CH(TMRAx, u32Ch));
-
-    u32CMPARAddr = (uint32_t)&TMRAx->CMPAR1 + u32Ch * 4U;
-    return GET_VAL_BY_ADDR(u32CMPARAddr);
+    return READ_REG(CMPAR_REG(u32Ch));
 }
 
 /**
@@ -969,14 +967,14 @@ void TMRA_SyncStartCmd(CM_TMRA_TypeDef *TMRAx, en_functional_state_t enNewState)
  */
 void TMRA_SetCompareBufCond(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, uint16_t u16Cond)
 {
-    uint32_t u32BCONRAddr;
+    __IO uint16_t *BCONRx;
 
     DDL_ASSERT(IS_TMRA_UNIT(TMRAx));
     DDL_ASSERT(IS_TMRA_CMPVAL_BUF_CH(u32Ch));
     DDL_ASSERT(IS_TMRA_BUF_TRANS_COND(u16Cond));
 
-    u32BCONRAddr = (uint32_t)&TMRAx->BCONR1 + u32Ch * 4U;
-    MODIFY_REG16(RW_MEM16(u32BCONRAddr), TMRA_BUF_TRANS_COND_PEAK_VALLEY, u16Cond);
+    BCONRx = &BCONR_REG(u32Ch);
+    MODIFY_REG16(*BCONRx, TMRA_BUF_TRANS_COND_PEAK_VALLEY, u16Cond);
 }
 
 /**
@@ -998,7 +996,7 @@ void TMRA_CompareBufCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32Ch, en_functional_st
     DDL_ASSERT(IS_TMRA_CMPVAL_BUF_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
-    u32BCONRAddr = (uint32_t)&TMRAx->BCONR1 + u32Ch * 4U;
+    u32BCONRAddr = BCONR_ADDR(u32Ch);
 
     WRITE_REG32(PERIPH_BIT_BAND(u32BCONRAddr, TMRA_BCONR_BEN_POS), enNewState);
 }
@@ -1045,8 +1043,8 @@ void TMRA_ClearStatus(CM_TMRA_TypeDef *TMRAx, uint32_t u32Flag)
 {
     DDL_ASSERT(IS_TMRA_UNIT_FLAG(TMRAx, u32Flag));
 
-    CLR_REG8_BIT(TMRAx->BCSTRH, u32Flag & TMRA_BCSTRH_FLAG_MASK);
-    CLR_REG16_BIT(TMRAx->STFLR, u32Flag >> 16U);
+    MODIFY_REG8(TMRAx->BCSTRH, TMRA_BCSTRH_FLAG_MASK, ~u32Flag);
+    WRITE_REG16(TMRAx->STFLR, (~(u32Flag >> 16U)) & TMRA_STFLR_FLAG_MASK);
 }
 
 /**
@@ -1070,10 +1068,10 @@ void TMRA_IntCmd(CM_TMRA_TypeDef *TMRAx, uint32_t u32IntType, en_functional_stat
     u32BCSTRH = u32IntType & TMRA_BCSTRH_INT_MASK;
     u32ICONR  = u32IntType >> 16U;
     if (enNewState == ENABLE) {
-        SET_REG8_BIT(TMRAx->BCSTRH, u32BCSTRH);
+        SET_REG8_BIT(TMRAx->BCSTRH, u32BCSTRH | TMRA_BCSTRH_FLAG_MASK);
         SET_REG16_BIT(TMRAx->ICONR, u32ICONR);
     } else {
-        CLR_REG8_BIT(TMRAx->BCSTRH, u32BCSTRH);
+        MODIFY_REG8(TMRAx->BCSTRH, (u32BCSTRH | TMRA_BCSTRH_FLAG_MASK), ~u32BCSTRH);
         CLR_REG16_BIT(TMRAx->ICONR, u32ICONR);
     }
 }

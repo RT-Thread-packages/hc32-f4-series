@@ -10,9 +10,10 @@
    2022-06-30       CDT             Modify function: DAC_AMPCmd
    2023-06-30       CDT             Refine definition of dac resolution
    2023-09-30       CDT             Modify API DAC_DeInit
+   2024-11-08       CDT             Add align parametric in struct stc_dac_init_t
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -64,6 +65,8 @@ extern "C"
 typedef struct {
     uint16_t u16Src;                 /*!< Data source to be converted
                                      This parameter can be a value of @ref DAC_DATA_SRC */
+    uint16_t u16Align;               /*!< Specify the data alignment
+                                     This parameter can be a value of @ref DAC_DATAREG_ALIGN_PATTERN */
     en_functional_state_t enOutput;  /*!< Enable or disable analog output
                                      This parameter can be a value of @ref en_functional_state_t */
 } stc_dac_init_t;
@@ -124,10 +127,10 @@ typedef struct {
  * @defgroup DAC_ADP_SELECT DAC ADCx priority select
  * @{
  */
-#define DAC_ADP_SEL_ADC1                   (DAC_DAADPCR_ADCSL1)
-#define DAC_ADP_SEL_ADC2                   (DAC_DAADPCR_ADCSL2)
-#define DAC_ADP_SEL_ADC3                   (DAC_DAADPCR_ADCSL3)
-#define DAC_ADP_SEL_ALL   (DAC_DAADPCR_ADCSL1 | DAC_DAADPCR_ADCSL2 | DAC_DAADPCR_ADCSL3)
+#define DAC_ADP_SEL_ADC1                    (DAC_DAADPCR_ADCSL1)
+#define DAC_ADP_SEL_ADC2                    (DAC_DAADPCR_ADCSL2)
+#define DAC_ADP_SEL_ADC3                    (DAC_DAADPCR_ADCSL3)
+#define DAC_ADP_SEL_ALL                     (DAC_DAADPCR_ADCSL1 | DAC_DAADPCR_ADCSL2 | DAC_DAADPCR_ADCSL3)
 /**
  * @}
  */

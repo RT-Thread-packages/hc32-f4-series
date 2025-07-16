@@ -1,15 +1,16 @@
 /**
  *******************************************************************************
- * @file    hc32_ll_icg.h
- * @brief   This file contains all the Macro Definitions of the ICG driver
- *          library.
+ * @file  hc32_ll_icg.h
+ * @brief This file contains all the Macro Definitions of the ICG driver
+ *        library.
  @verbatim
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2023-12-15       CDT             Modify macro define: ICG_SWDT_LPM_CNT_CONTINUE -> ICG_SWDT_LPM_CNT_CONT
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -134,7 +135,7 @@ extern "C"
  * @brief    Counting control of SWDT in sleep/stop mode
  * @{
  */
-#define ICG_SWDT_LPM_CNT_CONTINUE               (0UL)                   /*!< Continue counting in sleep/stop mode */
+#define ICG_SWDT_LPM_CNT_CONT                   (0UL)                   /*!< Continue counting in sleep/stop mode */
 #define ICG_SWDT_LPM_CNT_STOP                   (ICG_ICG0_SWDTSLPOFF)   /*!< Stop counting in sleep/stop mode     */
 /**
  * @}
@@ -222,7 +223,7 @@ extern "C"
  * @brief    Counting control of WDT in sleep mode
  * @{
  */
-#define ICG_WDT_LPM_CNT_CONTINUE                (0UL)                   /*!< Continue counting in sleep mode */
+#define ICG_WDT_LPM_CNT_CONT                    (0UL)                   /*!< Continue counting in sleep mode */
 #define ICG_WDT_LPM_CNT_STOP                    (ICG_ICG0_WDTSLPOFF)    /*!< Stop counting in sleep mode     */
 /**
  * @}
@@ -326,10 +327,6 @@ extern "C"
  */
 
 /**
- * @}
- */
-
-/**
  * @defgroup ICG_Register_Configuration ICG Register Configuration
  * @{
  */
@@ -338,7 +335,7 @@ extern "C"
  * @defgroup ICG_SWDT_Preload_Configuration ICG SWDT Preload Configuration
  * @{
  */
-/* SWDT register config */
+/* SWDT register bits config */
 #define ICG_RB_SWDT_AUTS                        (ICG_SWDT_RST_STOP)
 #define ICG_RB_SWDT_ITS                         (ICG_SWDT_EXP_TYPE_RST)
 #define ICG_RB_SWDT_PERI                        (ICG_SWDT_CNT_PERIOD65536)
@@ -357,7 +354,7 @@ extern "C"
  * @defgroup ICG_WDT_Preload_Configuration ICG WDT Preload Configuration
  * @{
  */
-/* WDT register config */
+/* WDT register bits config */
 #define ICG_RB_WDT_AUTS                         (ICG_WDT_RST_STOP)
 #define ICG_RB_WDT_ITS                          (ICG_WDT_EXP_TYPE_RST)
 #define ICG_RB_WDT_PERI                         (ICG_WDT_CNT_PERIOD65536)
@@ -376,7 +373,7 @@ extern "C"
  * @defgroup ICG_NMI_Pin_Preload_Configuration ICG NMI Pin Preload Configuration
  * @{
  */
-/* NMI register config */
+/* NMI register bits config */
 #define ICG_RB_NMI_FCLK                         (ICG_NMI_PIN_FILTER_CLK_DIV64)
 #define ICG_RB_NMI_FEN                          (ICG_NMI_PIN_FILTER_ENABLE)
 #define ICG_RB_NMI_TRG                          (ICG_NMI_PIN_TRIG_EDGE_RISING)
@@ -394,7 +391,7 @@ extern "C"
  * @defgroup ICG_BOR_Preload_Configuration ICG BOR Preload Configuration
  * @{
  */
-/* BOR register config */
+/* BOR register bits config */
 #define ICG_RB_BOR_LEV                          (ICG_BOR_VOL_THRESHOLD_LVL3)
 #define ICG_RB_BOR_DIS                          (ICG_BOR_RST_DISABLE)
 
@@ -408,7 +405,7 @@ extern "C"
  * @defgroup ICG_HRC_Preload_Configuration ICG HRC Preload Configuration
  * @{
  */
-/* HRC register config */
+/* HRC register bits config */
 #define ICG_RB_HRC_FREQSEL                      (ICG_HRC_16M)
 #define ICG_RB_HRC_STOP                         (ICG_HRC_RST_OSCILLATION)
 
@@ -440,6 +437,9 @@ extern "C"
  * @}
  */
 
+/**
+ * @}
+ */
 /*******************************************************************************
  * Global variable definitions ('extern')
  ******************************************************************************/

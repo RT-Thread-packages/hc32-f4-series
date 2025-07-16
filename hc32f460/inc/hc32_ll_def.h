@@ -12,9 +12,10 @@
    2023-06-30       CDT             Modify typo
                                     Add __NO_OPTIMIZE configuration item
    2023-09-30       CDT             Add attribute for __RAM_FUNC definition
+   2024-08-31       CDT             Add __USED definition
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -39,7 +40,7 @@ extern "C"
 #include <stdint.h>
 
 /**
- * @addtogroup LL_Common
+ * @defgroup LL_Common LL Common
  * @{
  */
 
@@ -101,6 +102,10 @@ typedef enum {
 #define __UNUSED                        __attribute__((unused))
 #endif /* __UNUSED */
 
+#ifndef __USED
+#define __USED                        __attribute__((used))
+#endif /* __USED */
+
 #if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
 #ifndef __WEAKDEF
 #define __WEAKDEF                   __attribute__((weak))
@@ -124,7 +129,7 @@ area of a module to a memory space in physical RAM. */
 #ifndef __NO_OPTIMIZE
 #define __NO_OPTIMIZE               __attribute__((optnone))
 #endif /* __NO_OPTIMIZE */
-#elif defined ( __GNUC__ ) && !defined (__CC_ARM) /*!< GNU Compiler */
+#elif defined (__GNUC__) && !defined (__CC_ARM) /*!< GNU Compiler */
 #ifndef __WEAKDEF
 #define __WEAKDEF                   __attribute__((weak))
 #endif /* __WEAKDEF */

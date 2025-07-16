@@ -6,9 +6,10 @@
    Change Logs:
    Date             Author          Notes
    2023-09-30       CDT             First version
+   2024-06-30       CDT             Delete redundancies API and Correct DBGC spell
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -59,7 +60,7 @@
     (((x) | DBGC_SECURITY_ALL) == DBGC_SECURITY_ALL))
 
 /* Parameter valid check for debug trace mode */
-#define IS_DGBC_TRACE_MD(x)                                                    \
+#define IS_DBGC_TRACE_MD(x)                                                    \
 (   ((x) == DBGC_TRACE_ASYNC)                       ||                         \
     ((x) == DBGC_TRACE_SYNC_1BIT)                   ||                         \
     ((x) == DBGC_TRACE_SYNC_2BIT)                   ||                         \
@@ -91,59 +92,6 @@
  * @defgroup DBGC_Global_Functions DBGC Global Functions
  * @{
  */
-
-/**
- * @brief Get MCU security status.
- * @param [in] u32Flag              Specify the flags to get, This parameter can be any combination of the member from
- *                                  @ref DBGC_MCU_Security_Flag
- * @retval An @ref en_flag_status_t enumeration type value.
- */
-en_flag_status_t DBGC_GetSecurityStatus(uint32_t u32Flag)
-{
-    DDL_ASSERT(IS_SECURITY_FLAG(u32Flag));
-    return ((0UL != READ_REG32_BIT(CM_DBGC->MCUSTAT, u32Flag)) ? SET : RESET);
-}
-
-/**
- * @brief  erase the chip.
- * @param [in] u32Timeout           Maximum count of trying to wait flash erase
- * @retval int32_t:
- *         - LL_OK: erase successfully
- *         - LL_ERR: erase error
- *         - LL_ERR_TIMEOUT: erase timeout
- */
-int32_t DBGC_FlashErase(uint32_t u32Timeout)
-{
-    __IO uint32_t u32TimeCnt = 0UL;
-    int32_t i32Ret = LL_ERR_TIMEOUT;
-    SET_REG32_BIT(CM_DBGC->FERSCTL, DBGC_FERSCTL_ERASEREQ);
-    /* Wait erase finish */
-    while (u32TimeCnt <= u32Timeout) {
-        if (DBGC_FERSCTL_ERASEACK == READ_REG32_BIT(CM_DBGC->FERSCTL, DBGC_FERSCTL_ERASEACK)) {
-            i32Ret = LL_OK;
-            break;
-        }
-        u32TimeCnt++;
-    }
-    if (DBGC_FERSCTL_ERASEERR == READ_REG32_BIT(CM_DBGC->FERSCTL, DBGC_FERSCTL_ERASEERR)) {
-        i32Ret = LL_ERR;
-    }
-    return i32Ret;
-}
-
-/**
- * @brief  Get authenticate ID.
- * @param  [out] pstcAuthID     Authenticate ID struct
- * @retval the value of the authenticate ID
- */
-void DBGC_GetAuthID(stc_dbgc_auth_id_t *pstcAuthID)
-{
-    if (NULL != pstcAuthID) {
-        pstcAuthID->u32AuthID0 = READ_REG32(CM_DBGC->AUTHID0);
-        pstcAuthID->u32AuthID1 = READ_REG32(CM_DBGC->AUTHID1);
-        pstcAuthID->u32AuthID2 = READ_REG32(CM_DBGC->AUTHID2);
-    }
-}
 
 /**
  * @brief  Whether to stop the peripheral while mcu core stop.
@@ -185,7 +133,7 @@ void DBGC_TraceIoCmd(en_functional_state_t enNewState)
  */
 void DBGC_TraceModeConfig(uint32_t u32TraceMode)
 {
-    DDL_ASSERT(IS_DGBC_TRACE_MD(u32TraceMode));
+    DDL_ASSERT(IS_DBGC_TRACE_MD(u32TraceMode));
 
     MODIFY_REG32(CM_DBGC->MCUTRACECTL, DBGC_MCUTRACECTL_TRACEMODE, u32TraceMode);
 }

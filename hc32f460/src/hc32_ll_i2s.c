@@ -8,9 +8,12 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify I2S_ClearStatus function
+   2024-06-30       CDT             Optimize calculate for I2SDIV and ODD in MCK enabled mode
+   2024-08-31       CDT             Optimize I2S_DeInit()
+                                    Delete needless set data in I2S_Init function
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -344,10 +347,13 @@ static int32_t I2S_WaitStatus(const CM_I2S_TypeDef *I2Sx, uint32_t u32Flag,
  * @param  [in] I2Sx                    Pointer to I2S unit instance
  *         This parameter can be one of the following values:
  *           @arg CM_I2Sx:              I2S unit instance
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:                   No error occurred.
  */
-void I2S_DeInit(CM_I2S_TypeDef *I2Sx)
+int32_t I2S_DeInit(CM_I2S_TypeDef *I2Sx)
 {
+    int32_t i32Ret = LL_OK;
+
     /* Check parameters */
     DDL_ASSERT(IS_I2S_UNIT(I2Sx));
 
@@ -358,6 +364,8 @@ void I2S_DeInit(CM_I2S_TypeDef *I2Sx)
     WRITE_REG32(I2Sx->PR,     0x00000002UL);
     SET_REG32_BIT(I2Sx->CTRL, I2S_RST_TYPE_ALL);
     CLR_REG32_BIT(I2Sx->CTRL, I2S_RST_TYPE_ALL);
+
+    return i32Ret;
 }
 
 /**
@@ -413,11 +421,7 @@ int32_t I2S_Init(CM_I2S_TypeDef *I2Sx, const stc_i2s_init_t *pstcI2sInit)
             }
 
             if (I2S_MCK_OUTPUT_ENABLE == pstcI2sInit->u32MCKOutput) {
-                if (I2S_CH_LEN_16BIT != pstcI2sInit->u32ChWidth) {
-                    u32Temp = (((u32I2sClk / (u32ChWidth * 2U * 4U)) * 10U) / pstcI2sInit->u32AudioFreq) + 5U;
-                } else {
-                    u32Temp = (((u32I2sClk / (u32ChWidth * 2U * 8U)) * 10U) / pstcI2sInit->u32AudioFreq) + 5U;
-                }
+                u32Temp = (((u32I2sClk / (32U * 2U * 4U)) * 10U) / pstcI2sInit->u32AudioFreq) + 5U;
             } else {
                 u32Temp = (((u32I2sClk / (u32ChWidth * 2U)) * 10U) / pstcI2sInit->u32AudioFreq) + 5U;
             }
@@ -432,11 +436,10 @@ int32_t I2S_Init(CM_I2S_TypeDef *I2Sx, const stc_i2s_init_t *pstcI2sInit)
             u32I2sDiv = 2U;
             i32Ret     = LL_ERR;
         }
-        u32Temp = pstcI2sInit->u32ClockSrc         | pstcI2sInit->u32Mode           |
-                  pstcI2sInit->u32Protocol         | pstcI2sInit->u32TransMode      |
-                  pstcI2sInit->u32ChWidth          | pstcI2sInit->u32DataWidth      |
-                  pstcI2sInit->u32MCKOutput        | pstcI2sInit->u32TransFIFOLevel |
-                  pstcI2sInit->u32ReceiveFIFOLevel | (u32I2sOdd << I2S_CTRL_ODD_POS);
+        u32Temp = pstcI2sInit->u32ClockSrc         | pstcI2sInit->u32Mode             |
+                  pstcI2sInit->u32TransMode        | pstcI2sInit->u32MCKOutput        |
+                  pstcI2sInit->u32TransFIFOLevel   | pstcI2sInit->u32ReceiveFIFOLevel |
+                  (u32I2sOdd << I2S_CTRL_ODD_POS);
         if (I2S_MD_MASTER == pstcI2sInit->u32Mode) {
             u32Temp |= (I2S_CTRL_CKOE | I2S_CTRL_LRCKOE);
         }
@@ -627,11 +630,7 @@ int32_t I2S_SetAudioFreq(CM_I2S_TypeDef *I2Sx, uint32_t u32Freq)
         }
 
         if (I2S_MCK_OUTPUT_ENABLE == READ_REG32_BIT(I2Sx->CTRL, I2S_CTRL_MCKOE)) {
-            if (I2S_CH_LEN_16BIT != READ_REG32_BIT(I2Sx->CFGR, I2S_CFGR_CHLEN)) {
-                u32Temp = (((u32I2sClk / (u32ChWidth * 2U * 4U)) * 10U) / u32Freq) + 5U;
-            } else {
-                u32Temp = (((u32I2sClk / (u32ChWidth * 2U * 8U)) * 10U) / u32Freq) + 5U;
-            }
+            u32Temp = (((u32I2sClk / (32U * 2U * 4U)) * 10U) / u32Freq) + 5U;
         } else {
             u32Temp = (((u32I2sClk / (u32ChWidth * 2U)) * 10U) / u32Freq) + 5U;
         }

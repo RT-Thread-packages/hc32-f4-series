@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
+   2024-11-08       CDT             unified the abbreviation of Calibrate
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -24,7 +25,6 @@
  * Include files
  ******************************************************************************/
 #include "hc32_ll_hrpwm.h"
-#include "hc32_ll_utility.h"
 
 /**
  * @addtogroup LL_Driver
@@ -52,7 +52,7 @@
  */
 
 /* About 1mS timeout */
-#define HRPWM_CAL_TIMEOUT               (HCLK_VALUE/1000UL)
+#define HRPWM_CALIB_TIMEOUT             (HCLK_VALUE/1000UL)
 #define HRPWM_PCLK0_MIN                 (120000000UL)
 
 #define HRPWM_SYSCLKSRC_HRC             (0x00U)
@@ -69,15 +69,16 @@
  * @defgroup HRPWM_Check_Param_Validity HRPWM Check Parameters Validity
  * @{
  */
+
 /*! Parameter valid check for HRPWM output channel */
-#define IS_VALID_HRPWM_CH(x)                                                   \
+#define IS_HRPWM_CH(x)                                                         \
 (   ((x) >= HRPWM_CH_MIN)                       &&                             \
     ((x) <= HRPWM_CH_MAX))
 
 /*! Parameter valid check for HRPWM calibration unit */
-#define IS_VALID_HRPWM_CAL_UNIT(x)                                             \
-(   (HRPWM_CAL_UNIT0 == (x))                    ||                             \
-    (HRPWM_CAL_UNIT1 == (x)))
+#define IS_HRPWM_CALIB_UNIT(x)                                                 \
+(   (HRPWM_CALIB_UNIT0 == (x))                  ||                             \
+    (HRPWM_CALIB_UNIT1 == (x)))
 
 /**
  * @}
@@ -110,23 +111,23 @@
 
 /**
  * @brief  Process for getting HRPWM Calibrate function code
- * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CAL_UNIT0 or HRPWM_CAL_UNIT1
+ * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CALIB_UNIT0 or HRPWM_CALIB_UNIT1
  * @param  [out] pu8Code            The pointer to get calibrate code.
  * @retval int32_t:
  *         - LL_OK:                 Success
  *         - LL_ERR_TIMEOUT:        Time out
  *         - LL_ERR_INVD_PARAM:     Parameter error
  */
-int32_t HRPWM_CalibrateProcess(uint32_t u32Unit, uint8_t *pu8Code)
+int32_t HRPWM_CalibProcess(uint32_t u32Unit, uint8_t *pu8Code)
 {
-    __IO uint32_t u32Timeout = HRPWM_CAL_TIMEOUT;
+    __IO uint32_t u32Timeout = HRPWM_CALIB_TIMEOUT;
     int32_t i32Ret = LL_OK;
 
     if (NULL != pu8Code) {
         /* Enable calibrate */
-        HRPWM_CalibrateCmd(u32Unit, ENABLE);
+        HRPWM_CalibCmd(u32Unit, ENABLE);
         /* Wait calibrate finish flag */
-        while (DISABLE == HRPWM_GetCalibrateState(u32Unit)) {
+        while (DISABLE == HRPWM_GetCalibState(u32Unit)) {
             if (0UL == u32Timeout--) {
                 i32Ret = LL_ERR_TIMEOUT;
                 break;
@@ -135,7 +136,7 @@ int32_t HRPWM_CalibrateProcess(uint32_t u32Unit, uint8_t *pu8Code)
 
         if (LL_OK == i32Ret) {
             /* Get calibrate code */
-            *pu8Code = HRPWM_GetCalibrateCode(u32Unit);
+            *pu8Code = HRPWM_GetCalibCode(u32Unit);
         }
     } else {
         i32Ret = LL_ERR_INVD_PARAM;
@@ -145,15 +146,15 @@ int32_t HRPWM_CalibrateProcess(uint32_t u32Unit, uint8_t *pu8Code)
 
 /**
  * @brief  HRPWM Calibrate function enable or disable for specified unit
- * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CAL_UNIT0 or HRPWM_CAL_UNIT1
+ * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CALIB_UNIT0 or HRPWM_CALIB_UNIT1
  * @param  [in] enNewState          An @ref en_functional_state_t enumeration value.
  * @retval None
  */
-void HRPWM_CalibrateCmd(uint32_t u32Unit, en_functional_state_t enNewState)
+void HRPWM_CalibCmd(uint32_t u32Unit, en_functional_state_t enNewState)
 {
     __IO uint32_t *CALCRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CAL_UNIT(u32Unit));
+    DDL_ASSERT(IS_HRPWM_CALIB_UNIT(u32Unit));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     CALCRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CALCR0) + 4UL * u32Unit);
@@ -167,15 +168,15 @@ void HRPWM_CalibrateCmd(uint32_t u32Unit, en_functional_state_t enNewState)
 
 /**
  * @brief  HRPWM Calibrate function status get for specified unit
- * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CAL_UNIT0 or HRPWM_CAL_UNIT1
+ * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CALIB_UNIT0 or HRPWM_CALIB_UNIT1
  * @retval An @ref en_functional_state_t enumeration value.
  */
-en_functional_state_t HRPWM_GetCalibrateState(uint32_t u32Unit)
+en_functional_state_t HRPWM_GetCalibState(uint32_t u32Unit)
 {
     en_functional_state_t enRet;
     __IO uint32_t *CALCRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CAL_UNIT(u32Unit));
+    DDL_ASSERT(IS_HRPWM_CALIB_UNIT(u32Unit));
 
     CALCRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CALCR0) + 4UL * u32Unit);
 
@@ -189,14 +190,14 @@ en_functional_state_t HRPWM_GetCalibrateState(uint32_t u32Unit)
 
 /**
  * @brief  HRPWM Calibrate code get for specified unit
- * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CAL_UNIT0 or HRPWM_CAL_UNIT1
+ * @param  [in] u32Unit             Calibrate unit, the parameter should be HRPWM_CALIB_UNIT0 or HRPWM_CALIB_UNIT1
  * @retval uint8_t:                 The calibration code.
  */
-uint8_t HRPWM_GetCalibrateCode(uint32_t u32Unit)
+uint8_t HRPWM_GetCalibCode(uint32_t u32Unit)
 {
     __IO uint32_t *CALCRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CAL_UNIT(u32Unit));
+    DDL_ASSERT(IS_HRPWM_CALIB_UNIT(u32Unit));
 
     CALCRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CALCR0) + 4UL * u32Unit);
 
@@ -213,7 +214,7 @@ void HRPWM_ChCmd(uint32_t u32Ch, en_functional_state_t enNewState)
 {
     __IO uint32_t *CRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CH(u32Ch));
+    DDL_ASSERT(IS_HRPWM_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     CRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CR1) + 4UL * (u32Ch - 1UL));
@@ -234,7 +235,7 @@ void HRPWM_ChPositiveAdjustCmd(uint32_t u32Ch, en_functional_state_t enNewState)
 {
     __IO uint32_t *CRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CH(u32Ch));
+    DDL_ASSERT(IS_HRPWM_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     CRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CR1) + 4UL * (u32Ch - 1UL));
@@ -255,7 +256,7 @@ void HRPWM_ChNegativeAdjustCmd(uint32_t u32Ch, en_functional_state_t enNewState)
 {
     __IO uint32_t *CRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CH(u32Ch));
+    DDL_ASSERT(IS_HRPWM_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     CRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CR1) + 4UL * (u32Ch - 1UL));
@@ -276,7 +277,7 @@ void HRPWM_ChPositiveAdjustConfig(uint32_t u32Ch, uint8_t u8DelayNum)
 {
     __IO uint32_t *CRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CH(u32Ch));
+    DDL_ASSERT(IS_HRPWM_CH(u32Ch));
 
     CRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CR1) + 4UL * (u32Ch - 1UL));
     MODIFY_REG32(*CRx, HRPWM_CR_PSEL, ((uint32_t)u8DelayNum - 1UL) << HRPWM_CR_PSEL_POS);
@@ -292,7 +293,7 @@ void HRPWM_ChNegativeAdjustConfig(uint32_t u32Ch, uint8_t u8DelayNum)
 {
     __IO uint32_t *CRx;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_HRPWM_CH(u32Ch));
+    DDL_ASSERT(IS_HRPWM_CH(u32Ch));
 
     CRx = (__IO uint32_t *)(((uint32_t)&CM_HRPWM->CR1) + 4UL * (u32Ch - 1UL));
     MODIFY_REG32(*CRx, HRPWM_CR_NSEL, ((uint32_t)u8DelayNum - 1UL) << HRPWM_CR_NSEL_POS);

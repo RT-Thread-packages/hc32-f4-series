@@ -10,9 +10,14 @@
    2022-06-30       CDT             Add API I2C_SlaveAddrCmd(), modify API I2C_SlaveAddrConfig()
    2023-06-30       CDT             Disable slave address function in I2C_Init()
                                     Move macro define I2C_SRC_CLK to head file
+   2023-12-15       CDT             Modify I2C_Restart()
+                                    Modify macro IS_I2C_INT_FLAG -> IS_I2C_INT
+   2024-06-30       CDT             Modify the I2C_BaudrateConfig func rounding off method
+                                    Modify duty cycle for SCL
+   2024-11-08       CDT             Modify I2C_CR1_ENGC to I2C_CR1_GCEN, modify I2C_CCR_FREQ to I2C_CCR_CKDIV
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -54,7 +59,7 @@
  */
 #define I2C_BAUDRATE_MAX                (400000UL)
 
-#define I2C_SCL_HIGHT_LOW_LVL_SUM_MAX   ((float32_t)0x3E)
+#define I2C_SCL_HIGH_LOW_LVL_SUM_MAX    ((float32_t)(0x1F + 0x1F))
 #define I2C_7BIT_MAX                    (0x7FUL)
 #define I2C_10BIT_MAX                   (0x3FFUL)
 
@@ -63,7 +68,10 @@
  * @{
  */
 
-#define IS_I2C_UNIT(x)                  (((x) == CM_I2C1) || ((x) == CM_I2C2) || ((x) == CM_I2C3))
+#define IS_I2C_UNIT(x)                                                         \
+(   ((x) == CM_I2C1)                        ||                                 \
+    ((x) == CM_I2C2)                        ||                                 \
+    ((x) == CM_I2C3))
 
 #define IS_I2C_DIG_FILTER_CLK(x)        ((x) <= I2C_DIG_FILTER_CLK_DIV4)
 
@@ -82,7 +90,7 @@
 (   ((x) != 0U)                                     &&                         \
     (((x) | I2C_FLAG_CLR_ALL) == I2C_FLAG_CLR_ALL))
 
-#define IS_I2C_INT_FLAG(x)                                                     \
+#define IS_I2C_INT(x)                                                          \
 (   ((x) != 0U)                                     &&                         \
     (((x) | I2C_INT_ALL) == I2C_INT_ALL))
 
@@ -113,7 +121,6 @@
 #define IS_I2C_FLAG_STD(x)                                                     \
 (   ((x) == RESET)                                  ||                         \
     ((x) == SET))
-
 /**
  * @}
  */
@@ -226,6 +233,7 @@ void I2C_GenerateStop(CM_I2C_TypeDef *I2Cx)
  *         @arg CM_I2C or CM_I2Cx:  I2C instance register base.
  * @param [in] pstcI2cInit          Pointer to I2C config structure  @ref stc_i2c_init_t
  *         @arg pstcI2cInit->u32ClockDiv: Division of i2c source clock, reference as:
+ * <pre>
  *              step1: calculate div = (I2cSrcClk/Baudrate/(Imme+2*Dnfsum+SclTime)
  *                     I2cSrcClk -- I2c source clock
  *                     Baudrate -- baudrate of i2c
@@ -235,6 +243,7 @@ void I2C_GenerateStop(CM_I2C_TypeDef *I2Cx)
  *                                 Filter capacity if digital filter on(1 ~ 4)
  *                     Imme     -- An Immediate data, 68
  *              step2: chose a division item which is similar and bigger than div from @ref I2C_Clock_Division.
+ * </pre>
  *         @arg pstcI2cInit->u32Baudrate : Baudrate configuration
  *         @arg pstcI2cInit->u32SclTime : Indicate SCL pin rising and falling
  *              time, should be number of T(i2c clock period time)
@@ -258,6 +267,7 @@ int32_t I2C_BaudrateConfig(CM_I2C_TypeDef *I2Cx, const stc_i2c_init_t *pstcI2cIn
     float32_t SumTotal;
     float32_t WidthHL;
     float32_t fErr = 0.0F;
+    float32_t WidthHLMax;
 
     if ((NULL == pstcI2cInit) || (NULL == pf32Error)) {
         i32Ret = LL_ERR_INVD_PARAM;
@@ -283,7 +293,7 @@ int32_t I2C_BaudrateConfig(CM_I2C_TypeDef *I2Cx, const stc_i2c_init_t *pstcI2cIn
             Divsum = 3UL;
         }
 
-        if (I2cDivClk != 0UL) {
+        if (I2cDivClk != 0UL) { /* Judge for misra */
             WidthTotal = (float32_t)I2cSrcClk / (float32_t)Baudrate / (float32_t)I2cDivClk;
             SumTotal = (2.0F * (float32_t)Divsum) + (2.0F * (float32_t)Dnfsum) + (float32_t)SclCnt;
             WidthHL = WidthTotal - SumTotal;
@@ -299,15 +309,16 @@ int32_t I2C_BaudrateConfig(CM_I2C_TypeDef *I2Cx, const stc_i2c_init_t *pstcI2cIn
                 /* Err, Should set a smaller division value for pstcI2cInit->u32ClockDiv */
                 i32Ret = LL_ERR_INVD_PARAM;
             } else {
-                if (WidthHL > I2C_SCL_HIGHT_LOW_LVL_SUM_MAX) {
+                WidthHLMax = I2C_SCL_HIGH_LOW_LVL_SUM_MAX;
+                if (WidthHL > WidthHLMax) {
                     /* Err, Should set a bigger division value for pstcI2cInit->u32ClockDiv */
                     i32Ret = LL_ERR_INVD_PARAM;
                 } else {
                     TheoryBaudrate = I2cSrcClk / (uint32_t)WidthTotal / I2cDivClk;
                     fErr = ((float32_t)Baudrate - (float32_t)TheoryBaudrate) / (float32_t)TheoryBaudrate;
-                    WRITE_REG32(I2Cx->CCR,                                              \
-                                (pstcI2cInit->u32ClockDiv << I2C_CCR_FREQ_POS) |       \
-                                (((uint32_t)WidthHL / 2U) << I2C_CCR_SLOWW_POS) |       \
+                    WRITE_REG32(I2Cx->CCR,
+                                (pstcI2cInit->u32ClockDiv << I2C_CCR_CKDIV_POS) |
+                                (((uint32_t)WidthHL / 2U) << I2C_CCR_SLOWW_POS) |
                                 (((uint32_t)WidthHL - (((uint32_t)WidthHL) / 2U)) << I2C_CCR_SHIGHW_POS));
                 }
             }
@@ -328,16 +339,18 @@ int32_t I2C_BaudrateConfig(CM_I2C_TypeDef *I2Cx, const stc_i2c_init_t *pstcI2cIn
  * @param [in] I2Cx                 Pointer to I2C instance register base.
  *                                  This parameter can be a value of the following:
  *         @arg CM_I2C or CM_I2Cx:  I2C instance register base.
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:                   No error occurred.
  */
-void I2C_DeInit(CM_I2C_TypeDef *I2Cx)
+int32_t I2C_DeInit(CM_I2C_TypeDef *I2Cx)
 {
     /* Check parameters */
     DDL_ASSERT(IS_I2C_UNIT(I2Cx));
-
     /* RESET peripheral register and internal status*/
     CLR_REG32_BIT(I2Cx->CR1, I2C_CR1_PE);
     SET_REG32_BIT(I2Cx->CR1, I2C_CR1_SWRST);
+
+    return LL_OK;
 }
 
 /**
@@ -347,6 +360,7 @@ void I2C_DeInit(CM_I2C_TypeDef *I2Cx)
  *         @arg CM_I2C or CM_I2Cx:  I2C instance register base.
  * @param [in] pstcI2cInit          Pointer to I2C config structure  @ref stc_i2c_init_t
  *         @arg pstcI2cInit->u32ClockDiv: Division of i2c source clock, reference as:
+ * <pre>
  *              step1: calculate div = (I2cSrcClk/Baudrate/(Imme+2*Dnfsum+SclTime)
  *                     I2cSrcClk -- I2c source clock
  *                     Baudrate -- baudrate of i2c
@@ -357,6 +371,7 @@ void I2C_DeInit(CM_I2C_TypeDef *I2Cx)
  *                     Imme     -- An Immediate data, 68
  *              step2: chose a division item which is similar and bigger than div
  *                     from @ref I2C_Clock_Division.
+ * </pre>
  *         @arg pstcI2cInit->u32Baudrate : Baudrate configuration
  *         @arg pstcI2cInit->u32SclTime : Indicate SCL pin rising and falling
  *              time, should be number of T(i2c clock period time)
@@ -387,7 +402,7 @@ int32_t I2C_Init(CM_I2C_TypeDef *I2Cx, const stc_i2c_init_t *pstcI2cInit, float3
         i32Ret = I2C_BaudrateConfig(I2Cx, pstcI2cInit, pf32Error);
 
         /* Disable global broadcast address function */
-        CLR_REG32_BIT(I2Cx->CR1, I2C_CR1_ENGC);
+        CLR_REG32_BIT(I2Cx->CR1, I2C_CR1_GCEN);
         /* Release software reset */
         CLR_REG32_BIT(I2Cx->CR1, I2C_CR1_SWRST);
         /* Disable I2C peripheral */
@@ -421,10 +436,10 @@ void I2C_SlaveAddrConfig(CM_I2C_TypeDef *I2Cx, uint32_t u32AddrNum, uint32_t u32
     } else {
         if (I2C_ADDR_10BIT == u32AddrMode) {
             MODIFY_REG32(*pu32SLRx, I2C_SLR0_SLADDR0EN | I2C_SLR0_ADDRMOD0 | I2C_SLR0_SLADDR0,
-                         u32AddrMode + u32Addr);
+                         u32AddrMode | u32Addr);
         } else {
             MODIFY_REG32(*pu32SLRx, I2C_SLR0_SLADDR0EN | I2C_SLR0_ADDRMOD0 | I2C_SLR0_SLADDR0,
-                         u32AddrMode + (u32Addr << 1U));
+                         u32AddrMode | (u32Addr << 1U));
         }
     }
 }
@@ -603,7 +618,8 @@ void I2C_GeneralCallCmd(CM_I2C_TypeDef *I2Cx, en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_I2C_UNIT(I2Cx));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
-    MODIFY_REG32(I2Cx->CR1, I2C_CR1_ENGC, (uint32_t)enNewState << I2C_CR1_ENGC_POS);
+
+    MODIFY_REG32(I2Cx->CR1, I2C_CR1_GCEN, (uint32_t)enNewState << I2C_CR1_GCEN_POS);
 }
 
 /**
@@ -628,21 +644,8 @@ en_flag_status_t I2C_GetStatus(const CM_I2C_TypeDef *I2Cx, uint32_t u32Flag)
  * @param [in] I2Cx                 Pointer to I2C instance register base.
  *                                  This parameter can be a value of the following:
  *         @arg CM_I2C or CM_I2Cx:  I2C instance register base.
- * @param [in] u32Flag              Specifies the flag to clear, This parameter
- *                                  can be any combination of the following values
- *         @arg I2C_FLAG_START              : Start flag clear
- *         @arg I2C_FLAG_MATCH_ADDR0        : Address 0 detected flag clear
- *         @arg I2C_FLAG_MATCH_ADDR1        : Address 1 detected flag clear
- *         @arg I2C_FLAG_TX_CPLT            : Transfer end flag clear
- *         @arg I2C_FLAG_STOP               : Stop flag clear
- *         @arg I2C_FLAG_RX_FULL            : Receive buffer full flag clear
- *         @arg I2C_FLAG_TX_EMPTY           : Transfer buffer empty flag clear
- *         @arg I2C_FLAG_ARBITRATE_FAIL     : Arbitration fails flag clear
- *         @arg I2C_FLAG_NACKF              : Nack detected flag clear
- *         @arg I2C_FLAG_GENERAL_CALL       : General call address detected flag clear
- *         @arg I2C_FLAG_SMBUS_DEFAULT_MATCH: Smbus default address detected flag clear
- *         @arg I2C_FLAG_SMBUS_HOST_MATCH   : Smbus host address detected flag clear
- *         @arg I2C_FLAG_SMBUS_ALARM_MATCH  : Smbus alarm address detected flag clear
+ * @param [in] u32Flag              Specifies the flag to clear, This parameter can be any combination of the member from
+ *                                  @ref I2C_Flag_Clear
  * @retval None
  */
 void I2C_ClearStatus(CM_I2C_TypeDef *I2Cx, uint32_t u32Flag)
@@ -681,7 +684,7 @@ void I2C_SWResetCmd(CM_I2C_TypeDef *I2Cx, en_functional_state_t enNewState)
 void I2C_IntCmd(CM_I2C_TypeDef *I2Cx, uint32_t u32IntType, en_functional_state_t enNewState)
 {
     DDL_ASSERT(IS_I2C_UNIT(I2Cx));
-    DDL_ASSERT(IS_I2C_INT_FLAG(u32IntType));
+    DDL_ASSERT(IS_I2C_INT(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -869,12 +872,16 @@ int32_t I2C_Restart(CM_I2C_TypeDef *I2Cx, uint32_t u32Timeout)
 
     DDL_ASSERT(IS_I2C_UNIT(I2Cx));
 
-    /* Clear start status flag */
-    I2C_ClearStatus(I2Cx, I2C_FLAG_START);
-    /* Send restart condition */
-    I2C_GenerateRestart(I2Cx);
-    /* Judge if start success*/
-    i32Ret = I2C_WaitStatus(I2Cx, (I2C_FLAG_BUSY | I2C_FLAG_START), SET, u32Timeout);
+    i32Ret = I2C_WaitStatus(I2Cx, I2C_FLAG_BUSY, SET, u32Timeout);
+
+    if (LL_OK == i32Ret) {
+        /* Clear start status flag */
+        I2C_ClearStatus(I2Cx, I2C_FLAG_CLR_START);
+        /* Send restart condition */
+        I2C_GenerateRestart(I2Cx);
+        /* Judge if start success*/
+        i32Ret = I2C_WaitStatus(I2Cx, (I2C_FLAG_BUSY | I2C_FLAG_START), SET, u32Timeout);
+    }
 
     return i32Ret;
 }
@@ -972,7 +979,7 @@ int32_t I2C_Trans10BitAddr(CM_I2C_TypeDef *I2Cx, uint16_t u16Addr, uint8_t u8Dir
 
     if ((u8Dir == I2C_DIR_RX) && (LL_OK == i32Ret)) {
         /* Restart */
-        I2C_ClearStatus(I2Cx, I2C_FLAG_START);
+        I2C_ClearStatus(I2Cx, I2C_FLAG_CLR_START);
         I2C_GenerateRestart(I2Cx);
         i32Ret = I2C_WaitStatus(I2Cx, I2C_FLAG_START, SET, u32Timeout);
 
@@ -1000,14 +1007,14 @@ int32_t I2C_Trans10BitAddr(CM_I2C_TypeDef *I2Cx, uint16_t u16Addr, uint8_t u8Dir
  *                                  This parameter can be a value of the following:
  *         @arg CM_I2C or CM_I2Cx:  I2C instance register base.
  * @param [in] au8TxData            The data array to be sent
- * @param [in] u32Size              Number of data in array pau8TxData
+ * @param [in] u32Size              Number of data in array au8TxData
  * @param [in] u32Timeout           Maximum count of trying to get a status of a flag in status register
  * @retval int32_t
  *         - LL_OK:                 Success
  *         - LL_ERR_TIMEOUT:        Failed
  *         - LL_ERR_INVD_PARAM:     Parameter error
  */
-int32_t I2C_TransData(CM_I2C_TypeDef *I2Cx, uint8_t const au8TxData[], uint32_t u32Size, uint32_t u32Timeout)
+int32_t I2C_TransData(CM_I2C_TypeDef *I2Cx, const uint8_t au8TxData[], uint32_t u32Size, uint32_t u32Timeout)
 {
     int32_t i32Ret = LL_OK;
     __IO uint32_t u32Count = 0UL;
@@ -1133,7 +1140,7 @@ int32_t I2C_MasterReceiveDataAndStop(CM_I2C_TypeDef *I2Cx, uint8_t au8RxData[], 
             if (i32Ret == LL_OK) {
                 /* Stop before read last data */
                 if (i == (u32Size - 1UL)) {
-                    I2C_ClearStatus(I2Cx, I2C_FLAG_STOP);
+                    I2C_ClearStatus(I2Cx, I2C_FLAG_CLR_STOP);
                     I2C_GenerateStop(I2Cx);
                 }
                 /* read data from register */
@@ -1173,7 +1180,7 @@ int32_t I2C_Stop(CM_I2C_TypeDef *I2Cx, uint32_t u32Timeout)
 
     /* Clear stop flag */
     while ((SET == I2C_GetStatus(I2Cx, I2C_FLAG_STOP)) && (u32Timeout > 0UL)) {
-        I2C_ClearStatus(I2Cx, I2C_FLAG_STOP);
+        I2C_ClearStatus(I2Cx, I2C_FLAG_CLR_STOP);
         u32Timeout--;
     }
     I2C_GenerateStop(I2Cx);

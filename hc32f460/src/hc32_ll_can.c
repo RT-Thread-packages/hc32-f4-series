@@ -10,9 +10,12 @@
                                     API fixed: CAN_FillTxFrame(), CAN_GetStatus(), CAN_ClearStatus()
    2023-06-30       CDT             Added 3 APIs for local-reset.Refine local function CAN_ReadRxBuf(), CAN_WriteTxBuf()
                                     Modify typo
+   2024-06-30       CDT             API CAN_DeInit() added return value
+                                    API optimized: CAN_WriteTxBuf()
+                                    Replace constants with Macros
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -88,10 +91,10 @@
 #define IS_CAN_FLAG(x)              IS_CAN_BIT_MASK(x, CAN_FLAG_ALL)
 
 #define IS_CAN_ID(ide, x)                                                      \
-(   (((ide) == 1U) && (((x) | 0x1FFFFFFFUL) == 0x1FFFFFFFUL))   ||             \
-    (((ide) == 0U) && (((x) | 0x7FFUL) == 0x7FFUL)))
+(   (((ide) == 1U) && (((x) | CAN_EXT_ID_MASK) == CAN_EXT_ID_MASK))     ||     \
+    (((ide) == 0U) && (((x) | CAN_STD_ID_MASK) == CAN_STD_ID_MASK)))
 
-#define IS_CAN_ID_MASK(x)           (((x) | 0x1FFFFFFFUL) == 0x1FFFFFFFUL)
+#define IS_CAN_ID_MASK(x)           (((x) | CAN_EXT_ID_MASK) == CAN_EXT_ID_MASK)
 
 #define IS_CAN_IDE(x)               (((x) == 0U) || ((x) == 1U))
 
@@ -342,8 +345,10 @@ static void CAN_WriteTxBuf(CM_CAN_TypeDef *CANx, const stc_can_tx_frame_t *pstcT
         u8WordLen = 2U;
     }
 
-    for (i = 0U; i < u8WordLen; i++) {
-        reg32TBUF[2U + i] = pu32TxData[i];
+    if (pstcTx->RTR == 0U) {
+        for (i = 0U; i < u8WordLen; i++) {
+            reg32TBUF[2U + i] = pu32TxData[i];
+        }
     }
 }
 
@@ -367,9 +372,9 @@ static void CAN_ReadRxBuf(const CM_CAN_TypeDef *CANx, stc_can_rx_frame_t *pstcRx
     pstcRx->u32Ctrl = reg32RBUF[1U];
 
     if (pstcRx->IDE == 0U) {
-        pstcRx->u32ID &= 0x7FFUL;
+        pstcRx->u32ID &= CAN_STD_ID_MASK;
     } else {
-        pstcRx->u32ID &= 0x1FFFFFFFUL;
+        pstcRx->u32ID &= CAN_EXT_ID_MASK;
     }
 
     u8WordLen = m_au8DLC2WordSize[pstcRx->DLC];
@@ -513,14 +518,14 @@ int32_t CAN_StructInit(stc_can_init_t *pstcCanInit)
  * @param  [in]  CANx                   Pointer to CAN instance register base.
  *                                      This parameter can be a value of the following:
  *   @arg  CM_CAN or CM_CANx:           CAN instance register base.
- * @retval None
+ * @retval int32_t:
+ *           - LL_OK:                   De-Initialize success.
  */
-void CAN_DeInit(CM_CAN_TypeDef *CANx)
+int32_t CAN_DeInit(CM_CAN_TypeDef *CANx)
 {
     uint8_t i;
 
     DDL_ASSERT(IS_CAN_UNIT(CANx));
-
     CLR_REG8_BIT(CANx->CFG_STAT, CAN_CFG_STAT_RESET);
     for (i = 0U; i < 2U; i++) {
         WRITE_REG8(CANx->CFG_STAT, 0x80U);
@@ -541,9 +546,9 @@ void CAN_DeInit(CM_CAN_TypeDef *CANx)
         WRITE_REG16(CANx->TT_TRIG, 0x00U);
         WRITE_REG16(CANx->TT_WTRIG, 0x00U);
         WRITE_REG8(CANx->ACFEN, 0x01U);
-
         SET_REG8_BIT(CANx->CFG_STAT, CAN_CFG_STAT_RESET);
     }
+    return LL_OK;
 }
 
 /**
@@ -1379,7 +1384,7 @@ int32_t CAN_TTC_GetConfig(const CM_CAN_TypeDef *CANx, stc_can_ttc_config_t *pstc
         pstcCanTtc->u8TxBufMode         = READ_REG8_BIT(CANx->TCTRL, CAN_TCTRL_TTTBM);
         pstcCanTtc->u8NTUPrescaler      = READ_REG8_BIT(CANx->TTCFG, CAN_TTCFG_T_PRESC);
         pstcCanTtc->u32RefMsgIDE        = (u32Tmp >> CAN_REF_MSG_REF_IDE_POS) & 0x1UL;
-        pstcCanTtc->u32RefMsgID         = u32Tmp & 0x7FFFFFFFUL;
+        pstcCanTtc->u32RefMsgID         = u32Tmp & CAN_EXT_ID_MASK;
         pstcCanTtc->u16TriggerType      = READ_REG16_BIT(CANx->TRG_CFG, CAN_TRG_CFG_TTYPE);
         pstcCanTtc->u16TxEnableWindow   = (READ_REG16_BIT(CANx->TRG_CFG, CAN_TRG_CFG_TEW) >> CAN_TRG_CFG_TEW_POS) + 1U;
         pstcCanTtc->u16TxTriggerTime    = READ_REG16(CANx->TT_TRIG);

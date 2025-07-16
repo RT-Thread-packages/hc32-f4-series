@@ -9,9 +9,12 @@
    2022-06-30       CDT             Add USB core ID select function
                                     Delete comment
    2023-06-30       CDT             Modify typo
+   2024-06-30       CDT             Modify for macro define USB_MAX_TX_FIFOS
+                                    Modify parameter type in function usb_FrameIntervalConfig():uint8_t -> uint32_t
+   2024-11-08       CDT             Modify API usb_wrpkt & usb_rdpkt for C-STAT
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -54,9 +57,13 @@ extern "C"
 /*******************************************************************************
  * Global pre-processor symbols/macros ('#define')
  ******************************************************************************/
+/**
+ * @defgroup USB_Global_Macros USB Global Macros
+ * @{
+ */
 #define USB_MAX_TX_FIFOS                       (16U)
-#define USB_MAX_CH_NUM                         (USB_MAX_TX_FIFOS)
-#define USB_MAX_EP_NUM                         (16U)
+#define USB_MAX_CH_NUM                         (16U)
+#define USB_MAX_EP_NUM                         (USB_MAX_TX_FIFOS)
 
 /* USB Core ID define */
 #define USBFS_CORE_ID                          (0U)
@@ -71,7 +78,7 @@ extern "C"
 #define DEVICE_MODE                            (0U)
 #define HOST_MODE                              (1U)
 
-/* Macro definations for device mode*/
+/* Macro definitions for device mode*/
 #define DSTS_ENUMSPD_HS_PHY_30MHZ_OR_60MHZ     (0U << USBFS_DSTS_ENUMSPD_POS)
 #define DSTS_ENUMSPD_FS_PHY_30MHZ_OR_60MHZ     (1U << USBFS_DSTS_ENUMSPD_POS)
 #define DSTS_ENUMSPD_LS_PHY_6MHZ               (2U << USBFS_DSTS_ENUMSPD_POS)
@@ -132,9 +139,16 @@ extern "C"
 #define __USB_ALIGN_END
 #endif
 
+/**
+ * @}
+ */
 /*******************************************************************************
  * Global type definitions ('typedef')
  ******************************************************************************/
+/**
+ * @defgroup USB_Global_Types USB Global Types
+ * @{
+ */
 
 typedef struct {
     __IO uint32_t GVBUSCFG;                   /* VBUS Configuration Register                      000h */
@@ -226,7 +240,7 @@ typedef struct { /* 000h */
     USB_CORE_HREGS     *HREGS;
     USB_CORE_INEPREGS  *INEP_REGS[USB_MAX_TX_FIFOS];
     USB_CORE_OUTEPREGS *OUTEP_REGS[USB_MAX_TX_FIFOS];
-    USB_CORE_HC_REGS   *HC_REGS[USB_MAX_TX_FIFOS];
+    USB_CORE_HC_REGS   *HC_REGS[USB_MAX_CH_NUM];
     __IO uint32_t  *HPRT;
     __IO uint32_t  *DFIFO[USB_MAX_TX_FIFOS];
     __IO uint32_t  *GCCTL;
@@ -284,6 +298,9 @@ typedef struct {
     uint8_t        u8PhyType;    /* USBHS_PHY_EMBED or USBHS_PHY_EXT */
 } stc_usb_port_identify;
 
+/**
+ * @}
+ */
 /*******************************************************************************
   Global function prototypes (definition in C source)
  ******************************************************************************/
@@ -503,7 +520,7 @@ __STATIC_INLINE void usb_BurstLenConfig(LL_USB_TypeDef *USBx, uint8_t len)
  * @param  [in] interval    Frame interval
  * @retval None
  */
-__STATIC_INLINE void usb_FrameIntervalConfig(LL_USB_TypeDef *USBx, uint8_t interval)
+__STATIC_INLINE void usb_FrameIntervalConfig(LL_USB_TypeDef *USBx, uint32_t interval)
 {
     MODIFY_REG32(USBx->DREGS->DCFG, USBFS_DCFG_PFIVL, interval);
 }
@@ -570,7 +587,7 @@ __STATIC_INLINE void usb_prtsusp(LL_USB_TypeDef *USBx)
 
 /**
  * @brief  control the enumeration speed of the core, this function make sure that
- *         the maximum speed supperted by the connected device.
+ *         the maximum speed supported by the connected device.
  * @param  [in] USBx        usb instance
  * @retval None
  */
@@ -629,8 +646,8 @@ __STATIC_INLINE void usb_chrst(LL_USB_TypeDef *USBx, uint8_t ch_idx)
 
 extern void usb_initusbcore(LL_USB_TypeDef *USBx, USB_CORE_BASIC_CFGS *basic_cfgs);
 extern void usb_setregaddr(LL_USB_TypeDef *USBx, stc_usb_port_identify *pstcPortIdentify, USB_CORE_BASIC_CFGS *basic_cfgs);
-extern void usb_rdpkt(LL_USB_TypeDef *USBx, uint8_t *dest, uint16_t len);
-extern void usb_wrpkt(LL_USB_TypeDef *USBx, uint8_t *src, uint8_t ch_ep_num, uint16_t len, uint8_t u8DmaEn);
+extern void usb_rdpkt(LL_USB_TypeDef *USBx, uint8_t *pu8dest, uint16_t len);
+extern void usb_wrpkt(LL_USB_TypeDef *USBx, const uint8_t *pu8src, uint8_t ch_ep_num, uint16_t len, uint8_t u8DmaEn);
 extern void usb_txfifoflush(LL_USB_TypeDef *USBx, uint32_t num);
 extern void usb_rxfifoflush(LL_USB_TypeDef *USBx);
 extern void usb_modeset(LL_USB_TypeDef *USBx, uint8_t mode);

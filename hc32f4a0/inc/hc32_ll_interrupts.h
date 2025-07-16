@@ -7,9 +7,10 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2024-06-30       CDT             Modify INTC filter B macros correspond with RM
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -78,8 +79,8 @@ typedef struct {
     uint32_t u32Filter;         /*!< ExtInt filter (A) function setting, @ref EXTINT_FilterClock_Sel for details */
     uint32_t u32FilterClock;    /*!< ExtInt filter (A) clock division, @ref EXTINT_FilterClock_Div for details */
     uint32_t u32Edge;           /*!< ExtInt trigger edge, @ref EXTINT_Trigger_Sel for details */
-    uint32_t u32FilterB;        /*!< NMI, ExtInt filter B function setting, @ref NMI_EXTINT_FilterBClock_Sel for details */
-    uint32_t u32FilterBClock;   /*!< NMI, ExtInt filter B time, @ref NMI_EXTINT_FilterBTim_Sel for details */
+    uint32_t u32FilterB;        /*!< ExtInt filter B function setting, @ref EXTINT_FilterBClock_Sel for details */
+    uint32_t u32FilterBClock;   /*!< ExtInt filter B time, @ref EXTINT_FilterBTim_Sel for details */
 } stc_extint_init_t;
 
 /**
@@ -94,7 +95,7 @@ typedef struct {
  * @{
  */
 /**
- * @defgroup INTC_Priority_Sel Interrupt Priority Level 00 ~ 15
+ * @defgroup INTC_Priority_Sel Interrupt Priority Level
  * @{
  */
 #define DDL_IRQ_PRIO_00                 (0U)
@@ -296,18 +297,18 @@ typedef struct {
  * @{
  */
 #define EXTINT_FILTER_OFF               (0UL)
-#define EXTINT_FILTER_ON                INTC_EIRQCR_EFEN
+#define EXTINT_FILTER_ON                (INTC_EIRQCR_EFEN)
 
 /**
  * @}
  */
 
 /**
- * @defgroup NMI_EXTINT_FilterBClock_Sel External Interrupt Filter B Function Selection
+ * @defgroup EXTINT_FilterBClock_Sel External Interrupt Filter B Function Selection
  * @{
  */
-#define NMI_EXTINT_FILTER_B_OFF         (0UL)
-#define NMI_EXTINT_FILTER_B_ON          INTC_EIRQCR_NOCEN
+#define EXTINT_FILTER_B_OFF             (0UL)
+#define EXTINT_FILTER_B_ON              (INTC_EIRQCR_NOCEN)
 /**
  * @}
  */
@@ -326,13 +327,13 @@ typedef struct {
  */
 
 /**
- * @defgroup NMI_EXTINT_FilterBTim_Sel External Interrupt Filter B Time Selection
+ * @defgroup EXTINT_FilterBTim_Sel External Interrupt Filter B Time Selection
  * @{
  */
-#define NMI_EXTINT_FCLK_B_500NS         (0UL)
-#define NMI_EXTINT_FCLK_B_1US           (INTC_NOCCR_NOCSEL_0)
-#define NMI_EXTINT_FCLK_B_2US           (INTC_NOCCR_NOCSEL_1)
-#define NMI_EXTINT_FCLK_B_4US           (INTC_NOCCR_NOCSEL)
+#define EXTINT_FILTER_B_LVL1            (0UL)
+#define EXTINT_FILTER_B_LVL2            (INTC_NOCCR_NOCSEL_0)
+#define EXTINT_FILTER_B_LVL3            (INTC_NOCCR_NOCSEL_1)
+#define EXTINT_FILTER_B_LVL4            (INTC_NOCCR_NOCSEL)
 /**
  * @}
  */
@@ -342,9 +343,9 @@ typedef struct {
  * @{
  */
 #define EXTINT_TRIG_FALLING             (0UL)
-#define EXTINT_TRIG_RISING              INTC_EIRQCR_EIRQTRG_0
-#define EXTINT_TRIG_BOTH                INTC_EIRQCR_EIRQTRG_1
-#define EXTINT_TRIG_LOW                 INTC_EIRQCR_EIRQTRG
+#define EXTINT_TRIG_RISING              (INTC_EIRQCR_EIRQTRG_0)
+#define EXTINT_TRIG_BOTH                (INTC_EIRQCR_EIRQTRG_1)
+#define EXTINT_TRIG_LOW                 (INTC_EIRQCR_EIRQTRG)
 
 /**
  * @}
@@ -392,6 +393,7 @@ typedef struct {
                                          INTC_WUPEN_TMR2OVFWUEN | INTC_WUPEN_RXWUEN             |           \
                                          INTC_WUPEN_USHWUEN     | INTC_WUPEN_USFWUEN            |           \
                                          INTC_WUPEN_ETHWUEN)
+
 /**
  * @}
  */

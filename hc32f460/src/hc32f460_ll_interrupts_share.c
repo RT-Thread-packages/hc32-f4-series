@@ -14,7 +14,7 @@
                                     Modify for head file update: EIRQFR -> EIFR
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -440,7 +440,7 @@ void IRQ130_Handler(void)
         }
     }
     /* Main-OSC stop */
-    if (CMU_XTALSTDCR_XTALSTDIE ==  READ_REG8_BIT(CM_CMU->XTALSTDCR, CMU_XTALSTDCR_XTALSTDIE)) {
+    if (CMU_XTALSTDCR_XTALSTDIE == READ_REG8_BIT(CM_CMU->XTALSTDCR, CMU_XTALSTDCR_XTALSTDIE)) {
         if ((CMU_XTALSTDSR_XTALSTDF == READ_REG8_BIT(CM_CMU->XTALSTDSR, CMU_XTALSTDSR_XTALSTDF)) && \
             (0UL != (VSSEL130 & BIT_MASK_21))) {
             CLK_XtalStop_IrqHandler();

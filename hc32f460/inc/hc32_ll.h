@@ -9,9 +9,10 @@
    2022-03-31       CDT             First version
    2023-01-15       CDT             Modify version as 3.1.0
    2023-09-30       CDT             Modify version as 3.2.0
+   2024-11-08       CDT             Modify version as Rev3.3.0
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -92,7 +93,7 @@ extern "C"
 * @{
 */
 #define HC32_DDL_REV_MAIN               0x03U  /*!< [31:24] main version  */
-#define HC32_DDL_REV_SUB1               0x02U  /*!< [23:16] sub1 version  */
+#define HC32_DDL_REV_SUB1               0x03U  /*!< [23:16] sub1 version  */
 #define HC32_DDL_REV_SUB2               0x00U  /*!< [15:8]  sub2 version  */
 #define HC32_DDL_REV_PATCH              0x00U  /*!< [7:0]   patch version */
 #define HC32_DDL_REV                    ((HC32_DDL_REV_MAIN << 24) | (HC32_DDL_REV_SUB1 << 16) | \

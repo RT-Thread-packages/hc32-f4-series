@@ -1,5 +1,332 @@
 # Update History
 ------
+## V3.3.0  Nov 08, 2024
+#### documents
+#### drivers
+- ##### bsp/components
+  - **24cxx**
+    - Add null pointer check
+    - Add prefix to static global variable
+  - **w25qxx**
+    - Add null pointer check
+  - **wm8731**
+    - Add null pointer check
+    - Add prefix to static global variable
+- ##### bsp/ev_hc32f460_lqfp100_v2
+  - Modify for data overflow in function BSP_I2C_Init()
+  - Enable cache in API BSP_CLK_Init()
+  - MISRAC fix in API BSP_XTAL32_Init()
+  - FCM interface add instance
+  - Modify XTAL/XTAL32 pins definition
+  - Modify macro of EEPROM capacity
+  - Optimize using DMA linked list transfer
+- ##### cmsis/Device
+  - Modify CMP/DBGC/DCU/DMA/QSPI/TMR4/TMR6/I2C/I2S registers
+  - Modify GPIO configuration value of QSPI
+- ##### hc32_ll_driver
+  - **generic**
+    - Modify version as Rev3.3.0
+    - Add __USED definition
+  - **adc**
+    - Add declaration of API ADC_MxChCmd(), ADC_ConvDataAverageMxChCmd(), and add defgroup ADC_Mx_Channel
+    - Add declaration of API ADC_GetResolution()
+    - Fixed some comments
+    - Add API ADC_MxChCmd(),ADC_ConvDataAverageMxChCmd
+    - Add API ADC_GetResolution()
+    - API optimized: ADC_ClearStatus(),ADC_AWD_ClearStatus()
+    - Optimized access code for some registers to improve readability
+  - **aos**
+    - Optimize assert IS_AOS_TARGET
+  - **can**
+    - API CAN_DeInit() added return value
+    - Added macro group CAN_ID_Mask
+    - API optimized: CAN_WriteTxBuf()
+    - Replace constants with Macros
+  - **clk**
+    - Modify comment
+    - Refine API CLK_XtalStdInit and add API CLK_XtalStdCmd, CLK_SetXtalStdExceptionType
+    - Refine API CLK_XtalStdInit. and add API CLK_XtalStdCmd, CLK_SetXtalStdExceptionType
+    - Modify CLK_PLLXM_DIV_MIN as 1U
+    - Delete group definition for CLK_FREQ
+  - **cmp**
+    - Rename the peripheral registers structure: CMPCR -> CMP_COMMON
+  - **crc**
+    - Add declaration of API CRC_GetResult() & CRC_SetInitValue()
+    - Modify interface of AccumulateData and Calculate functions
+    - Add API CRC_GetResult() & CRC_SetInitValue()
+    - Optimized APIs CRC_WriteData8/16/32
+  - **dbgc**
+    - Delete redundancies API and Correct DBGC spell
+  - **dma**
+    - Modify API input param type:u16->u32
+    - Add structure stc_dma_rc_nonseq_init_t
+    - Add API DMA_ReconfigNonSeqStructInit() & DMA_ReconfigNonSeqInit()
+    - Add API DMA_MxChSWTrigger() and DMA_SWReconfig()
+    - Add DMA Repeat size assert
+    - Use macros replace immediate data, modify IS_DMA_NON_SEQ_TRANS_CNT
+    - Optimize DMA_ClearErrStatus() & DMA_ClearTransCompleteStatus()
+    - Add assert IS_DMA_DATA_WIDTH_ADDR
+    - Fix bug: fail to set max boundary value for block size, repeat size and non-seq tran count
+    - Add API DMA_MxChSWTrigger() & DMA_SWReconfig()
+  - **efm**
+    - Rename EFM_DataCacheResetCmd() as EFM_CacheRamReset() and modify comment
+    - Optimized macro group EFM_Remap_Size definitions
+    - Move EFM_CACHE_ALL from c file to head file
+    - Add prefix EFM to SECTOR_SIZE and macro EFM_PROTECT_LEVEL_ALL
+    - Add const before buffer pointer to cater top-level calls
+    - Optimize EFM_ClearStatus()
+    - Optimize condition judgment
+    - Bug Fixed # judge the EFM_FLAG_OPTEND whether set o not before clear EFM_FLAG_OPTEND
+  - **emb**
+    - Add macro EMB_FLAG_CLR_ALL
+    - Optimize EMB_ClearStatus function
+    - Rename macro-definition: IS_VALID_EMB_INT -> IS_EMB_INT
+  - **fcm**
+    - Interface add instance
+    - Modify API FCM_ClearStatus(), Clear status by write instruction
+  - **gpio**
+    - Add assert for GPIO register lock status in API GPIO_AnalogCmd(), GPIO_ExtIntCmd()
+    - clear EFEN bit or NOCEN bit in GPIO_ExtIntCmd() before enable interrupt
+  - **i2c**
+    - Adjust I2C_FLAG_ALL & I2C_FLAG_CLR_ALL & I2C_INT_ALL
+    - Add I2C_Flag_Clear def group
+    - Fix I2C_Deinit
+    - Rename related to SMBus Alert Response Address
+    - Modify I2C_Restart()
+    - Modify macro IS_I2C_INT_FLAG -> IS_I2C_INT
+    - Modify the I2C_BaudrateConfig func rounding off method
+    - Modify duty cycle for SCL
+    - Modify I2C_CR1_ENGC to I2C_CR1_GCEN, modify I2C_CCR_FREQ to I2C_CCR_CKDIV
+  - **i2s**
+    - Optimize I2S_DeInit()
+    - Removed I2S_RST_TYPE_CODEC
+    - Optimize calculate for I2SDIV and ODD in MCK enabled mode
+    - Delete needless set data in I2S_Init function
+  - **icg**
+    - Modify macro define: ICG_SWDT_LPM_CNT_CONTINUE -> ICG_SWDT_LPM_CNT_CONT
+    - Add __USED for optimize
+  - **interrupts**
+    - Modify API NMI_ClearNmiStatus(),EXTINT_ClearExtIntStatus() Clear status by write instruction
+    - clear EFEN bit in EXTINT_Init()
+  - **mpu**
+    - Add structure stc_mpu_unit_init_t, and declaration of MPU_UnitInit(), MPU_UnitStructInit()
+    - Refine def group MPU_Flag
+    - Add API MPU_UnitInit(), MPU_UnitStructInit()
+  - **pwc**
+    - Refine API PWC_SLEEP_Enter()
+    - Add API PWC_PD_SetIoState & PWC_PD_SetMode and add return value to PWC_PD_Enter
+    - Remove redundant assert
+    - Modify API PWC_PD_Enter() #add lvd register unlock at ahead of the API and return value
+    - Modify API PWC_STOP_Enter() #delete redundancies code
+    - Unified the operation mode for register
+    - Refine PWC_SLEEP_Enter()
+    - Add API PWC_PD_SetIoState() & PWC_PD_SetMode()
+    - Add assert in PWC_PD_Config()
+    - Modify LVD initialize process
+    - Remove macro PWC_LVD_EXT_INPUT_EN_REG & PWC_LVD_EXT_INPUT_EN_BIT & PWC_LVD_CMP_OUTPUT_EN_REG & PWC_LVD_CMP_OUTPUT_EN_BIT
+    - Modify PWC_LVD_ClearStatus & PWC_PD_ClearWakeupStatus for couping risk
+    - Couping Risks caused by modifying the status bits of the WKTM
+    - Modify macro name IS_PWC_WKT_COMPARISION_VALUE as IS_PWC_WKT_COMPARISON_VALUE
+    - Fix misra warning
+    - Add assert for PWC_STOP_Enter()
+  - **qspi**
+    - Delete judgement condition when switching to direct communication mode
+    - Modify QSPI->SR2 to QSPI->CLR
+  - **rmu**
+    - Add IS_RMU_UNLOCKED assert
+    - Modify IS_VALID_RMU_RST_FLAG -> IS_RMU_RST_FLAG
+  - **rtc**
+    - Modify RTC_EnterRwMode,RTC_ExitRwMode,RTC_ConfirmLPMCond,RTC_SetIntPeriod,RTC_AlarmCmd,RTC_IntCmd,RTC_ClearStatus for couping risk
+    - Optimized access code for some registers to improve readability
+  - **sdioc**
+    - Add parameter for SDMMC_CMD38_Erase
+  - **spi**
+    - Rename SPI_FLAG_OVERLOAD as SPI_FLAG_OVERRUN, SPI_FLAG_UNDERLOAD as SPI_FLAG_UNDERRUN
+    - Modify API API_xxxConfig() to SPI_Setxxx() and refine SPI_SetSSValidLevel, modify SPI_IRQ_ALL -> SPI_INT_ALL
+    - Modify some assert
+    - Rename some API SPI_xxxConfig as SPI_Setxxx
+    - Refine API SPI_Init()
+    - Add Send restriction in SPI_TxRx function
+    - Modify SPI_DeInit,SPI_ClearStatus for couping risk
+  - **sram**
+    - Refine def group SRAM_ECC_Mode, and refine def group SRAM_Err_Mode as SRAM_Exception_Type
+    - Add macro SRAM_ECC_SRAM_ALL and group SRAM_Check_SRAM
+    - Refine SRAM_SetEccMode, and refine SRAM_SetErrorMode() as SRAM_SetExceptionType
+    - Modify assert IS_SRAM_ECC_MD()
+  - **swdt**
+    - Modify API SWDT_ClearStatus() for couping risk
+  - **tmr0**
+    - Modify API of TMR0_DeInit()
+    - Modify TMR0_ClearStatus for couping risk
+  - **tmr4**
+    - Modify peripheral registers structure: CM_TMR4CR -> CM_TMR4_ECER
+    - Fix bug that the status flag of CCSR/OCSR for couping risk
+    - Refine TMR4_GetStatus()
+    - Fix misra warning, MODIFY_REG->MODIFY_RCSR_REG
+  - **tmr6**
+    - Modify for headfile update: CM_TMR6CR -> CM_TMR6_COMMON
+    - Modify API TMR6_ClearStatus() for couping risk
+  - **tmra**
+    - API TMRA_DeInit() added return value
+    - API TMRA_DeInit() refined
+    - Modify PCONR reg from RW_MEM16 to MODIFY_REG16 in TMRA_PWM_Init() function
+    - Modify TMRA_CountReloadCmd,TMRA_ClearStatus,TMRA_IntCmd for couping risk
+    - Optimized access code for some registers to improve readability
+  - **trng**
+    - Use MODIFY_REG32() to prevent reserved bit from being overwritten
+  - **usart**
+    - Add the declaration of API USART_GetFuncState()
+    - Add interfaces for getting USART configuration status
+    - Add API USART_GetFuncState()
+    - Add assert for the register bit can only be set when TE=0&RE=0
+    - Optimize condition judgment
+    - Add assert for pvBuf pointer alignment for data width 9bit
+  - **usb**
+    - Modify for macro define USB_MAX_TX_FIFOS
+    - Modify parameter type in function usb_FrameIntervalConfig():uint8_t -> uint32_t
+    - Modify API usb_wrpkt & usb_rdpkt for C-STAT
+  - **utility**
+    - Optimized the Delay functions as cache is enabled
+  - **wdt**
+    - Modify macro define: WDT_LPM_CNT_CONTINUE -> WDT_LPM_CNT_CONT
+    - Modify API WDT_ClearStatus() for couping risk
+#### midwares
+- ##### hc32/emulate_eeprom
+  - Add flash emulate eeprom midware
+- ##### hc32/iap
+  - Modify u8FrameData to 4-byte alignment
+  - Fix cppcheck warning
+- ##### hc32/iec60730_class_b_stl
+  - Add compiler macros pre-processor: GCC and AC6
+  - Use STL_RetargetPrintf() replace printf() of the C lib.
+  - Fix warning: MISRAC2012-Rule-8.4
+  - Assign m_pu32MarchRAM using the variable m_au32MarchRAM
+- ##### hc32/usb
+  - Support Microsoft OS descriptor
+  - Modify for macro define USB_MAX_TX_FIFOS
+  - Delete undesired EP status setting operation
+  - Add USB class WinUSB midware
+  - Modify for control write transfer for USB DMA mode
+  - Optimize the interface init function
+  - Modify for MISRA
+  - Optimize the interface struct
+  - Change the DataLength in the _CDCXfer struct from u16 to u32
+  - Change the length parameter in the usb_host_cdc_senddata() from u16 to u32
+  - Add a CDC Request state
+  - Optimize assignment operation
+  - Modify for channel distribute and free
+  - Modify usb_host_chx_in_isr() for BBERR flag
+  - Clear ACK flag when XFRC in usb_host_chx_in_isr() function
+  - Clear CHH flag when XFRC in usb_host_chx_in_isr() and usb_host_chx_out_isr() function
+  - Modify function usb_host_parsecfgdesc()
+#### projects
+- ##### ev_hc32f460_lqfp100_v2/applications
+  - **emulate_eeprom/flash_emulate_eeprom**
+    - Add flash_emulate_eeprom application
+  - **functional_safety/iec60730_class_b**
+    - Add ICG0 configuration: ICG_REG_CFG0_CONST
+    - Add BSP clock initialization
+    - FCM interface add instance
+    - Replace peripheral WDT with SWDT to avoid dependencies on the system clock
+  - **iap/iap_boot**
+    - Modify XTAL pins definition
+  - **iap/iap_ymodem_boot**
+    - Modify XTAL pins definition
+  - **usb/usb_dev_cdc**
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_dev_cdc_msc**
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_dev_hid_cdc**
+    - Modify timer0 clock division for asynchronous clock
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_dev_hid_custom**
+    - Modify timer0 clock division for asynchronous clock
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_dev_hid_msc**
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_dev_mouse**
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_dev_msc**
+    - Optimize print information
+    - Support Microsoft OS descriptor
+  - **usb/usb_host_cdc**
+    - Add BSP_KEY_Init() in the usb_bsp_init() function
+    - Optimize print information
+    - Remove unused code in host_user_userinput() function
+    - Redesign the CDC data tx and rx application demo
+    - Modify user state definition
+  - **usb/usb_host_mouse_kb**
+    - Optimize print information
+  - **usb/usb_host_msc**
+    - Optimize print information
+- ##### ev_hc32f460_lqfp100_v2/examples
+  - **adc/adc_awd**
+    - Modify macro TMR0_CMP_VAL value
+  - **adc/adc_hard_trigger**
+    - Modify macro TMR0_CMP_VAL value
+  - **can/can_classical**
+    - Example optimized.
+  - **clk/clk_xtalstop_detect**
+    - Use CLK_XtalStdInit() to replace XtalStopDetctInit()
+    - Modify XTAL_STOP_IrqCallback
+  - **crc/crc_hw_encode_sw_check**
+    - Fix cppcheck warning
+  - **dcu/dcu_compare**
+    - Add m_u8DoneFlag to indicate interrupt done
+  - **dmac/dmac_base**
+    - Optimize DMA2_Error_IrqCallback()
+    - Add DMA transform tigger by software
+  - **efm/efm_protect**
+    - Disable cache while chip erase & set read only after chip erase
+  - **fcm/fcm_freq_measure**
+    - FCM interface add instance
+  - **gpio/gpio_input**
+    - Add gpio_input example
+  - **i2c/i2c_slave_int**
+    - Add STOPF clearing to eei callback
+  - **i2s/i2s_play_audio**
+    - Remove the configuration of unused pin
+  - **i2s/i2s_record_and_play**
+    - Optimize using DMA linked list transfer
+  - **intc/intc_extint_key**
+    - Integrate global, group, share interrupt in one project
+  - **intc/intc_swint**
+    - Change the flashing LEDs from all to only blue for simple.
+  - **mpu/mpu_core_write_protect**
+    - Modify protect region from RTC to SRAM
+  - **qspi/qspi_custom_mode**
+    - Add qspi_custom_mode example
+  - **rtc/rtc_calibration_output**
+    - Variable name changed: from u16CompenVal to i16CompenVal
+  - **sdioc/sdioc_mmc**
+    - Add card insertion timeout checking
+  - **sdioc/sdioc_sd**
+    - Add card insertion timeout checking
+  - **timer0/timer0_basetimer**
+    - Modify timer0 clock division for asynchronous clock
+  - **timer0/timer0_capture**
+    - Change Timer0 interrupt priority to (DDL_IRQ_PRIO_DEFAULT - 1U)
+  - **timer6/timer6_cmp_sawtooth_dual_buf**
+    - Modify compare register buffer initialization value
+  - **timer6/timer6_cmp_triangular_buf**
+    - Modify compare register buffer initialization value
+  - **timera/timera_pwm**
+    - Set the initial value of the count register to 1 when using triangle wave mode to output PWM.
+  - **trng/trng_base**
+    - Set PCLK4 for better random data.
+  - **usart/usart_clocksync_dma**
+    - Fixed the return value type of ClockSync_Receive_DMA() and ClockSync_TransReceive_DMA()
+  - **usart/usart_uart_dma**
+    - Optimize function: USART_TxComplete_IrqCallback
+    - Add function: USART_StopTimeoutTimer
+#### utils
+------
 ## V3.2.0  Sep 30, 2023
 #### documents
 #### drivers

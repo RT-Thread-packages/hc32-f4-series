@@ -13,9 +13,11 @@
    2023-06-30       CDT             Modify typo
                                     Delete union in stc_tmr6_init_t structure
                                     Modify API TMR6_GetCountDir()
+   2023-12-15       CDT             Modify for headfile update: CM_TMR6CR -> CM_TMR6_COMMON
+   2024-06-30       CDT             Modify API TMR6_ClearStatus() for couping risk
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -86,7 +88,7 @@
  */
 
 /*! Parameter valid check for normal timer6 unit */
-#define IS_VALID_TMR6_UNIT(x)                                                  \
+#define IS_TMR6_UNIT(x)                                                        \
 (   ((x) == CM_TMR6_1)                          ||                             \
     ((x) == CM_TMR6_2)                          ||                             \
     ((x) == CM_TMR6_3)                          ||                             \
@@ -102,54 +104,54 @@
     ((x) == TMR6_CNT_SRC_HW))
 
 /*! Parameter valid check for interrupt source configuration */
-#define IS_VALID_IRQ(x)                                                        \
+#define IS_TMR6_IRQ(x)                                                         \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_INT_ALL) == TMR6_INT_ALL))
 
 /*! Parameter valid check for status bit read */
-#define IS_VALID_GET_FLAG(x)                                                   \
+#define IS_TMR6_GET_FLAG(x)                                                    \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_FLAG_ALL) == TMR6_FLAG_ALL))
 
 /*! Parameter valid check for status bit clear */
-#define IS_VALID_CLR_FLAG(x)                                                   \
+#define IS_TMR6_CLR_FLAG(x)                                                    \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_FLAG_CLR_ALL) == TMR6_FLAG_CLR_ALL))
 
 /*! Parameter valid check for period register */
-#define IS_VALID_PERIOD_REG(x)                                                 \
+#define IS_TMR6_PERIOD_REG(x)                                                  \
 (   (x) <= TMR6_PERIOD_REG_C)
 
 /*! Parameter valid check for general compare register */
-#define IS_VALID_CMP_REG(x)                                                    \
+#define IS_TMR6_CMP_REG(x)                                                     \
 (   (x) <= TMR6_CMP_REG_F)
 
 /*! Parameter valid check for general/special compare channel */
-#define IS_VALID_CNT_CH(x)                                                     \
+#define IS_TMR6_CNT_CH(x)                                                      \
 (   ((x) == TMR6_CH_A)                          ||                             \
     ((x) == TMR6_CH_B))
 
 /*! Parameter valid check for buffer function number */
-#define IS_VALID_BUF_NUM(x)                                                    \
+#define IS_TMR6_BUF_NUM(x)                                                     \
 (   ((x) == TMR6_BUF_SINGLE)                    ||                             \
     ((x) == TMR6_BUF_DUAL))
 
 /*! Parameter valid check for buffer transfer timer configuration */
-#define IS_VALID_BUF_TRANS_TRIG(x)                                             \
+#define IS_TMR6_BUF_TRANS_TRIG(x)                                              \
 (   ((x) == TMR6_BUF_TRANS_INVD)                ||                             \
     ((x) == TMR6_BUF_TRANS_OVF)                 ||                             \
     ((x) == TMR6_BUF_TRANS_UDF)                 ||                             \
     ((x) == TMR6_BUF_TRANS_OVF_UDF))
 
 /*! Parameter valid check for count condition for valid period function */
-#define IS_VALID_PERIOD_CNT_COND(x)                                            \
+#define IS_TMR6_PERIOD_CNT_COND(x)                                             \
 (   ((x) == TMR6_VALID_PERIOD_INVD)             ||                             \
     ((x) == TMR6_VALID_PERIOD_CNT_COND_VALLEY)  ||                             \
     ((x) == TMR6_VALID_PERIOD_CNT_COND_PEAK)    ||                             \
     ((x) == TMR6_VALID_PERIOD_CNT_COND_VALLEY_PEAK))
 
 /*! Parameter valid check for count condition for valid period count */
-#define IS_VALID_PERIOD_CNT(x)                                                 \
+#define IS_TMR6_PERIOD_CNT(x)                                                  \
 (   ((x) == TMR6_VALID_PERIOD_CNT_INVD)         ||                             \
     ((x) == TMR6_VALID_PERIOD_CNT1)             ||                             \
     ((x) == TMR6_VALID_PERIOD_CNT2)             ||                             \
@@ -160,17 +162,17 @@
     ((x) == TMR6_VALID_PERIOD_CNT7))
 
 /*! Parameter valid check for count register data range */
-#define IS_VALID_REG_RANGE_U16(x)               ((x) <= 0xFFFFUL)
+#define IS_TMR6_REG_RANGE_U16(x)               ((x) <= 0xFFFFUL)
 
 /*! Parameter valid check for dead time register */
-#define IS_VALID_DEADTIME_REG(x)                                               \
+#define IS_TMR6_DEADTIME_REG(x)                                                \
 (   ((x) == TMR6_DEADTIME_REG_UP_A)             ||                             \
     ((x) == TMR6_DEADTIME_REG_DOWN_A)           ||                             \
     ((x) == TMR6_DEADTIME_REG_UP_B)             ||                             \
     ((x) == TMR6_DEADTIME_REG_DOWN_B))
 
 /*! Parameter valid check for pin */
-#define IS_VALID_PIN(x)                                                        \
+#define IS_TMR6_PIN(x)                                                         \
 (   ((x) == TMR6_IO_PWMA)                       ||                             \
     ((x) == TMR6_IO_PWMB)                       ||                             \
     ((x) == TMR6_INPUT_TRIGA)                   ||                             \
@@ -179,32 +181,32 @@
     ((x) == TMR6_INPUT_TRIGD))
 
 /*! Parameter valid check for input pin filter clock */
-#define IS_VALID_FILTER_CLK(x)                                                 \
+#define IS_TMR6_FILTER_CLK(x)                                                  \
 (   ((x) == TMR6_FILTER_CLK_DIV1)               ||                             \
     ((x) == TMR6_FILTER_CLK_DIV4)               ||                             \
     ((x) == TMR6_FILTER_CLK_DIV16)              ||                             \
     ((x) == TMR6_FILTER_CLK_DIV64))
 
 /*! Parameter valid check for PWM pin status */
-#define IS_VALID_PWM_POLARITY(x)                                               \
+#define IS_TMR6_PWM_POLARITY(x)                                                \
 (   ((x) == TMR6_PWM_LOW)                       ||                             \
     ((x) == TMR6_PWM_HIGH)                      ||                             \
     ((x) == TMR6_PWM_HOLD)                      ||                             \
     ((x) == TMR6_PWM_INVT))
 
 /*! Parameter valid check for force PWM output pin */
-#define IS_VALID_PWM_FORCE_POLARITY(x)                                         \
+#define IS_TMR6_PWM_FORCE_POLARITY(x)                                          \
 (   ((x) == TMR6_PWM_FORCE_INVD)                ||                             \
     ((x) == TMR6_PWM_FORCE_LOW)                 ||                             \
     ((x) == TMR6_PWM_FORCE_HIGH))
 
 /*! Parameter valid check for PWM pin status for count start and stop */
-#define IS_VALID_PWM_POLARITY_START_STOP(x)                                    \
+#define IS_TMR6_PWM_POLARITY_START_STOP(x)                                     \
 (   ((x) == TMR6_PWM_LOW)                       ||                             \
     ((x) == TMR6_PWM_HIGH)                      ||                             \
     ((x) == TMR6_PWM_HOLD))
 
-#define IS_VALID_CNT_STAT(x)                                                   \
+#define IS_TMR6_CNT_STAT(x)                                                    \
 (   ((x) == TMR6_STAT_START)                    ||                             \
     ((x) == TMR6_STAT_STOP)                     ||                             \
     ((x) == TMR6_STAT_OVF)                      ||                             \
@@ -215,100 +217,100 @@
     ((x) == TMR6_STAT_DOWN_CNT_MATCH_B))
 
 /*! Parameter valid check for pin mode */
-#define IS_VALID_PIN_MD(x)                                                     \
+#define IS_TMR6_PIN_MD(x)                                                      \
 (   ((x) == TMR6_PIN_CMP_OUTPUT)                ||                             \
     ((x) == TMR6_PIN_CAPT_INPUT))
 
 /*! Parameter valid check for EMB event valid channel  */
-#define IS_VALID_EMB_CH(x)                                                     \
+#define IS_TMR6_EMB_CH(x)                                                      \
 (   ((x) == TMR6_EMB_EVT_CH0)                   ||                             \
     ((x) == TMR6_EMB_EVT_CH1)                   ||                             \
     ((x) == TMR6_EMB_EVT_CH2)                   ||                             \
     ((x) == TMR6_EMB_EVT_CH3))
 
 /*! Parameter valid check for EMB release mode when EMB event invalid   */
-#define IS_VALID_EMB_RELEASE_MD(x)                                             \
+#define IS_TMR6_EMB_RELEASE_MD(x)                                              \
 (   ((x) == TMR6_EMB_RELEASE_IMMED)             ||                             \
     ((x) == TMR6_EMB_RELEASE_OVF)               ||                             \
     ((x) == TMR6_EMB_RELEASE_UDF)               ||                             \
     ((x) == TMR6_EMB_RELEASE_OVF_UDF))
 
 /*! Parameter valid check for pin output status when EMB event valid */
-#define IS_VALID_EMB_VALID_PIN_POLARITY(x)                                     \
+#define IS_TMR6_EMB_VALID_PIN_POLARITY(x)                                      \
 (   ((x) == TMR6_EMB_PIN_NORMAL)                ||                             \
     ((x) == TMR6_EMB_PIN_HIZ)                   ||                             \
     ((x) == TMR6_EMB_PIN_LOW)                   ||                             \
     ((x) == TMR6_EMB_PIN_HIGH))
 
 /*! Parameter valid check for dead time buffer function for DTUAR and DTUBR register */
-#define IS_VALID_DEADTIME_BUF_FUNC_DTUAR_REG(x)                                \
+#define IS_TMR6_DEADTIME_BUF_FUNC_DTUAR_REG(x)                                 \
 (   ((x) == TMR6_DEADTIME_CNT_UP_BUF_OFF)       ||                             \
     ((x) == TMR6_DEADTIME_CNT_UP_BUF_ON))
 
 /*! Parameter valid check for dead time buffer function for DTDAR and DTDBR register */
-#define IS_VALID_DEADTIME_BUF_FUNC_DTDAR_REG(x)                                \
+#define IS_TMR6_DEADTIME_BUF_FUNC_DTDAR_REG(x)                                 \
 (   ((x) == TMR6_DEADTIME_CNT_DOWN_BUF_OFF)     ||                             \
     ((x) == TMR6_DEADTIME_CNT_DOWN_BUF_ON))
 
 /*! Parameter valid check for dead time buffer transfer condition */
-#define IS_VALID_DEADTIME_BUF_TRANS_COND_REG(x)                                \
+#define IS_TMR6_DEADTIME_BUF_TRANS_COND_REG(x)                                 \
 (   ((x) == TMR6_DEADTIME_BUF_COND_INVD)        ||                             \
     ((x) == TMR6_DEADTIME_BUF_COND_OVF)         ||                             \
     ((x) == TMR6_DEADTIME_BUF_COND_UDF)         ||                             \
     ((x) == TMR6_DEADTIME_BUF_COND_OVF_UDF))
 
 /*! Parameter valid check for dead time equal function for DTUAR and DTDAR register */
-#define IS_VALID_DEADTIME_EQUAL_FUNC_REG(x)                                    \
+#define IS_TMR6_DEADTIME_EQUAL_FUNC_REG(x)                                     \
 (   ((x) == TMR6_DEADTIME_EQUAL_OFF)            ||                             \
     ((x) == TMR6_DEADTIME_EQUAL_ON))
 
 /*! Parameter valid check for start condition   */
-#define IS_VALID_START_COND(x)                                                 \
+#define IS_TMR6_START_COND(x)                                                  \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_START_COND_ALL) == TMR6_START_COND_ALL))
 
 /*! Parameter valid check for stop condition   */
-#define IS_VALID_STOP_COND(x)                                                  \
+#define IS_TMR6_STOP_COND(x)                                                   \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_STOP_COND_ALL) == TMR6_STOP_COND_ALL))
 
 /*! Parameter valid check for clear condition   */
-#define IS_VALID_CLR_COND(x)                                                   \
+#define IS_TMR6_CLR_COND(x)                                                    \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_CLR_COND_ALL) == TMR6_CLR_COND_ALL))
 
 /*! Parameter valid check for update condition   */
-#define IS_VALID_UPD_COND(x)                                                   \
+#define IS_TMR6_UPD_COND(x)                                                    \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_UPD_COND_ALL) == TMR6_UPD_COND_ALL))
 
 /*! Parameter valid check for capture condition   */
-#define IS_VALID_CAPT_COND(x)                                                  \
+#define IS_TMR6_CAPT_COND(x)                                                   \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_CAPT_COND_ALL) == TMR6_CAPT_COND_ALL))
 
 /*! Parameter valid check for hardware count up condition */
-#define IS_VALID_CNT_UP_COND(x)                                                \
+#define IS_TMR6_CNT_UP_COND(x)                                                 \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_CNT_UP_COND_ALL) == TMR6_CNT_UP_COND_ALL))
 
 /*! Parameter valid check for hardware count down condition */
-#define IS_VALID_CNT_DOWN_COND(x)                                              \
+#define IS_TMR6_CNT_DOWN_COND(x)                                               \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_CNT_DOWN_COND_ALL) == TMR6_CNT_DOWN_COND_ALL))
 
 /*! Parameter valid check for count Mode */
-#define IS_VALID_CNT_MD(x)                                                     \
+#define IS_TMR6_CNT_MD(x)                                                      \
 (   ((x) == TMR6_MD_SAWTOOTH)                   ||                             \
     ((x) == TMR6_MD_TRIANGLE))
 
 /*! Parameter valid check for count direction */
-#define IS_VALID_CNT_DIR(x)                                                    \
+#define IS_TMR6_CNT_DIR(x)                                                     \
 (   ((x) == TMR6_CNT_UP)                        ||                             \
     ((x) == TMR6_CNT_DOWN))
 
 /*! Parameter valid check for count clock division  */
-#define IS_VALID_CNT_CLK_DIV(x)                                                \
+#define IS_TMR6_CNT_CLK_DIV(x)                                                 \
 (   ((x) == TMR6_CLK_DIV1)                      ||                             \
     ((x) == TMR6_CLK_DIV2)                      ||                             \
     ((x) == TMR6_CLK_DIV4)                      ||                             \
@@ -322,29 +324,29 @@
     ((x) == TMR6_CLK_DIV1024))
 
 /*! Parameter valid check for count reload mode */
-#define IS_VALID_CNT_RELOAD_MD(x)                                              \
+#define IS_TMR6_CNT_RELOAD_MD(x)                                               \
 (   ((x) == TMR6_CNT_RELOAD_ON)                 ||                             \
     ((x) == TMR6_CNT_RELOAD_OFF))
 
 /*! Parameter valid check for Z Mask input function mask cycles number  */
-#define IS_VALID_ZMASK_CYCLES(x)                                               \
+#define IS_TMR6_ZMASK_CYCLES(x)                                                \
 (   ((x) == TMR6_ZMASK_FUNC_INVD)               ||                             \
     ((x) == TMR6_ZMASK_CYCLE_4)                 ||                             \
     ((x) == TMR6_ZMASK_CYCLE_8)                 ||                             \
     ((x) == TMR6_ZMASK_CYCLE_16))
 
 /*! Parameter valid check for Z Mask function of timer6 position unit */
-#define IS_VALID_POS_UNIT_ZMASK_FUNC(x)                                        \
+#define IS_TMR6_POS_UNIT_ZMASK_FUNC(x)                                         \
 (   ((x) == TMR6_POS_CLR_ZMASK_FUNC_OFF)        ||                             \
     ((x) == TMR6_POS_CLR_ZMASK_FUNC_ON))
 
 /*! Parameter valid check for Z Mask function of timer6 revolution unit */
-#define IS_VALID_REVO_UNIT_ZMASK_FUNC(x)                                       \
+#define IS_TMR6_REVO_UNIT_ZMASK_FUNC(x)                                        \
 (   ((x) == TMR6_REVO_CNT_ZMASK_FUNC_OFF)       ||                             \
     ((x) == TMR6_REVO_CNT_ZMASK_FUNC_ON))
 
 /*! Parameter valid check for software sync control unit */
-#define IS_VALID_SW_UNIT(x)                                                    \
+#define IS_TMR6_SW_UNIT(x)                                                     \
 (   ((x) != 0UL)                                &&                             \
     (((x) | TMR6_SW_SYNC_ALL) == TMR6_SW_SYNC_ALL))
 
@@ -354,6 +356,7 @@
     ((x) == CM_TMR6_6)                          ||                             \
     ((x) == CM_TMR6_7)                          ||                             \
     ((x) == CM_TMR6_8))
+
 /**
  * @}
  */
@@ -396,7 +399,7 @@ int32_t TMR6_Init(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_init_t *pstcTmr6Init)
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     if (NULL != pstcTmr6Init) {
         /* Check parameters */
@@ -404,27 +407,27 @@ int32_t TMR6_Init(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_init_t *pstcTmr6Init)
 
         if (pstcTmr6Init->u8CountSrc == TMR6_CNT_SRC_SW) {
             /* Normal count */
-            DDL_ASSERT(IS_VALID_CNT_MD(pstcTmr6Init->sw_count.u32CountMode));
-            DDL_ASSERT(IS_VALID_CNT_DIR(pstcTmr6Init->sw_count.u32CountDir));
-            DDL_ASSERT(IS_VALID_CNT_CLK_DIV(pstcTmr6Init->sw_count.u32ClockDiv));
+            DDL_ASSERT(IS_TMR6_CNT_MD(pstcTmr6Init->sw_count.u32CountMode));
+            DDL_ASSERT(IS_TMR6_CNT_DIR(pstcTmr6Init->sw_count.u32CountDir));
+            DDL_ASSERT(IS_TMR6_CNT_CLK_DIV(pstcTmr6Init->sw_count.u32ClockDiv));
 
             MODIFY_REG32(TMR6x->GCONR, TMR6_INIT_MASK, (pstcTmr6Init->sw_count.u32CountMode | pstcTmr6Init->sw_count.u32CountDir | \
                                                         pstcTmr6Init->sw_count.u32ClockDiv));
         } else {
             /* Hardware count */
-            DDL_ASSERT(IS_VALID_CNT_UP_COND(pstcTmr6Init->hw_count.u32CountUpCond) ||
+            DDL_ASSERT(IS_TMR6_CNT_UP_COND(pstcTmr6Init->hw_count.u32CountUpCond) ||
                        (pstcTmr6Init->hw_count.u32CountUpCond == TMR6_CNT_UP_COND_INVD));
-            DDL_ASSERT(IS_VALID_CNT_DOWN_COND(pstcTmr6Init->hw_count.u32CountDownCond) ||
+            DDL_ASSERT(IS_TMR6_CNT_DOWN_COND(pstcTmr6Init->hw_count.u32CountDownCond) ||
                        (pstcTmr6Init->hw_count.u32CountDownCond == TMR6_CNT_DOWN_COND_INVD));
 
             WRITE_REG32(TMR6x->HCUPR, pstcTmr6Init->hw_count.u32CountUpCond);
             WRITE_REG32(TMR6x->HCDOR, pstcTmr6Init->hw_count.u32CountDownCond);
         }
 
-        DDL_ASSERT(IS_VALID_CNT_RELOAD_MD(pstcTmr6Init->u32CountReload));
+        DDL_ASSERT(IS_TMR6_CNT_RELOAD_MD(pstcTmr6Init->u32CountReload));
         MODIFY_REG32(TMR6x->GCONR, TMR6_GCONR_OVSTP, pstcTmr6Init->u32CountReload);
         if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-            DDL_ASSERT(IS_VALID_REG_RANGE_U16(pstcTmr6Init->u32PeriodValue));
+            DDL_ASSERT(IS_TMR6_REG_RANGE_U16(pstcTmr6Init->u32PeriodValue));
         }
         WRITE_REG32(TMR6x->PERAR, pstcTmr6Init->u32PeriodValue);
         i32Ret = LL_OK;
@@ -442,8 +445,8 @@ int32_t TMR6_Init(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_init_t *pstcTmr6Init)
 void TMR6_SetCountMode(CM_TMR6_TypeDef *TMR6x, uint32_t u32Mode)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_MD(u32Mode));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_MD(u32Mode));
     MODIFY_REG32(TMR6x->GCONR, TMR6_GCONR_MODE, u32Mode);
 }
 
@@ -457,8 +460,8 @@ void TMR6_SetCountMode(CM_TMR6_TypeDef *TMR6x, uint32_t u32Mode)
 void TMR6_SetCountDir(CM_TMR6_TypeDef *TMR6x, uint32_t u32Dir)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_DIR(u32Dir));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_DIR(u32Dir));
     MODIFY_REG32(TMR6x->GCONR, TMR6_GCONR_DIR, u32Dir);
 }
 
@@ -471,7 +474,7 @@ void TMR6_SetCountDir(CM_TMR6_TypeDef *TMR6x, uint32_t u32Dir)
 uint32_t TMR6_GetCountDir(CM_TMR6_TypeDef *TMR6x)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     return READ_REG32_BIT(TMR6x->STFLR, TMR6_STFLR_DIRF);
 }
 
@@ -485,8 +488,8 @@ uint32_t TMR6_GetCountDir(CM_TMR6_TypeDef *TMR6x)
 void TMR6_SetClockDiv(CM_TMR6_TypeDef *TMR6x, uint32_t u32Div)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CLK_DIV(u32Div));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CLK_DIV(u32Div));
 
     MODIFY_REG32(TMR6x->GCONR, TMR6_GCONR_CKDIV, u32Div);
 }
@@ -501,7 +504,7 @@ void TMR6_SetClockDiv(CM_TMR6_TypeDef *TMR6x, uint32_t u32Div)
 void TMR6_CountReloadCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -522,8 +525,8 @@ void TMR6_CountReloadCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewStat
  */
 void TMR6_HWCountUpCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_UP_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_UP_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -544,8 +547,8 @@ void TMR6_HWCountUpCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_function
  */
 void TMR6_HWCountDownCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_DOWN_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_DOWN_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -570,22 +573,22 @@ int32_t TMR6_PWM_Init(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_tmr6_pwm
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     __IO uint32_t *TMR6_GCMxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
 
     TMR6_GCMxR = (__IO uint32_t *)((uint32_t)&TMR6x->GCMAR + 4UL * u32Ch);
 
     if (NULL != pstcPwmInit) {
-        DDL_ASSERT(IS_VALID_PWM_POLARITY_START_STOP(pstcPwmInit->u32StartPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY_START_STOP(pstcPwmInit->u32StopPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY(pstcPwmInit->u32CountDownMatchBPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY(pstcPwmInit->u32CountUpMatchBPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY(pstcPwmInit->u32CountDownMatchAPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY(pstcPwmInit->u32CountUpMatchAPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY(pstcPwmInit->u32UdfPolarity));
-        DDL_ASSERT(IS_VALID_PWM_POLARITY(pstcPwmInit->u32OvfPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY_START_STOP(pstcPwmInit->u32StartPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY_START_STOP(pstcPwmInit->u32StopPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY(pstcPwmInit->u32CountDownMatchBPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY(pstcPwmInit->u32CountUpMatchBPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY(pstcPwmInit->u32CountDownMatchAPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY(pstcPwmInit->u32CountUpMatchAPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY(pstcPwmInit->u32UdfPolarity));
+        DDL_ASSERT(IS_TMR6_PWM_POLARITY(pstcPwmInit->u32OvfPolarity));
         if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-            DDL_ASSERT(IS_VALID_REG_RANGE_U16(pstcPwmInit->u32CompareValue));
+            DDL_ASSERT(IS_TMR6_REG_RANGE_U16(pstcPwmInit->u32CompareValue));
         }
         WRITE_REG32(*TMR6_GCMxR, pstcPwmInit->u32CompareValue);
 
@@ -627,8 +630,8 @@ void TMR6_PWM_OutputCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, en_functional_st
 {
     uint32_t u32Tmp;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -659,11 +662,11 @@ void TMR6_PWM_SetPolarity(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32Co
     uint8_t au8Pos[8] = {TMR6_PCNAR_STACA_POS, TMR6_PCNAR_STPCA_POS, TMR6_PCNAR_OVFCA_POS, TMR6_PCNAR_UDFCA_POS, \
                          TMR6_PCNAR_CMAUCA_POS, TMR6_PCNAR_CMADCA_POS, TMR6_PCNAR_CMBUCA_POS, TMR6_PCNAR_CMBDCA_POS
                         };
-    DDL_ASSERT(IS_VALID_PWM_POLARITY(u32Polarity));
-    DDL_ASSERT(IS_VALID_CNT_STAT(u32CountState));
+    DDL_ASSERT(IS_TMR6_PWM_POLARITY(u32Polarity));
+    DDL_ASSERT(IS_TMR6_CNT_STAT(u32CountState));
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
 
     u32Polarity <<= au8Pos[u32CountState];
     u32PolarityMask <<= au8Pos[u32CountState];
@@ -686,9 +689,9 @@ void TMR6_PWM_SetPolarity(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32Co
 void TMR6_PWM_SetForcePolarity(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32Polarity)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
-    DDL_ASSERT(IS_VALID_PWM_FORCE_POLARITY(u32Polarity));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_PWM_FORCE_POLARITY(u32Polarity));
 
     if (TMR6_CH_A == u32Ch) {
         MODIFY_REG32(TMR6x->PCNAR, TMR6_PCNAR_FORCA, u32Polarity << TMR6_PCNAR_FORCA_POS);
@@ -710,9 +713,9 @@ void TMR6_PWM_SetForcePolarity(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t 
 void TMR6_HWCaptureCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32Cond, en_functional_state_t enNewState)
 {
     __IO uint32_t *HCPxR;
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
-    DDL_ASSERT(IS_VALID_CAPT_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_CAPT_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     HCPxR = (__IO uint32_t *)((uint32_t)&TMR6x->HCPAR + (u32Ch * 4UL));
@@ -734,9 +737,9 @@ void TMR6_HWCaptureCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32C
  */
 void TMR6_SetFilterClockDiv(CM_TMR6_TypeDef *TMR6x, uint32_t u32Pin, uint32_t u32Div)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_PIN(u32Pin));
-    DDL_ASSERT(IS_VALID_FILTER_CLK(u32Div));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_PIN(u32Pin));
+    DDL_ASSERT(IS_TMR6_FILTER_CLK(u32Div));
 
     switch (u32Pin) {
         case TMR6_IO_PWMA:
@@ -746,16 +749,16 @@ void TMR6_SetFilterClockDiv(CM_TMR6_TypeDef *TMR6x, uint32_t u32Pin, uint32_t u3
             MODIFY_REG32(TMR6x->FCNGR, TMR6_FCNGR_NOFICKGB, u32Div << TMR6_FCNGR_NOFICKGB_POS);
             break;
         case TMR6_INPUT_TRIGA:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFICKTA, u32Div << TMR6CR_FCNTR_NOFICKTA_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFICKTA, u32Div << TMR6_COMMON_FCNTR_NOFICKTA_POS);
             break;
         case TMR6_INPUT_TRIGB:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFICKTB, u32Div << TMR6CR_FCNTR_NOFICKTB_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFICKTB, u32Div << TMR6_COMMON_FCNTR_NOFICKTB_POS);
             break;
         case TMR6_INPUT_TRIGC:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFICKTC, u32Div << TMR6CR_FCNTR_NOFICKTC_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFICKTC, u32Div << TMR6_COMMON_FCNTR_NOFICKTC_POS);
             break;
         case TMR6_INPUT_TRIGD:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFICKTD, u32Div << TMR6CR_FCNTR_NOFICKTD_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFICKTD, u32Div << TMR6_COMMON_FCNTR_NOFICKTD_POS);
             break;
         default:
             break;
@@ -772,8 +775,8 @@ void TMR6_SetFilterClockDiv(CM_TMR6_TypeDef *TMR6x, uint32_t u32Pin, uint32_t u3
  */
 void TMR6_FilterCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Pin, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_PIN(u32Pin));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_PIN(u32Pin));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     switch (u32Pin) {
@@ -784,16 +787,16 @@ void TMR6_FilterCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Pin, en_functional_state
             MODIFY_REG32(TMR6x->FCNGR, TMR6_FCNGR_NOFIENGB, ((uint32_t)enNewState) << TMR6_FCNGR_NOFIENGB_POS);
             break;
         case TMR6_INPUT_TRIGA:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFIENTA, ((uint32_t)enNewState) << TMR6CR_FCNTR_NOFIENTA_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFIENTA, ((uint32_t)enNewState) << TMR6_COMMON_FCNTR_NOFIENTA_POS);
             break;
         case TMR6_INPUT_TRIGB:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFIENTB, ((uint32_t)enNewState) << TMR6CR_FCNTR_NOFIENTB_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFIENTB, ((uint32_t)enNewState) << TMR6_COMMON_FCNTR_NOFIENTB_POS);
             break;
         case TMR6_INPUT_TRIGC:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFIENTC, ((uint32_t)enNewState) << TMR6CR_FCNTR_NOFIENTC_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFIENTC, ((uint32_t)enNewState) << TMR6_COMMON_FCNTR_NOFIENTC_POS);
             break;
         case TMR6_INPUT_TRIGD:
-            MODIFY_REG32(CM_TMR6CR->FCNTR, TMR6CR_FCNTR_NOFIENTD, ((uint32_t)enNewState) << TMR6CR_FCNTR_NOFIENTD_POS);
+            MODIFY_REG32(CM_TMR6_COMMON->FCNTR, TMR6_COMMON_FCNTR_NOFIENTD, ((uint32_t)enNewState) << TMR6_COMMON_FCNTR_NOFIENTD_POS);
             break;
         default:
             break;
@@ -810,9 +813,9 @@ void TMR6_FilterCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Pin, en_functional_state
  */
 void TMR6_SetFunc(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32Func)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
-    DDL_ASSERT(IS_VALID_PIN_MD(u32Func));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_PIN_MD(u32Func));
 
     switch (u32Ch) {
         case TMR6_CH_A:
@@ -838,8 +841,8 @@ void TMR6_SetFunc(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, uint32_t u32Func)
 void TMR6_IntCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32IntType, en_functional_state_t enNewState)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_IRQ(u32IntType));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_IRQ(u32IntType));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -861,11 +864,11 @@ en_flag_status_t TMR6_GetStatus(const CM_TMR6_TypeDef *TMR6x, uint32_t u32Flag)
 {
     en_flag_status_t enStatus = RESET;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_GET_FLAG(u32Flag));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_GET_FLAG(u32Flag));
 
     if (0UL != READ_REG32_BIT(TMR6x->STFLR, u32Flag)) {
-        enStatus =  SET;
+        enStatus = SET;
     }
     return enStatus;
 }
@@ -874,17 +877,17 @@ en_flag_status_t TMR6_GetStatus(const CM_TMR6_TypeDef *TMR6x, uint32_t u32Flag)
  * @brief  Clear Timer6 status flag
  * @param  [in] TMR6x               Timer6 unit
  *  @arg CM_TMR6_x
- * @param  [in] u32Flag             Status bit to be read, Can be one or any combination of the values from
+ * @param  [in] u32Flag             Status bit to be clear, Can be one or any combination of the values from
  *                                  @ref TMR6_Stat_Flag_Define
  * @retval None
  */
 void TMR6_ClearStatus(CM_TMR6_TypeDef *TMR6x, uint32_t u32Flag)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CLR_FLAG(u32Flag));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CLR_FLAG(u32Flag));
 
-    CLR_REG32_BIT(TMR6x->STFLR, u32Flag);
+    WRITE_REG32(TMR6x->STFLR, TMR6_FLAG_CLR_ALL & ~u32Flag);
 }
 
 /**
@@ -896,7 +899,7 @@ void TMR6_ClearStatus(CM_TMR6_TypeDef *TMR6x, uint32_t u32Flag)
 uint32_t TMR6_GetPeriodNum(const CM_TMR6_TypeDef *TMR6x)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     return (READ_REG32_BIT(TMR6x->STFLR, TMR6_STFLR_VPERNUM) >> TMR6_STFLR_VPERNUM_POS);
 }
@@ -911,7 +914,7 @@ void TMR6_DeInit(CM_TMR6_TypeDef *TMR6x)
 {
     uint32_t u32RefRegResetValue;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
         u32RefRegResetValue = TMR6_REG_RST_VALUE_U16;
     } else {
@@ -946,7 +949,7 @@ void TMR6_DeInit(CM_TMR6_TypeDef *TMR6x)
     WRITE_REG32(TMR6x->PCNAR, 0UL);
     WRITE_REG32(TMR6x->PCNBR, 0UL);
     WRITE_REG32(TMR6x->FCNGR, 0UL);
-    WRITE_REG32(CM_TMR6CR->FCNTR, 0UL);
+    WRITE_REG32(CM_TMR6_COMMON->FCNTR, 0UL);
     WRITE_REG32(TMR6x->VPERR, 0UL);
     WRITE_REG32(TMR6x->STFLR, 0UL);
     WRITE_REG32(TMR6x->HSTAR, 0UL);
@@ -958,10 +961,10 @@ void TMR6_DeInit(CM_TMR6_TypeDef *TMR6x)
     WRITE_REG32(TMR6x->HCUPR, 0UL);
     WRITE_REG32(TMR6x->HCDOR, 0UL);
 
-    WRITE_REG32(CM_TMR6CR->SSTAR, 0UL);
-    WRITE_REG32(CM_TMR6CR->SSTPR, 0UL);
-    WRITE_REG32(CM_TMR6CR->SCLRR, 0UL);
-    WRITE_REG32(CM_TMR6CR->SUPDR, 0UL);
+    WRITE_REG32(CM_TMR6_COMMON->SSTAR, 0UL);
+    WRITE_REG32(CM_TMR6_COMMON->SSTPR, 0UL);
+    WRITE_REG32(CM_TMR6_COMMON->SCLRR, 0UL);
+    WRITE_REG32(CM_TMR6_COMMON->SUPDR, 0UL);
 }
 
 /**
@@ -973,7 +976,7 @@ void TMR6_DeInit(CM_TMR6_TypeDef *TMR6x)
 void TMR6_Start(CM_TMR6_TypeDef *TMR6x)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     SET_REG32_BIT(TMR6x->GCONR, TMR6_GCONR_START);
 }
 
@@ -986,7 +989,7 @@ void TMR6_Start(CM_TMR6_TypeDef *TMR6x)
 void TMR6_Stop(CM_TMR6_TypeDef *TMR6x)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     CLR_REG32_BIT(TMR6x->GCONR, TMR6_GCONR_START);
 }
 
@@ -1000,9 +1003,9 @@ void TMR6_Stop(CM_TMR6_TypeDef *TMR6x)
 void TMR6_SetCountValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Value)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-        DDL_ASSERT(IS_VALID_REG_RANGE_U16(u32Value));
+        DDL_ASSERT(IS_TMR6_REG_RANGE_U16(u32Value));
     }
     WRITE_REG32(TMR6x->CNTER, u32Value);
 }
@@ -1017,9 +1020,9 @@ void TMR6_SetCountValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Value)
 void TMR6_SetUpdateValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Value)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-        DDL_ASSERT(IS_VALID_REG_RANGE_U16(u32Value));
+        DDL_ASSERT(IS_TMR6_REG_RANGE_U16(u32Value));
     }
     WRITE_REG32(TMR6x->UPDAR, u32Value);
 }
@@ -1033,7 +1036,7 @@ void TMR6_SetUpdateValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Value)
 uint32_t TMR6_GetCountValue(const CM_TMR6_TypeDef *TMR6x)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     return READ_REG32(TMR6x->CNTER);
 }
@@ -1047,7 +1050,7 @@ uint32_t TMR6_GetCountValue(const CM_TMR6_TypeDef *TMR6x)
 uint32_t TMR6_GetUpdateValue(const CM_TMR6_TypeDef *TMR6x)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     return READ_REG32(TMR6x->UPDAR);
 }
@@ -1064,13 +1067,13 @@ void TMR6_SetPeriodValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Index, uint32_t u32
 {
     __IO uint32_t *TMR6_PERxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_PERIOD_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_PERIOD_REG(u32Index));
 
     TMR6_PERxR = (uint32_t *)((uint32_t)&TMR6x->PERAR + 4UL * u32Index);
 
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-        DDL_ASSERT(IS_VALID_REG_RANGE_U16(u32Value));
+        DDL_ASSERT(IS_TMR6_REG_RANGE_U16(u32Value));
     }
     WRITE_REG32(*TMR6_PERxR, u32Value);
 }
@@ -1087,12 +1090,12 @@ void TMR6_SetCompareValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Index, uint32_t u3
 {
     __IO uint32_t *TMR6_GCMxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CMP_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CMP_REG(u32Index));
     TMR6_GCMxR = (__IO uint32_t *)((uint32_t)&TMR6x->GCMAR + 4UL * u32Index);
 
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-        DDL_ASSERT(IS_VALID_REG_RANGE_U16(u32Value));
+        DDL_ASSERT(IS_TMR6_REG_RANGE_U16(u32Value));
     }
     WRITE_REG32(*TMR6_GCMxR, u32Value);
 }
@@ -1109,12 +1112,12 @@ void TMR6_SetSpecialCompareValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Index, uint
 {
     __IO uint32_t *TMR6_SCMxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CMP_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CMP_REG(u32Index));
     TMR6_SCMxR = (uint32_t *)((uint32_t)&TMR6x->SCMAR + 4UL * u32Index);
 
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-        DDL_ASSERT(IS_VALID_REG_RANGE_U16(u32Value));
+        DDL_ASSERT(IS_TMR6_REG_RANGE_U16(u32Value));
     }
     WRITE_REG32(*TMR6_SCMxR, u32Value);
 }
@@ -1131,12 +1134,12 @@ void TMR6_SetDeadTimeValue(CM_TMR6_TypeDef *TMR6x, uint32_t u32Index, uint32_t u
 {
     __IO uint32_t *TMR6_DTxyR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_DEADTIME_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_DEADTIME_REG(u32Index));
     TMR6_DTxyR = (uint32_t *)((uint32_t)&TMR6x->DTUAR + 4UL * u32Index);
 
     if (IS_TMR6_16BIT_UNIT(TMR6x)) {
-        DDL_ASSERT(IS_VALID_REG_RANGE_U16(u32Value));
+        DDL_ASSERT(IS_TMR6_REG_RANGE_U16(u32Value));
     }
     WRITE_REG32(*TMR6_DTxyR, u32Value);
 }
@@ -1152,8 +1155,8 @@ uint32_t TMR6_GetCompareValue(const CM_TMR6_TypeDef *TMR6x, uint32_t u32Index)
 {
     __IO uint32_t *TMR6_GCMxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CMP_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CMP_REG(u32Index));
     TMR6_GCMxR = (uint32_t *)((uint32_t)&TMR6x->GCMAR + 4UL * u32Index);
 
     return READ_REG32(*TMR6_GCMxR);
@@ -1170,8 +1173,8 @@ uint32_t TMR6_GetSpecialCompareValue(const CM_TMR6_TypeDef *TMR6x, uint32_t u32I
 {
     __IO uint32_t *TMR6_SCMxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CMP_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CMP_REG(u32Index));
     TMR6_SCMxR = (uint32_t *)((uint32_t)&TMR6x->SCMAR + 4UL * u32Index);
 
     return READ_REG32(*TMR6_SCMxR);
@@ -1188,8 +1191,8 @@ uint32_t TMR6_GetPeriodValue(const CM_TMR6_TypeDef *TMR6x, uint32_t u32Index)
 {
     __IO uint32_t *TMR6_PERxR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_PERIOD_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_PERIOD_REG(u32Index));
     TMR6_PERxR = (uint32_t *)((uint32_t)&TMR6x->PERAR + 4UL * u32Index);
 
     return READ_REG32(*TMR6_PERxR);
@@ -1206,8 +1209,8 @@ uint32_t TMR6_GetDeadTimeValue(const CM_TMR6_TypeDef *TMR6x, uint32_t u32Index)
 {
     __IO uint32_t *TMR6_DTxyR;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_DEADTIME_REG(u32Index));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_DEADTIME_REG(u32Index));
     TMR6_DTxyR = (uint32_t *)((uint32_t)&TMR6x->DTUAR + 4UL * u32Index);
 
     return READ_REG32(*TMR6_DTxyR);
@@ -1228,10 +1231,10 @@ int32_t TMR6_GeneralBufConfig(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     if (NULL != pstcBufConfig) {
         /* Check parameters */
-        DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-        DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
-        DDL_ASSERT(IS_VALID_BUF_NUM(pstcBufConfig->u32BufNum));
-        DDL_ASSERT(IS_VALID_BUF_TRANS_TRIG(pstcBufConfig->u32BufTransCond));
+        DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+        DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
+        DDL_ASSERT(IS_TMR6_BUF_NUM(pstcBufConfig->u32BufNum));
+        DDL_ASSERT(IS_TMR6_BUF_TRANS_TRIG(pstcBufConfig->u32BufTransCond));
 
         if (TMR6_CH_A == u32Ch) {
             MODIFY_REG32(TMR6x->BCONR, BCONR_GEN_CFG_MASK, (pstcBufConfig->u32BufNum | pstcBufConfig->u32BufTransCond));
@@ -1255,8 +1258,8 @@ int32_t TMR6_GeneralBufConfig(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_
  */
 void TMR6_GeneralBufCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (TMR6_CH_A == u32Ch) {
@@ -1282,10 +1285,10 @@ int32_t TMR6_SpecialBufConfig(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     if (NULL != pstcBufConfig) {
         /* Check parameters */
-        DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-        DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
-        DDL_ASSERT(IS_VALID_BUF_NUM(pstcBufConfig->u32BufNum));
-        DDL_ASSERT(IS_VALID_BUF_TRANS_TRIG(pstcBufConfig->u32BufTransCond));
+        DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+        DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
+        DDL_ASSERT(IS_TMR6_BUF_NUM(pstcBufConfig->u32BufNum));
+        DDL_ASSERT(IS_TMR6_BUF_TRANS_TRIG(pstcBufConfig->u32BufTransCond));
 
         if (TMR6_CH_A == u32Ch) {
             MODIFY_REG32(TMR6x->BCONR, BCONR_SPECIAL_CFG_MASK << BCONR_SPECIAL_CFG_CHA_OFS, \
@@ -1310,8 +1313,8 @@ int32_t TMR6_SpecialBufConfig(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_
  */
 void TMR6_SpecialBufCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (TMR6_CH_A == u32Ch) {
@@ -1337,9 +1340,9 @@ int32_t TMR6_PeriodBufConfig(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_buf_config_t
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     if (NULL != pstcBufConfig) {
         /* Check parameters */
-        DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-        DDL_ASSERT(IS_VALID_BUF_NUM(pstcBufConfig->u32BufNum));
-        DDL_ASSERT(IS_VALID_BUF_TRANS_TRIG(pstcBufConfig->u32BufTransCond));
+        DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+        DDL_ASSERT(IS_TMR6_BUF_NUM(pstcBufConfig->u32BufNum));
+        DDL_ASSERT(IS_TMR6_BUF_TRANS_TRIG(pstcBufConfig->u32BufTransCond));
 
         MODIFY_REG32(TMR6x->BCONR, BCONR_PERIOD_CFG_MASK << BCONR_PERIOD_CFG_OFS, \
                      (pstcBufConfig->u32BufNum | pstcBufConfig->u32BufTransCond) << BCONR_PERIOD_CFG_OFS);
@@ -1358,7 +1361,7 @@ int32_t TMR6_PeriodBufConfig(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_buf_config_t
  */
 void TMR6_PeriodBufCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(TMR6x->BCONR, BCONR_FUNC_CMD_MASK << BCONR_PERIOD_CFG_OFS,
@@ -1379,9 +1382,9 @@ int32_t TMR6_ValidPeriodConfig(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_valid_peri
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     if (NULL != pstcValidperiodConfig) {
         /* Check parameters */
-        DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-        DDL_ASSERT(IS_VALID_PERIOD_CNT_COND(pstcValidperiodConfig->u32CountCond));
-        DDL_ASSERT(IS_VALID_PERIOD_CNT(pstcValidperiodConfig->u32PeriodInterval));
+        DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+        DDL_ASSERT(IS_TMR6_PERIOD_CNT_COND(pstcValidperiodConfig->u32CountCond));
+        DDL_ASSERT(IS_TMR6_PERIOD_CNT(pstcValidperiodConfig->u32PeriodInterval));
 
         MODIFY_REG32(TMR6x->VPERR, TMR6_VPERR_PCNTS | TMR6_VPERR_PCNTE, \
                      pstcValidperiodConfig->u32CountCond | pstcValidperiodConfig->u32PeriodInterval);
@@ -1401,8 +1404,8 @@ int32_t TMR6_ValidPeriodConfig(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_valid_peri
  */
 void TMR6_ValidPeriodCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (TMR6_CH_A == u32Ch) {
@@ -1422,7 +1425,7 @@ void TMR6_ValidPeriodCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, en_functional_s
 void TMR6_DeadTimeFuncCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -1445,13 +1448,13 @@ int32_t TMR6_DeadTimeConfig(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_deadtime_conf
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     if (NULL != pstcDeadTimeConfig) {
-        DDL_ASSERT(IS_VALID_DEADTIME_EQUAL_FUNC_REG(pstcDeadTimeConfig->u32EqualUpDown));
-        DDL_ASSERT(IS_VALID_DEADTIME_BUF_FUNC_DTUAR_REG(pstcDeadTimeConfig->u32BufUp));
-        DDL_ASSERT(IS_VALID_DEADTIME_BUF_FUNC_DTDAR_REG(pstcDeadTimeConfig->u32BufDown));
-        DDL_ASSERT(IS_VALID_DEADTIME_BUF_TRANS_COND_REG(pstcDeadTimeConfig->u32BufTransCond));
+        DDL_ASSERT(IS_TMR6_DEADTIME_EQUAL_FUNC_REG(pstcDeadTimeConfig->u32EqualUpDown));
+        DDL_ASSERT(IS_TMR6_DEADTIME_BUF_FUNC_DTUAR_REG(pstcDeadTimeConfig->u32BufUp));
+        DDL_ASSERT(IS_TMR6_DEADTIME_BUF_FUNC_DTDAR_REG(pstcDeadTimeConfig->u32BufDown));
+        DDL_ASSERT(IS_TMR6_DEADTIME_BUF_TRANS_COND_REG(pstcDeadTimeConfig->u32BufTransCond));
 
         WRITE_REG32(TMR6x->DCONR, pstcDeadTimeConfig->u32EqualUpDown | pstcDeadTimeConfig->u32BufUp \
                     | pstcDeadTimeConfig->u32BufDown | pstcDeadTimeConfig->u32BufTransCond);
@@ -1473,12 +1476,12 @@ int32_t TMR6_ZMaskConfig(CM_TMR6_TypeDef *TMR6x, const stc_tmr6_zmask_config_t *
 {
     int32_t i32Ret = LL_ERR_INVD_PARAM;
     /* Check parameters */
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     if (NULL != pstcZMaskConfig) {
-        DDL_ASSERT(IS_VALID_ZMASK_CYCLES(pstcZMaskConfig->u32ZMaskCycle));
-        DDL_ASSERT(IS_VALID_POS_UNIT_ZMASK_FUNC(pstcZMaskConfig->u32PosCountMaskFunc));
-        DDL_ASSERT(IS_VALID_REVO_UNIT_ZMASK_FUNC(pstcZMaskConfig->u32RevoCountMaskFunc));
+        DDL_ASSERT(IS_TMR6_ZMASK_CYCLES(pstcZMaskConfig->u32ZMaskCycle));
+        DDL_ASSERT(IS_TMR6_POS_UNIT_ZMASK_FUNC(pstcZMaskConfig->u32PosCountMaskFunc));
+        DDL_ASSERT(IS_TMR6_REVO_UNIT_ZMASK_FUNC(pstcZMaskConfig->u32RevoCountMaskFunc));
 
         MODIFY_REG32(TMR6x->GCONR, TMR6_ZMASK_CFG_MASK, pstcZMaskConfig->u32ZMaskCycle | \
                      pstcZMaskConfig->u32PosCountMaskFunc | pstcZMaskConfig->u32RevoCountMaskFunc);
@@ -1503,13 +1506,13 @@ int32_t TMR6_EMBConfig(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_tmr6_em
     __IO uint32_t *PCNXR;
     int32_t i32Ret = LL_ERR_INVD_PARAM;
 
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
 
     if (NULL != pstcEmbConfig) {
-        DDL_ASSERT(IS_VALID_CNT_CH(u32Ch));
-        DDL_ASSERT(IS_VALID_EMB_CH(pstcEmbConfig->u32ValidCh));
-        DDL_ASSERT(IS_VALID_EMB_RELEASE_MD(pstcEmbConfig->u32ReleaseMode));
-        DDL_ASSERT(IS_VALID_EMB_VALID_PIN_POLARITY(pstcEmbConfig->u32PinStatus));
+        DDL_ASSERT(IS_TMR6_CNT_CH(u32Ch));
+        DDL_ASSERT(IS_TMR6_EMB_CH(pstcEmbConfig->u32ValidCh));
+        DDL_ASSERT(IS_TMR6_EMB_RELEASE_MD(pstcEmbConfig->u32ReleaseMode));
+        DDL_ASSERT(IS_TMR6_EMB_VALID_PIN_POLARITY(pstcEmbConfig->u32PinStatus));
 
         if (TMR6_CH_A == u32Ch) {
             PCNXR = (__IO uint32_t *)&TMR6x->PCNAR;
@@ -1533,8 +1536,8 @@ int32_t TMR6_EMBConfig(CM_TMR6_TypeDef *TMR6x, uint32_t u32Ch, const stc_tmr6_em
  */
 void TMR6_SWSyncStart(uint32_t u32Unit)
 {
-    DDL_ASSERT(IS_VALID_SW_UNIT(u32Unit));
-    WRITE_REG32(CM_TMR6CR->SSTAR, u32Unit);
+    DDL_ASSERT(IS_TMR6_SW_UNIT(u32Unit));
+    WRITE_REG32(CM_TMR6_COMMON->SSTAR, u32Unit);
 }
 
 /**
@@ -1545,8 +1548,8 @@ void TMR6_SWSyncStart(uint32_t u32Unit)
  */
 void TMR6_SWSyncStop(uint32_t u32Unit)
 {
-    DDL_ASSERT(IS_VALID_SW_UNIT(u32Unit));
-    WRITE_REG32(CM_TMR6CR->SSTPR, u32Unit);
+    DDL_ASSERT(IS_TMR6_SW_UNIT(u32Unit));
+    WRITE_REG32(CM_TMR6_COMMON->SSTPR, u32Unit);
 }
 
 /**
@@ -1557,8 +1560,8 @@ void TMR6_SWSyncStop(uint32_t u32Unit)
  */
 void TMR6_SWSyncClear(uint32_t u32Unit)
 {
-    DDL_ASSERT(IS_VALID_SW_UNIT(u32Unit));
-    WRITE_REG32(CM_TMR6CR->SCLRR, u32Unit);
+    DDL_ASSERT(IS_TMR6_SW_UNIT(u32Unit));
+    WRITE_REG32(CM_TMR6_COMMON->SCLRR, u32Unit);
 }
 
 /**
@@ -1569,8 +1572,8 @@ void TMR6_SWSyncClear(uint32_t u32Unit)
  */
 void TMR6_SWSyncUpdate(uint32_t u32Unit)
 {
-    DDL_ASSERT(IS_VALID_SW_UNIT(u32Unit));
-    WRITE_REG32(CM_TMR6CR->SUPDR, u32Unit);
+    DDL_ASSERT(IS_TMR6_SW_UNIT(u32Unit));
+    WRITE_REG32(CM_TMR6_COMMON->SUPDR, u32Unit);
 }
 
 /**
@@ -1582,7 +1585,7 @@ void TMR6_SWSyncUpdate(uint32_t u32Unit)
  */
 void TMR6_HWStartCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(TMR6x->HSTAR, TMR6_HSTAR_STAS, ((uint32_t)enNewState) << TMR6_HSTAR_STAS_POS);
@@ -1597,7 +1600,7 @@ void TMR6_HWStartCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
  */
 void TMR6_HWStopCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(TMR6x->HSTPR, TMR6_HSTPR_STPS, ((uint32_t)enNewState) << TMR6_HSTPR_STPS_POS);
@@ -1612,7 +1615,7 @@ void TMR6_HWStopCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
  */
 void TMR6_HWClearCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(TMR6x->HCLRR, TMR6_HCLRR_CLES, ((uint32_t)enNewState) << TMR6_HCLRR_CLES_POS);
@@ -1627,7 +1630,7 @@ void TMR6_HWClearCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
  */
 void TMR6_HWUpdateCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     MODIFY_REG32(TMR6x->HUPDR, TMR6_HUPDR_UPDS, ((uint32_t)enNewState) << TMR6_HUPDR_UPDS_POS);
@@ -1644,8 +1647,8 @@ void TMR6_HWUpdateCmd(CM_TMR6_TypeDef *TMR6x, en_functional_state_t enNewState)
  */
 void TMR6_HWStartCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_START_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_START_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -1666,8 +1669,8 @@ void TMR6_HWStartCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional
  */
 void TMR6_HWStopCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_STOP_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_STOP_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -1688,8 +1691,8 @@ void TMR6_HWStopCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_
  */
 void TMR6_HWClearCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_CLR_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_CLR_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -1710,8 +1713,8 @@ void TMR6_HWClearCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional
  */
 void TMR6_HWUpdateCondCmd(CM_TMR6_TypeDef *TMR6x, uint32_t u32Cond, en_functional_state_t enNewState)
 {
-    DDL_ASSERT(IS_VALID_TMR6_UNIT(TMR6x));
-    DDL_ASSERT(IS_VALID_UPD_COND(u32Cond));
+    DDL_ASSERT(IS_TMR6_UNIT(TMR6x));
+    DDL_ASSERT(IS_TMR6_UPD_COND(u32Cond));
     DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
 
     if (ENABLE == enNewState) {
@@ -1886,6 +1889,7 @@ int32_t TMR6_PWM_StructInit(stc_tmr6_pwm_init_t *pstcPwmInit)
     }
     return i32Ret;
 }
+
 /**
  * @}
  */
@@ -1897,8 +1901,8 @@ int32_t TMR6_PWM_StructInit(stc_tmr6_pwm_init_t *pstcPwmInit)
  */
 
 /**
- * @}
- */
+* @}
+*/
 
 /******************************************************************************
  * EOF (not truncated)

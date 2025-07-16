@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Optimize WDT_ClearStatus function timeout
+   2024-06-30       CDT             Modify API WDT_ClearStatus() for couping risk
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -100,7 +101,7 @@
     ((x) == WDT_RANGE_25TO100PCT))
 
 #define IS_WDT_LPM_CNT(x)                                                      \
-(   ((x) == WDT_LPM_CNT_CONTINUE)               ||                             \
+(   ((x) == WDT_LPM_CNT_CONT)                   ||                             \
     ((x) == WDT_LPM_CNT_STOP))
 
 #define IS_WDT_EXP_TYPE(x)                                                     \
@@ -227,7 +228,7 @@ int32_t WDT_ClearStatus(uint32_t u32Flag)
     /* Waiting for FLAG bit clear */
     u32Count = WDT_CLR_FLAG_TIMEOUT * (HCLK_VALUE / 25000UL);
     while (0UL != READ_REG32_BIT(CM_WDT->SR, u32Flag)) {
-        CLR_REG32_BIT(CM_WDT->SR, u32Flag);
+        MODIFY_REG32(CM_WDT->SR, WDT_FLAG_ALL, ~u32Flag);
         if (0UL == u32Count) {
             i32Ret = LL_ERR_TIMEOUT;
             break;

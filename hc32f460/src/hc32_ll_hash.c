@@ -9,7 +9,7 @@
    2023-06-30       CDT             Add HASH_DeInit function
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -190,7 +190,7 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
     u32BitLenHigh = (u32DataSize >> 29U) & 0x7U;
     u32BitLenLow  = (u32DataSize << 3U);
 
-    /* Stop hash calculating. */
+    /* wait hash calculating stop. */
     i32Ret = HASH_Wait(HASH_ACTION_START);
 
     while ((i32Ret == LL_OK) && (u8HashEnd == 0U)) {
@@ -199,7 +199,7 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
             u32DataSize -= HASH_GROUP_SIZE;
             u32Index += HASH_GROUP_SIZE;
         } else if (u32DataSize >= HASH_LAST_GROUP_SIZE_MAX) {
-            HASH_MemSet(u8FillBuffer, 0, HASH_GROUP_SIZE);
+            HASH_MemSet(u8FillBuffer, 0U, HASH_GROUP_SIZE);
             HASH_MemCopy(u8FillBuffer, &pu8Data[u32Index], u32DataSize);
             u8FillBuffer[u32DataSize] = 0x80U;
             u8DataEndMark = 1U;
@@ -210,7 +210,7 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
         }
 
         if (u8HashEnd != 0U) {
-            HASH_MemSet(u8FillBuffer, 0, HASH_GROUP_SIZE);
+            HASH_MemSet(u8FillBuffer, 0U, HASH_GROUP_SIZE);
             if (u32DataSize > 0U) {
                 HASH_MemCopy(u8FillBuffer, &pu8Data[u32Index], u32DataSize);
             }
@@ -243,9 +243,9 @@ static int32_t HASH_DoCalc(const uint8_t *pu8Data, uint32_t u32DataSize)
         WRITE_REG32(bCM_HASH->CR_b.START, 1U);
         i32Ret = HASH_Wait(HASH_ACTION_START);
     }
+
     /* Stop hash calculating. */
     WRITE_REG32(bCM_HASH->CR_b.START, 0U);
-
     return i32Ret;
 }
 

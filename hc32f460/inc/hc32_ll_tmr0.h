@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Modify typo
+   2024-06-30       CDT             Modify API of TMR0_DeInit()
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -95,7 +96,7 @@ typedef struct {
 
 /**
  * @defgroup TMR0_Clock_Source TMR0 Clock Source
- * @note In asynchronous clock, continuous operation of the BCONR register requires waiting for 3 asynchronous clocks.
+ * @note In asynchronous clock, continuous operation of the BCONR register requires waiting for 6 asynchronous clocks.
  * @{
  */
 #define TMR0_CLK_SRC_INTERN_CLK         (0UL)                                       /*!< Internal clock (Synchronous clock)  */
@@ -174,7 +175,7 @@ typedef struct {
  */
 
 /* Initialization functions */
-void TMR0_DeInit(CM_TMR0_TypeDef *TMR0x);
+int32_t TMR0_DeInit(CM_TMR0_TypeDef *TMR0x);
 int32_t TMR0_Init(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch, const stc_tmr0_init_t *pstcTmr0Init);
 int32_t TMR0_StructInit(stc_tmr0_init_t *pstcTmr0Init);
 void TMR0_Start(CM_TMR0_TypeDef *TMR0x, uint32_t u32Ch);

@@ -9,9 +9,10 @@
    2022-06-30       CDT             Support re-target printf for IAR EW version 9 or later
    2023-06-30       CDT             Modify register USART DR to USART TDR
                                     Prohibit DDL_DelayMS and DDL_DelayUS functions from being optimized
+   2024-08-31       CDT             Optimized the Delay functions as cache is enabled
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -147,7 +148,7 @@ __STATIC_INLINE uint32_t LL_GetPrintTimeout(void)
 __NO_OPTIMIZE void DDL_DelayMS(uint32_t u32Count)
 {
     __IO uint32_t i;
-    const uint32_t u32Cyc = (HCLK_VALUE + 10000UL - 1UL) / 10000UL;
+    const uint32_t u32Cyc = (HCLK_VALUE + 6000UL - 1UL) / 6000UL;
 
     while (u32Count-- > 0UL) {
         i = u32Cyc;
@@ -164,7 +165,7 @@ __NO_OPTIMIZE void DDL_DelayMS(uint32_t u32Count)
 __NO_OPTIMIZE void DDL_DelayUS(uint32_t u32Count)
 {
     __IO uint32_t i;
-    const uint32_t u32Cyc = (HCLK_VALUE + 10000000UL - 1UL) / 10000000UL;
+    const uint32_t u32Cyc = (HCLK_VALUE + 6000000UL - 1UL) / 6000000UL;
 
     while (u32Count-- > 0UL) {
         i = u32Cyc;
@@ -331,7 +332,7 @@ size_t __dwrite(int handle, const unsigned char *buffer, size_t size)
     return nChars;
 }
 
-#elif defined ( __GNUC__ ) && !defined (__CC_ARM)
+#elif defined (__GNUC__) && !defined (__CC_ARM)
 /**
  * @brief  Re-target _write function.
  * @param  [in] fd

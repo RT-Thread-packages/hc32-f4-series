@@ -12,9 +12,13 @@
    2023-06-30       CDT             Modify typo
                                     Modify CLK_SetUSBClockSrc(), add delay after configure USB clock
    2023-09-30       CDT             Modify API CLK_Xtal32Cmd(), CLK_MrcCmd() and CLK_LrcCmd(), use DDL_DelayUS() to replace CLK_Delay()
+   2023-12-15       CDT             Refine API CLK_XtalStdInit. and add API CLK_XtalStdCmd, CLK_SetXtalStdExceptionType
+   2024-08-31       CDT             Modify CLK_PLLXM_DIV_MAX as 25U
+                                    Modify CLK_PLLXM_DIV_MIN as 1U
+   2024-11-08       CDT             Delete group definition for CLK_FREQ
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -56,19 +60,17 @@
  */
 
 /**
- * @brief CLK_FREQ Clock frequency definition
- */
-#define CLK_FREQ_48M                    (48UL*1000UL*1000UL)
-#define CLK_FREQ_64M                    (64UL*1000UL*1000UL)
-#define CLK_FREQ_32M                    (32UL*1000UL*1000UL)
-
-/**
  * @brief Be able to modify TIMEOUT according to board condition.
  */
 #define CLK_TIMEOUT                     ((uint32_t)0x1000UL)
 #define CLK_LRC_TIMEOUT                 (160U)
 #define CLK_MRC_TIMEOUT                 (1U)
 #define CLK_XTAL32_TIMEOUT              (160U)
+
+/**
+ * @brief XTALSTD exception type mask
+ */
+#define CLK_XTALSTD_EXP_TYPE_MASK       (CMU_XTALSTDCR_XTALSTDIE | CMU_XTALSTDCR_XTALSTDRE | CMU_XTALSTDCR_XTALSTDRIS)
 
 /**
  * @brief LRC State ON or OFF
@@ -103,8 +105,8 @@
 #define CLK_PLLX_VCO_IN_MAX             (25UL*1000UL*1000UL)
 #define CLK_PLLX_VCO_OUT_MIN            (240UL*1000UL*1000UL)
 #define CLK_PLLX_VCO_OUT_MAX            (480UL*1000UL*1000UL)
-#define CLK_PLLXM_DIV_MIN               (2UL)
-#define CLK_PLLXM_DIV_MAX               (24UL)
+#define CLK_PLLXM_DIV_MIN               (1UL)
+#define CLK_PLLXM_DIV_MAX               (25UL)
 #define CLK_PLLXN_MULTI_MIN             (20UL)
 #define CLK_PLLXN_MULTI_MAX             (480UL)
 #define CLK_PLLXR_DIV_MIN               (2UL)
@@ -197,20 +199,11 @@
 (   ((x) == CLK_XTALSTD_OFF)                      ||                           \
     ((x) == CLK_XTALSTD_ON))
 
-/* Parameter valid check for XTALSTD mode */
-#define IS_CLK_XTALSTD_MD(x)                                                   \
-(   ((x) == CLK_XTALSTD_MD_RST)                   ||                           \
-    ((x) == CLK_XTALSTD_MD_INT))
-
-/* Parameter valid check for XTALSTD interrupt state */
-#define IS_CLK_XTALSTD_INT_STATE(x)                                            \
-(   ((x) == CLK_XTALSTD_INT_OFF)                  ||                           \
-    ((x) == CLK_XTALSTD_INT_ON))
-
-/* Parameter valid check for XTALSTD reset state */
-#define IS_CLK_XTALSTD_RST_STATE(x)                                            \
-(   ((x) == CLK_XTALSTD_RST_OFF)                  ||                           \
-    ((x) == CLK_XTALSTD_RST_ON))
+/* Parameter valid check for XTALSTD exception type */
+#define IS_CLK_XTALSTD_EXP_TYPE(x)                                             \
+(   ((x) == CLK_XTALSTD_EXP_TYPE_NONE)            ||                           \
+    ((x) == CLK_XTALSTD_EXP_TYPE_RST)             ||                           \
+    ((x) == CLK_XTALSTD_EXP_TYPE_INT))
 
 /* Parameter valid check for PLL state */
 #define IS_CLK_PLL_STATE(x)                                                    \
@@ -449,7 +442,7 @@
     ((x) == CLK_CANCLK_PLLXP)                     ||                           \
     ((x) == CLK_CANCLK_PLLXQ)                     ||                           \
     ((x) == CLK_CANCLK_PLLXR)                     ||                           \
-    ((x) == CLK_CANCLK_XTAL ))
+    ((x) == CLK_CANCLK_XTAL))
 
 /* Parameter valid check for CAN channel for clock source config */
 #define IS_CLK_CAN_UNIT(x)                                                     \
@@ -556,11 +549,6 @@ static int32_t CLK_WaitStable(uint8_t u8Flag, uint32_t u32Time)
 }
 
 #ifdef __DEBUG
-/**
- * @note   The pll_input/PLLM (VCOIN) must between 1 ~ 24MHz.
- *         The VCOIN*PLLN (VCOOUT) is between 240 ~ 480MHz.
- *         The PLLx frequency (VCOOUT/PLLxP_Q_R) is between 15 ~ 240MHz.
-*/
 static void PLLxParamCheck(const stc_clock_pllx_init_t *pstcPLLxInit)
 {
     uint32_t vcoIn;
@@ -987,62 +975,77 @@ int32_t CLK_XtalCmd(en_functional_state_t enNewState)
 }
 
 /**
- * @brief  Init XtalStd initial structure with default value.
- * @param  [in] pstcXtalStdInit specifies the Parameter of XTALSTD.
+ * @brief  XTAL status detection function enable/disable.
+ * @param  [in] enNewState An @ref en_functional_state_t enumeration value.
+ * @retval None
+ */
+void CLK_XtalStdCmd(en_functional_state_t enNewState)
+{
+    DDL_ASSERT(IS_FUNCTIONAL_STATE(enNewState));
+    DDL_ASSERT(IS_CLK_UNLOCKED());
+
+    if (DISABLE == enNewState) {
+        CLR_REG8_BIT(CM_CMU->XTALSTDCR, CMU_XTALSTDCR_XTALSTDE);
+    } else {
+        SET_REG8_BIT(CM_CMU->XTALSTDCR, CMU_XTALSTDCR_XTALSTDE);
+    }
+}
+
+/**
+ * @brief  Initialise the XTAL status detection.
+ * @param  [in] u8State specifies the Parameter of XTALSTD.
+ * @param  [in] u8ExceptionType specifies the Parameter of XTALSTD.
  * @retval int32_t:
  *         - LL_OK: Initialize success
  *         - LL_ERR_INVD_PARAM: Invalid parameter
  */
-int32_t CLK_XtalStdStructInit(stc_clock_xtalstd_init_t *pstcXtalStdInit)
+int32_t CLK_XtalStdInit(uint8_t u8State, uint8_t u8ExceptionType)
 {
     int32_t i32Ret = LL_OK;
 
-    /* Check if pointer is NULL */
-    if (NULL == pstcXtalStdInit) {
-        i32Ret = LL_ERR_INVD_PARAM;
-    } else {
-        /* Configure to default value */
-        pstcXtalStdInit->u8State = CLK_XTALSTD_OFF;
-        pstcXtalStdInit->u8Mode  = CLK_XTALSTD_MD_INT;
-        pstcXtalStdInit->u8Int   = CLK_XTALSTD_INT_OFF;
-        pstcXtalStdInit->u8Reset = CLK_XTALSTD_RST_OFF;
+    /* Parameter valid check */
+    DDL_ASSERT(IS_CLK_XTALSTD_STATE(u8State));
+    DDL_ASSERT(IS_CLK_XTALSTD_EXP_TYPE(u8ExceptionType));
+    DDL_ASSERT(IS_CLK_UNLOCKED());
+
+    if ((CLK_PLL_SRC_XTAL == PLL_SRC) && (u8ExceptionType == CLK_XTALSTD_EXP_TYPE_INT)) {
+        if (0UL == PLL_EN_REG) {
+            /* while xtal used as PLL clock source, XTALSTD only choose reset exception */
+            i32Ret = LL_ERR_INVD_PARAM;
+        }
+    }
+    if (LL_OK == i32Ret) {
+        /* Initialize XTALSTD */
+        WRITE_REG8(CM_CMU->XTALSTDCR, u8State | u8ExceptionType);
     }
 
     return i32Ret;
 }
 
 /**
- * @brief  Initialise the XTAL status detection.
- * @param  [in] pstcXtalStdInit specifies the Parameter of XTALSTD.
- *   @arg  u8State: The new state of the XTALSTD.
- *   @arg  u8Mode:  The XTAL status detection occur interrupt or reset.
- *   @arg  u8Int:   The XTAL status detection interrupt on or off.
- *   @arg  u8Reset:   The XTAL status detection reset on or off.
+ * @brief  Set XTALSTD exception type.
+ * @param  [in] u8ExceptionType specifies the XTALSTD exception type.
  * @retval int32_t:
  *         - LL_OK: Initialize success
  *         - LL_ERR_INVD_PARAM: Invalid parameter
  */
-int32_t CLK_XtalStdInit(const stc_clock_xtalstd_init_t *pstcXtalStdInit)
+int32_t CLK_SetXtalStdExceptionType(uint8_t u8ExceptionType)
 {
     int32_t i32Ret = LL_OK;
 
-    /* Check if pointer is NULL */
-    if (NULL == pstcXtalStdInit) {
-        i32Ret = LL_ERR_INVD_PARAM;
-    } else {
-        /* Parameter valid check */
-        DDL_ASSERT(IS_CLK_XTALSTD_STATE(pstcXtalStdInit->u8State));
-        DDL_ASSERT(IS_CLK_UNLOCKED());
-        /* Parameter valid check */
-        DDL_ASSERT(IS_CLK_XTALSTD_MD(pstcXtalStdInit->u8Mode));
-        DDL_ASSERT(IS_CLK_XTALSTD_INT_STATE(pstcXtalStdInit->u8Int));
-        DDL_ASSERT(IS_CLK_XTALSTD_RST_STATE(pstcXtalStdInit->u8Reset));
+    /* Parameter valid check */
+    DDL_ASSERT(IS_CLK_XTALSTD_EXP_TYPE(u8ExceptionType));
+    DDL_ASSERT(IS_CLK_UNLOCKED());
 
-        /* Configure and enable XTALSTD */
-        WRITE_REG8(CM_CMU->XTALSTDCR, (pstcXtalStdInit->u8State |   \
-                                       pstcXtalStdInit->u8Mode  |   \
-                                       pstcXtalStdInit->u8Int   |   \
-                                       pstcXtalStdInit->u8Reset));
+    if ((CLK_PLL_SRC_XTAL == PLL_SRC) && (u8ExceptionType == CLK_XTALSTD_EXP_TYPE_INT)) {
+        if (0UL == PLL_EN_REG) {
+            /* while xtal used as PLL clock source, XTALSTD only choose reset exception */
+            i32Ret = LL_ERR_INVD_PARAM;
+        }
+    }
+    if (LL_OK == i32Ret) {
+        /* Set exception type */
+        MODIFY_REG8(CM_CMU->XTALSTDCR, CLK_XTALSTD_EXP_TYPE_MASK, u8ExceptionType);
     }
 
     return i32Ret;
@@ -1071,7 +1074,7 @@ void CLK_ClearXtalStdStatus(void)
  */
 en_flag_status_t CLK_GetXtalStdStatus(void)
 {
-    return ((0x00U != READ_REG32(CM_CMU->XTALSTDSR)) ? SET : RESET);
+    return ((0x00U != READ_REG8(CM_CMU->XTALSTDSR)) ? SET : RESET);
 }
 
 /**
@@ -1232,9 +1235,6 @@ int32_t CLK_PLLStructInit(stc_clock_pll_init_t *pstcPLLInit)
  *         - LL_ERR_TIMEOUT: PLLH initial timeout
  *         - LL_ERR_BUSY: PLLH is the source clock, CANNOT stop it.
  *         - LL_ERR_INVD_PARAM: NULL pointer
- * @note   The pll_input/PLLM (VCOIN) must between 8 ~ 24MHz.
- *         The VCOIN*PLLN (VCOOUT) is between 600 ~ 1200MHz.
- *         The PLLH frequency (VCOOUT/PLLHP_Q_R) is between 40 ~ 240MHz.
  */
 int32_t CLK_PLLInit(const stc_clock_pll_init_t *pstcPLLInit)
 {
@@ -1322,8 +1322,7 @@ int32_t CLK_PLLCmd(en_functional_state_t enNewState)
  * @retval int32_t:
  *         - LL_OK: Initialize success
  *         - LL_ERR_INVD_PARAM: NULL pointer
- * @note  Pllx for UPLL while HC32F460, HC32F451, HC32F452
- *        Pllx for PLLA while HC32F4A0
+ *         PLLx for PLLA
  */
 int32_t CLK_PLLxStructInit(stc_clock_pllx_init_t *pstcPLLxInit)
 {
@@ -1347,16 +1346,14 @@ int32_t CLK_PLLxStructInit(stc_clock_pllx_init_t *pstcPLLxInit)
 
 /**
  * @brief  PLLx Initialize.
- * @param  [in] pstcPLLxInit specifies the structure of UPLL initial config.
- *   @arg  u8PLLState  : The new state of the UPLL.
- *   @arg  PLLCFGR     : UPLL config.
+ * @param  [in] pstcPLLxInit specifies the structure of PLLx initial config.
+ *   @arg  u8PLLState  : The new state of the PLLx.
+ *   @arg  PLLCFGR     : PLLx config.
  * @retval int32_t:
- *         - LL_OK: UPLL initial successfully
- *         - LL_ERR_TIMEOUT: UPLL initial timeout
+ *         - LL_OK: PLLx initial successfully
+ *         - LL_ERR_TIMEOUT: PLLx initial timeout
  *         - LL_ERR_INVD_PARAM: NULL pointer
- * @note   The pll_input/PLLM (VCOIN) must between 1 ~ 24MHz.
- *         The VCOIN*PLLN (VCOOUT) is between 240 ~ 480MHz.
- *         The UPLL frequency (VCOOUT/UPLLP_Q_R) is between 15 ~ 240MHz.
+ *         PLLx for PLLA
  */
 int32_t CLK_PLLxInit(const stc_clock_pllx_init_t *pstcPLLxInit)
 {
@@ -1385,8 +1382,7 @@ int32_t CLK_PLLxInit(const stc_clock_pllx_init_t *pstcPLLxInit)
  * @retval int32_t:
  *         - LL_OK: UPLL operate successfully
  *         - LL_ERR_TIMEOUT: UPLL operate timeout
- * @note   PLLx for UPLL while HC32F460, HC32F451, HC32F452
- *         PLLx for PLLA while HC32F4A0
+ *         PLLx for PLLA
  */
 int32_t CLK_PLLxCmd(en_functional_state_t enNewState)
 {
@@ -1619,6 +1615,7 @@ void CLK_SetClockDiv(uint32_t u32Clock, uint32_t u32Div)
  * @param  [in] u16Src specifies the peripheral clock source. @ref CLK_PERIPH_Sel
  * @retval None
  * @note   peripheral for ADC/DAC/TRNG
+ * @note   peripheral for ADC/DAC
  */
 void CLK_SetPeriClockSrc(uint16_t u16Src)
 {

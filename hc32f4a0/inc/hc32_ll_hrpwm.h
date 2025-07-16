@@ -1,16 +1,17 @@
 /**
  *******************************************************************************
  * @file  hc32_ll_hrpwm.h
- * @brief This file contains all the functions prototypes of the HWPRM driver
+ * @brief This file contains all the functions prototypes of the HRPWM driver
  *        library.
  @verbatim
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-09-30       CDT             Modify typo
+   2024-11-08       CDT             Modify macro definition group HRPWM_Global_Macros and unified the abbreviation of Calibrate
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -32,6 +33,7 @@ extern "C"
  * Include files
  ******************************************************************************/
 #include "hc32_ll_def.h"
+#include "hc32_ll_utility.h"
 
 #include "hc32f4xx.h"
 #include "hc32f4xx_conf.h"
@@ -64,15 +66,12 @@ extern "C"
 #define HRPWM_CH_MIN                        (1UL)
 #define HRPWM_CH_MAX                        (16UL)
 
-#define HRPWM_CH_DLY_NUM_MIN                (1U)
-#define HRPWM_CH_DLY_NUM_MAX                (256U)
-
 /**
- * @defgroup HRPWM_Calibrate_Unit_Define HRPWM Calibrate Unit Define
+ * @defgroup HRPWM_Calib_Unit_Define HRPWM Calibrate Unit Define
  * @{
  */
-#define HRPWM_CAL_UNIT0                     (0x00UL)
-#define HRPWM_CAL_UNIT1                     (0x01UL)
+#define HRPWM_CALIB_UNIT0                   (0x00UL)
+#define HRPWM_CALIB_UNIT1                   (0x01UL)
 /**
  * @}
  */
@@ -97,14 +96,14 @@ extern "C"
 en_functional_state_t HRPWM_CondConfirm(void);
 
 /* Process for getting HRPWM Calibrate function code */
-int32_t HRPWM_CalibrateProcess(uint32_t u32Unit, uint8_t *pu8Code);
+int32_t HRPWM_CalibProcess(uint32_t u32Unit, uint8_t *pu8Code);
 
 /* HRPWM Calibrate function enable or disable for specified unit */
-void HRPWM_CalibrateCmd(uint32_t u32Unit, en_functional_state_t enNewState);
+void HRPWM_CalibCmd(uint32_t u32Unit, en_functional_state_t enNewState);
 /* HRPWM Calibrate function status get for specified unit */
-en_functional_state_t HRPWM_GetCalibrateState(uint32_t u32Unit);
+en_functional_state_t HRPWM_GetCalibState(uint32_t u32Unit);
 /* HRPWM Calibrate code get for specified unit */
-uint8_t HRPWM_GetCalibrateCode(uint32_t u32Unit);
+uint8_t HRPWM_GetCalibCode(uint32_t u32Unit);
 
 /* HRPWM function enable or disable for specified channel */
 void HRPWM_ChCmd(uint32_t u32Ch, en_functional_state_t enNewState);

@@ -11,9 +11,11 @@
                                     Modify return type of function CRC_DeInit
    2023-09-30       CDT             Modify comment
                                     Delete and modify some of group/function relate to calculate CRC
+   2024-06-30       CDT             Add declaration of API CRC_GetResult() & CRC_SetInitValue()
+   2024-11-08       CDT             Modify interface of AccumulateData and Calculate functions
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -130,15 +132,18 @@ int32_t CRC_StructInit(stc_crc_init_t *pstcCrcInit);
 int32_t CRC_Init(const stc_crc_init_t *pstcCrcInit);
 int32_t CRC_DeInit(void);
 
+uint32_t CRC_GetResult(void);
+void CRC_SetInitValue(uint32_t u32Value);
+
 en_flag_status_t CRC_GetResultStatus(void);
 
-uint16_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len);
-uint16_t CRC_CRC16_Calculate(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len);
+int32_t CRC_CRC16_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t *pu16Out);
+int32_t CRC_CRC16_Calculate(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t *pu16Out);
 en_flag_status_t CRC_CRC16_CheckData(uint16_t u16InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint16_t u16ExpectValue);
 en_flag_status_t CRC_CRC16_GetCheckResult(uint16_t u16ExpectValue);
 
-uint32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len);
-uint32_t CRC_CRC32_Calculate(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len);
+int32_t CRC_CRC32_AccumulateData(uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t *pu32Out);
+int32_t CRC_CRC32_Calculate(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t *pu32Out);
 en_flag_status_t CRC_CRC32_CheckData(uint32_t u32InitValue, uint8_t u8DataWidth, const void *pvData, uint32_t u32Len, uint32_t u32ExpectValue);
 en_flag_status_t CRC_CRC32_GetCheckResult(uint32_t u32ExpectValue);
 

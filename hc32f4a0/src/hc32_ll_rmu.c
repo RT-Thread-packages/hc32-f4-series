@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Use IS_RMU_UNLOCKED() to assert
+   2024-06-30       CDT             Modify IS_VALID_RMU_RST_FLAG -> IS_RMU_RST_FLAG
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -58,7 +59,7 @@
  */
 
 /*! Parameter validity check for RMU reset cause. */
-#define IS_VALID_RMU_RST_FLAG(x)                                                \
+#define IS_RMU_RST_FLAG(x)                                                      \
 (   ((x) != 0UL)                            &&                                  \
     (((x) | RMU_FLAG_ALL) == RMU_FLAG_ALL))
 
@@ -97,7 +98,7 @@
 en_flag_status_t RMU_GetStatus(uint32_t u32RmuResetCause)
 {
     en_flag_status_t enStatus;
-    DDL_ASSERT(IS_VALID_RMU_RST_FLAG(u32RmuResetCause));
+    DDL_ASSERT(IS_RMU_RST_FLAG(u32RmuResetCause));
 
     enStatus = ((0UL == READ_REG32_BIT(CM_RMU->RSTF0, u32RmuResetCause)) ? RESET : SET);
     return enStatus;
@@ -106,7 +107,7 @@ en_flag_status_t RMU_GetStatus(uint32_t u32RmuResetCause)
 /**
  * @brief  Clear reset Status.
  * @param  None
- * @retval NOne
+ * @retval None
  * @note   Clear reset flag should be done after read RMU_RSTF0 register.
  *         Call PWC_Unlock(PWC_UNLOCK_CODE_1) unlock RMU_RSTF0 register first.
  */

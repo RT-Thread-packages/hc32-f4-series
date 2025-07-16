@@ -8,9 +8,10 @@
    Date             Author          Notes
    2022-03-31       CDT             First version
    2023-06-30       CDT             Modify API FCM_DeInit()
+   2024-06-30       CDT             Interface add instance
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -58,16 +59,16 @@ extern "C"
  * @brief  FCM Init structure definition
  */
 typedef struct {
-    uint16_t u16LowerLimit;     /*!< FCM lower limit value */
-    uint16_t u16UpperLimit;     /*!< FCM upper limit value */
-    uint32_t u32TargetClock;    /*!< FCM target clock source selection, @ref FCM_Target_Clock_Src */
-    uint32_t u32TargetClockDiv; /*!< FCM target clock source division selection, @ref FCM_Target_Clock_Div */
+    uint16_t u16LowerLimit;         /*!< FCM lower limit value */
+    uint16_t u16UpperLimit;         /*!< FCM upper limit value */
+    uint32_t u32TargetClock;        /*!< FCM target clock source selection, @ref FCM_Target_Clock_Src */
+    uint32_t u32TargetClockDiv;     /*!< FCM target clock source division selection, @ref FCM_Target_Clock_Div */
     uint32_t u32ExtRefClockEnable;  /*!< FCM external reference clock function config, @ref FCM_Ext_Ref_Clock_Config */
-    uint32_t u32RefClockEdge;   /*!< FCM reference clock trigger edge selection, @ref FCM_Ref_Clock_Edge */
-    uint32_t u32DigitalFilter;  /*!< FCM digital filter function config, @ref FCM_Digital_Filter_Config */
-    uint32_t u32RefClock;       /*!< FCM reference clock source selection, @ref FCM_Ref_Clock_Src */
-    uint32_t u32RefClockDiv;    /*!< FCM reference clock source division selection, @ref FCM_Ref_Clock_Div */
-    uint32_t u32ExceptionType;  /*!< FCM exception type select,  @ref FCM_Exception_Type */
+    uint32_t u32RefClockEdge;       /*!< FCM reference clock trigger edge selection, @ref FCM_Ref_Clock_Edge */
+    uint32_t u32DigitalFilter;      /*!< FCM digital filter function config, @ref FCM_Digital_Filter_Config */
+    uint32_t u32RefClock;           /*!< FCM reference clock source selection, @ref FCM_Ref_Clock_Src */
+    uint32_t u32RefClockDiv;        /*!< FCM reference clock source division selection, @ref FCM_Ref_Clock_Div */
+    uint32_t u32ExceptionType;      /*!< FCM exception type select,  @ref FCM_Exception_Type */
 } stc_fcm_init_t;
 
 /**
@@ -227,7 +228,7 @@ typedef struct {
  ******************************************************************************/
 
 /*******************************************************************************
-  Global function prototypes (definition in C source)
+ * Global function prototypes (definition in C source)
  ******************************************************************************/
 /**
  * @addtogroup FCM_Global_Functions
@@ -236,37 +237,41 @@ typedef struct {
 
 /**
  * @brief  Set FCM upper limit value.
+ * @param  [in] FCMx FCM unit instance.
+ *   @arg  CM_FCMx or CM_FCM
  * @param  u16Limit
  * @retval None.
  */
-__STATIC_INLINE void FCM_SetUpperLimit(uint16_t u16Limit)
+__STATIC_INLINE void FCM_SetUpperLimit(CM_FCM_TypeDef *FCMx, uint16_t u16Limit)
 {
-    WRITE_REG32(CM_FCM->UVR, u16Limit);
+    WRITE_REG32(FCMx->UVR, u16Limit);
 }
 
 /**
  * @brief  Set FCM lower limit value.
+ * @param  [in] FCMx FCM unit instance.
+ *   @arg  CM_FCMx or CM_FCM
  * @param  u16Limit
  * @retval None
  */
-__STATIC_INLINE void FCM_SetLowerLimit(uint16_t u16Limit)
+__STATIC_INLINE void FCM_SetLowerLimit(CM_FCM_TypeDef *FCMx, uint16_t u16Limit)
 {
-    WRITE_REG32(CM_FCM->LVR, u16Limit);
+    WRITE_REG32(FCMx->LVR, u16Limit);
 }
 
-int32_t FCM_Init(const stc_fcm_init_t *pstcFcmInit);
+int32_t FCM_Init(CM_FCM_TypeDef *FCMx, const stc_fcm_init_t *pstcFcmInit);
 int32_t FCM_StructInit(stc_fcm_init_t *pstcFcmInit);
-int32_t FCM_DeInit(void);
-uint16_t FCM_GetCountValue(void);
-void FCM_SetUpperLimit(uint16_t u16Limit);
-void FCM_SetLowerLimit(uint16_t u16Limit);
-void FCM_SetTargetClock(uint32_t u32ClockSrc, uint32_t u32Div);
-void FCM_SetRefClock(uint32_t u32ClockSrc, uint32_t u32Div);
-en_flag_status_t FCM_GetStatus(uint32_t u32Flag);
-void FCM_ClearStatus(uint32_t u32Flag);
-void FCM_ResetCmd(en_functional_state_t enNewState);
-void FCM_IntCmd(uint32_t u32IntType, en_functional_state_t enNewState);
-void FCM_Cmd(en_functional_state_t enNewState);
+int32_t FCM_DeInit(CM_FCM_TypeDef *FCMx);
+uint16_t FCM_GetCountValue(CM_FCM_TypeDef *FCMx);
+void FCM_SetUpperLimit(CM_FCM_TypeDef *FCMx, uint16_t u16Limit);
+void FCM_SetLowerLimit(CM_FCM_TypeDef *FCMx, uint16_t u16Limit);
+void FCM_SetTargetClock(CM_FCM_TypeDef *FCMx, uint32_t u32ClockSrc, uint32_t u32Div);
+void FCM_SetRefClock(CM_FCM_TypeDef *FCMx, uint32_t u32ClockSrc, uint32_t u32Div);
+en_flag_status_t FCM_GetStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag);
+void FCM_ClearStatus(CM_FCM_TypeDef *FCMx, uint32_t u32Flag);
+void FCM_ResetCmd(CM_FCM_TypeDef *FCMx, en_functional_state_t enNewState);
+void FCM_IntCmd(CM_FCM_TypeDef *FCMx, uint32_t u32IntType, en_functional_state_t enNewState);
+void FCM_Cmd(CM_FCM_TypeDef *FCMx, en_functional_state_t enNewState);
 
 /**
  * @}

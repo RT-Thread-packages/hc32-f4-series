@@ -10,7 +10,7 @@
    2023-06-30       CDT             Add function KEYSCAN_DeInit
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -181,7 +181,7 @@ int32_t KEYSCAN_StructInit(stc_keyscan_init_t *pstcKeyscanInit)
  * @param  [in] pstcKeyscanInit KEYSCAN config structure.
  *   @arg  u32HizCycle  Hiz state keep cycles during low level output.
  *   @arg  u32LowCycle  Low level output cycles.
- *   @arg  u32KeyClock    Scan clock.
+ *   @arg  u32KeyClock  Scan clock.
  *   @arg  u32KeyOut    KEYOUT selection.
  *   @arg  u32KeyIn     KEYIN(EIRQ) selection.
  * @retval int32_t:

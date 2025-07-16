@@ -11,7 +11,7 @@
    2023-06-30       CDT             Rename GPIO_ExIntCmd() as GPIO_ExtIntCmd
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -77,7 +77,7 @@ typedef struct {
     uint16_t u16PullUp;         /*!< Internal pull-up resistor setting, @ref GPIO_PinPU_Sel for details     */
     uint16_t u16Invert;         /*!< Pin input/output invert setting, @ref GPIO_PinInvert_Sel for details   */
     uint16_t u16ExtInt;         /*!< External interrupt pin setting, @ref GPIO_PinExtInt_Sel for details    */
-    uint16_t u16PinInputType;   /*!< Input type setting, @ref GPIO_PinInType_Sel for detials                */
+    uint16_t u16PinInputType;   /*!< Input type setting, @ref GPIO_PinInType_Sel for details                */
     uint16_t u16PinAttr;        /*!< Digital or analog attribute setting, @ref GPIO_PinMode_Sel for details */
 } stc_gpio_init_t;
 /**

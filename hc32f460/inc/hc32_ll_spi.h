@@ -9,10 +9,12 @@
    2022-03-31       CDT             First version
    2023-06-30       CDT             Add SPI_SetSckPolarity,SPI_SetSckPhase functions
                                     Add group SPI_SCK_Polarity_Define, SPI_SCK_Phase_Define
-                                    Modify return type of fuction SPI_DeInit
+                                    Modify return type of function SPI_DeInit
+   2023-12-15       CDT             Rename SPI_FLAG_OVERLOAD as SPI_FLAG_OVERRUN, SPI_FLAG_UNDERLOAD as SPI_FLAG_UNDERRUN
+                                    Modify API API_xxxConfig() to SPI_Setxxx() and refine SPI_SetSSValidLevel, modify SPI_IRQ_ALL -> SPI_INT_ALL
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -60,6 +62,7 @@ extern "C"
 
 /**
  * @brief Structure definition of SPI initialization.
+ * @note The parameter u32BaudRatePrescaler is invalid while slave mode
  */
 typedef struct {
     uint32_t u32WireMode;           /*!< SPI wire mode, 3 wire mode or 4 wire mode.
@@ -160,7 +163,7 @@ typedef struct {
 #define SPI_INT_TX_BUF_EMPTY        (SPI_CR1_TXIE)
 #define SPI_INT_RX_BUF_FULL         (SPI_CR1_RXIE)
 #define SPI_INT_IDLE                (SPI_CR1_IDIE)
-#define SPI_IRQ_ALL                 (SPI_INT_ERR | SPI_INT_TX_BUF_EMPTY | SPI_INT_RX_BUF_FULL | SPI_INT_IDLE )
+#define SPI_INT_ALL                 (SPI_INT_ERR | SPI_INT_TX_BUF_EMPTY | SPI_INT_RX_BUF_FULL | SPI_INT_IDLE)
 /**
  * @}
  */
@@ -194,6 +197,16 @@ typedef struct {
 #define SPI_PIN_SS1                 (SPI_CFG1_SS1PV)
 #define SPI_PIN_SS2                 (SPI_CFG1_SS2PV)
 #define SPI_PIN_SS3                 (SPI_CFG1_SS3PV)
+/**
+ * @}
+ */
+
+/**
+ * @defgroup SPI_SS_Level SPI SS pin valid level
+ * @{
+ */
+#define SPI_SS_VALID_LVL_HIGH       (1UL)
+#define SPI_SS_VALID_LVL_LOW        (0UL)
 /**
  * @}
  */
@@ -295,7 +308,6 @@ typedef struct {
 #define SPI_MD_3                    (SPI_CFG2_CPOL | SPI_CFG2_CPHA) /*!< SCK pin output high in idle state; \
                                                                          MOSI/MISO pin data valid in even edge, \
                                                                          MOSI/MISO pin data change in odd edge */
-
 /**
  * @}
  */
@@ -375,18 +387,18 @@ typedef struct {
  * @defgroup SPI_State_Flag_Define SPI State Flag Define
  * @{
  */
-#define SPI_FLAG_OVERLOAD           (SPI_SR_OVRERF)
+#define SPI_FLAG_OVERRUN            (SPI_SR_OVRERF)
 #define SPI_FLAG_IDLE               (SPI_SR_IDLNF)
 #define SPI_FLAG_MD_FAULT           (SPI_SR_MODFERF)
 #define SPI_FLAG_PARITY_ERR         (SPI_SR_PERF)
-#define SPI_FLAG_UNDERLOAD          (SPI_SR_UDRERF)
+#define SPI_FLAG_UNDERRUN           (SPI_SR_UDRERF)
 #define SPI_FLAG_TX_BUF_EMPTY       (SPI_SR_TDEF)       /*!< This flag is set when the data in the data register     \
                                                              is copied into the shift register, but the transmission \
                                                              of the data bit may not have been completed. */
 #define SPI_FLAG_RX_BUF_FULL        (SPI_SR_RDFF)       /*!< Indicates that a data was received. */
-#define SPI_FLAG_CLR_ALL            (SPI_FLAG_OVERLOAD | SPI_FLAG_MD_FAULT | SPI_FLAG_PARITY_ERR | SPI_FLAG_UNDERLOAD)
-#define SPI_FLAG_ALL                (SPI_FLAG_OVERLOAD | SPI_FLAG_IDLE | SPI_FLAG_MD_FAULT | SPI_FLAG_PARITY_ERR | \
-                                     SPI_FLAG_UNDERLOAD | SPI_FLAG_TX_BUF_EMPTY | SPI_FLAG_RX_BUF_FULL)
+#define SPI_FLAG_CLR_ALL            (SPI_FLAG_OVERRUN  | SPI_FLAG_MD_FAULT | SPI_FLAG_PARITY_ERR | SPI_FLAG_UNDERRUN)
+#define SPI_FLAG_ALL                (SPI_FLAG_OVERRUN  | SPI_FLAG_IDLE | SPI_FLAG_MD_FAULT | SPI_FLAG_PARITY_ERR | \
+                                     SPI_FLAG_UNDERRUN | SPI_FLAG_TX_BUF_EMPTY | SPI_FLAG_RX_BUF_FULL)
 /**
  * @}
  */
@@ -417,15 +429,15 @@ uint32_t SPI_ReadData(const CM_SPI_TypeDef *SPIx);
 
 en_flag_status_t SPI_GetStatus(const CM_SPI_TypeDef *SPIx, uint32_t u32Flag);
 void SPI_ClearStatus(CM_SPI_TypeDef *SPIx, uint32_t u32Flag);
-void SPI_LoopbackModeConfig(CM_SPI_TypeDef *SPIx, uint32_t u32Mode);
+void SPI_SetLoopbackMode(CM_SPI_TypeDef *SPIx, uint32_t u32Mode);
 void SPI_ParityCheckCmd(CM_SPI_TypeDef *SPIx, en_functional_state_t enNewState);
-void SPI_SSValidLevelConfig(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin, en_functional_state_t enNewState);
+void SPI_SetSSValidLevel(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin, uint32_t u32SSLevel);
 void SPI_SetSckPolarity(CM_SPI_TypeDef *SPIx, uint32_t u32Polarity);
 void SPI_SetSckPhase(CM_SPI_TypeDef *SPIx, uint32_t u32Phase);
 
 int32_t SPI_DelayTimeConfig(CM_SPI_TypeDef *SPIx, const stc_spi_delay_t *pstcDelayConfig);
 void SPI_SSPinSelect(CM_SPI_TypeDef *SPIx, uint32_t u32SSPin);
-void SPI_ReadBufConfig(CM_SPI_TypeDef *SPIx, uint32_t u32ReadBuf);
+void SPI_SetReadBuf(CM_SPI_TypeDef *SPIx, uint32_t u32ReadBuf);
 int32_t SPI_DelayStructInit(stc_spi_delay_t *pstcDelayConfig);
 
 int32_t SPI_Trans(CM_SPI_TypeDef *SPIx, const void *pvTxBuf, uint32_t u32TxLen, uint32_t u32Timeout);

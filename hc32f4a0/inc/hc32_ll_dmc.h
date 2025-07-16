@@ -7,9 +7,10 @@
    Change Logs:
    Date             Author          Notes
    2022-03-31       CDT             First version
+   2024-08-31       CDT             API EXMC_DMC_DeInit add return value
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -103,7 +104,7 @@ typedef struct {
                                          This parameter can be a value between Min_Data = 0 and Max_Data = 7 */
         uint8_t u8DQSS;             /*!< Defines the DQSS in memory clock cycles.
                                          This parameter can be a value between Min_Data = 0 and Max_Data = 3 */
-        uint8_t u8MRD;              /*!< Defines the the mode register command time in memory clock cycles.
+        uint8_t u8MRD;              /*!< Defines the mode register command time in memory clock cycles.
                                          This parameter can be a value between Min_Data = 0 and Max_Data = 0x7F */
         uint8_t u8RAS;              /*!< Defines the RAS in memory clock cycles.
                                          This parameter can be a value between Min_Data = 0 and Max_Data = 0x0F */
@@ -377,7 +378,7 @@ __STATIC_INLINE uint32_t EXMC_DMC_GetStatus(void)
 /* Initialization and configuration EXMC_DMC functions */
 int32_t EXMC_DMC_StructInit(stc_exmc_dmc_init_t *pstcDmcInit);
 int32_t EXMC_DMC_Init(const stc_exmc_dmc_init_t *pstcDmcInit);
-void EXMC_DMC_DeInit(void);
+int32_t EXMC_DMC_DeInit(void);
 
 void EXMC_DMC_Cmd(en_functional_state_t enNewState);
 void EXMC_DMC_SetState(uint32_t u32State);

@@ -11,9 +11,10 @@
    2023-09-30       CDT             Update EMB_CTL_CMPEN0~2 to EMB_CTL_CMPEN1~3
                                     Update EMB_INTEN_PORTINTEN to EMB_INTEN_PORTININTEN
                                     Update EMB_INTEN_PWMINTEN to EMB_INTEN_PWMSINTEN
+   2023-12-15       CDT             Add macro EMB_FLAG_CLR_ALL
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -77,7 +78,7 @@ typedef struct {
                                          This parameter can be a value of @ref EMB_Detect_Port_Level */
     uint32_t u32PortFilterDiv;      /*!< EMB port filter division
                                          This parameter can be a value of @ref EMB_Port_Filter_Clock_Division */
-    uint32_t u32PortFilterState;    /*!< EMB port filter division
+    uint32_t u32PortFilterState;    /*!< Enable or disable EMB detect port filter in control function
                                          This parameter can be a value of @ref EMB_Port_Filter_Selection */
 } stc_emb_monitor_port_config_t;
 
@@ -124,18 +125,6 @@ typedef struct {
 } stc_emb_monitor_tmr4_t;
 
 /**
- * @brief EMB monitor TMR6 configuration
- */
-typedef struct {
-    stc_emb_monitor_tmr_pwm_t stcTmr6_1;    /*!< EMB detect TMR6 function
-                                                 This parameter details refer @ref stc_emb_monitor_tmr_pwm_t structure */
-    stc_emb_monitor_tmr_pwm_t stcTmr6_2;    /*!< EMB detect TMR6 function
-                                                 This parameter details refer @ref stc_emb_monitor_tmr_pwm_t structure */
-    stc_emb_monitor_tmr_pwm_t stcTmr6_3;    /*!< EMB detect TMR6 function
-                                                 This parameter details refer @ref stc_emb_monitor_tmr_pwm_t structure */
-} stc_emb_monitor_tmr6_t;
-
-/**
  * @brief EMB control TMR4 initialization configuration
  */
 typedef struct {
@@ -148,6 +137,18 @@ typedef struct {
     stc_emb_monitor_tmr4_t  stcTmr4;    /*!< EMB detect TMR4 function
                                              This parameter details refer @ref stc_emb_monitor_tmr4_t structure */
 } stc_emb_tmr4_init_t;
+
+/**
+ * @brief EMB monitor TMR6 configuration
+ */
+typedef struct {
+    stc_emb_monitor_tmr_pwm_t stcTmr6_1;    /*!< EMB detect TMR6 function
+                                                 This parameter details refer @ref stc_emb_monitor_tmr_pwm_t structure */
+    stc_emb_monitor_tmr_pwm_t stcTmr6_2;    /*!< EMB detect TMR6 function
+                                                 This parameter details refer @ref stc_emb_monitor_tmr_pwm_t structure */
+    stc_emb_monitor_tmr_pwm_t stcTmr6_3;    /*!< EMB detect TMR6 function
+                                                 This parameter details refer @ref stc_emb_monitor_tmr_pwm_t structure */
+} stc_emb_monitor_tmr6_t;
 
 /**
  * @brief EMB control TMR6 initialization configuration
@@ -325,6 +326,7 @@ typedef struct {
 #define EMB_STAT_PORT1                      (EMB_STAT_PORTINST)
 #define EMB_FLAG_ALL                        (EMB_FLAG_PWMS | EMB_FLAG_CMP | EMB_FLAG_OSC | EMB_FLAG_PORT1 | \
                                              EMB_STAT_PWMS | EMB_STAT_PORT1)
+#define EMB_FLAG_CLR_ALL                    (EMB_FLAG_PWMS | EMB_FLAG_CMP | EMB_FLAG_OSC | EMB_FLAG_PORT1)
 /**
  * @}
  */

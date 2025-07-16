@@ -9,9 +9,10 @@
    2022-03-31       CDT             First version
    2022-06-30       CDT             Modify macro define for API
    2023-01-15       CDT             Code refine for scan function
+   2024-06-30       CDT             Rename the peripheral registers structure: CMPCR -> CMP_COMMON
  @endverbatim
  *******************************************************************************
- * Copyright (C) 2022-2023, Xiaohua Semiconductor Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2025, Xiaohua Semiconductor Co., Ltd. All rights reserved.
  *
  * This software component is licensed by XHSC under BSD 3-Clause license
  * (the "License"); You may not use this file except in compliance with the
@@ -193,9 +194,9 @@ INM4    VREF            VREF            DAC2
  * @defgroup CMP_8BitDAC_Adc_Ref_Switch CMP 8 bit DAC ADC Reference Voltage Switch
  * @{
  */
-#define CMP_ADC_REF_VREF            (CMPCR_RVADC_VREFSW)
-#define CMP_ADC_REF_DA2             (CMPCR_RVADC_DA2SW)
-#define CMP_ADC_REF_DA1             (CMPCR_RVADC_DA1SW)
+#define CMP_ADC_REF_VREF            (CMP_COMMON_RVADC_VREFSW)
+#define CMP_ADC_REF_DA2             (CMP_COMMON_RVADC_DA2SW)
+#define CMP_ADC_REF_DA1             (CMP_COMMON_RVADC_DA1SW)
 /**
  * @}
  */
@@ -204,8 +205,8 @@ INM4    VREF            VREF            DAC2
  * @defgroup CMP_8Bit_Dac_Ch CMP 8 bit DAC Channel
  * @{
  */
-#define CMP_8BITDAC_CH1             (CMPCR_DACR_DA1EN)
-#define CMP_8BITDAC_CH2             (CMPCR_DACR_DA2EN)
+#define CMP_8BITDAC_CH1             (CMP_COMMON_DACR_DA1EN)
+#define CMP_8BITDAC_CH2             (CMP_COMMON_DACR_DA2EN)
 /**
  * @}
  */

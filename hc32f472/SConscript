@@ -90,6 +90,6 @@ path = [cwd + '/inc']
 
 CPPDEFINES = ['USE_DDL_DRIVER']
 
-group = DefineGroup('HC32F472-LL', src, depend = ['SOC_HC32F472PE'], CPPPATH = path, CPPDEFINES = CPPDEFINES)
+group = DefineGroup('HC32F472-LL', src, depend = ['SOC_HC32F472MC'], CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
 Return('group')
